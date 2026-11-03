@@ -35,7 +35,7 @@ const BRIDGE = `
 
   // ---- the look: everything is in the bar
   const labels = await p.evaluate(() => Array.from(document.querySelectorAll('#bar > button, #bar #accBtns .pill')).map(b => b.textContent.trim()));      // textContent: below 1700 px the words are hidden but still there
-  ok('top bar has Log in all, Reload all, 4 account pills, Panel, Simple, Accounts, Settings (History and Diagnostics are in Settings, Where to hunt is gone)', ['Log in all', 'Reload all', 'Panel', 'Simple', 'Accounts', 'Settings'].every(l => labels.includes(l)) && !labels.includes('History') && !labels.includes('Diagnostics') && (await p.locator('.pill').count()) === 4, labels);
+  ok('top bar has Log in all, Reload all, 4 account pills, Panel, Simple, Settings (History, Diagnostics and, since lang-58, Accounts are in Settings; Where to hunt is gone)', ['Log in all', 'Reload all', 'Panel', 'Simple', 'Settings'].every(l => labels.includes(l)) && !labels.includes('Accounts') && !labels.includes('History') && !labels.includes('Diagnostics') && (await p.locator('.pill').count()) === 4, labels);
   ok('"Dashboard" and "Panels" are gone (replaced by Simple and Panel)', !labels.includes('Dashboard') && !labels.includes('Panels'), labels);
   ok('the pills use the saved names (trainer1) and "Conta N" otherwise', (await p.locator('.pill .lbl').allInnerTexts()).join() === 'trainer1,Conta 2,<img src=x onerror="window.__xss=1">,Conta 4', await p.locator('.pill .lbl').allInnerTexts());
   ok('a name with HTML in it is shown as text, not run', (await p.evaluate(() => window.__xss)) === undefined);
@@ -99,7 +99,7 @@ const BRIDGE = `
   ok('...and says what happened per panel, in words', toastText.includes('trainer1: login sent') && toastText.includes('no saved login') && toastText.includes('already signed in') && toastText.includes('panel not ready'), toastText);
 
   // ---- the Accounts window
-  await p.click('#btnAccounts');
+  await p.evaluate(() => document.getElementById('btnAccounts').click());
   ok('Accounts opens the Saved accounts window with 4 rows', await p.locator('#modal').isVisible() && (await p.locator('.arow').count()) === 4);
   ok('saved values are shown; a saved password is NOT (only a "saved" hint)', (await p.inputValue('.arow[data-n="1"] .f-user')) === 'trainer1@example.com' && (await p.inputValue('.arow[data-n="1"] .f-pass')) === '' && (await p.getAttribute('.arow[data-n="1"] .f-pass', 'placeholder')).includes('saved'));
   ok('the "no encryption" warning is hidden when encryption works', await p.locator('#noCrypt').isHidden());
@@ -125,13 +125,13 @@ const BRIDGE = `
 
   // cancel / escape change nothing
   const callsBefore = (await p.evaluate(() => window.__calls)).length;
-  await p.click('#btnAccounts'); await p.fill('.arow[data-n="4"] .f-user', 'should-not-save'); await p.click('#aCancel');
-  await p.click('#btnAccounts'); await p.keyboard.press('Escape');
+  await p.evaluate(() => document.getElementById('btnAccounts').click()); await p.fill('.arow[data-n="4"] .f-user', 'should-not-save'); await p.click('#aCancel');
+  await p.evaluate(() => document.getElementById('btnAccounts').click()); await p.keyboard.press('Escape');
   ok('Cancel and Escape close the window without saving', await p.locator('#modal').isHidden() && (await p.evaluate(() => window.__calls)).filter(c => c[0] === 'save').length === 1 && (await p.evaluate(() => window.__calls)).length === callsBefore);
 
   // no encryption: warning
   await p.evaluate(() => { window.__saved.encryption = false; window.__saveAnswer = { ok: true, warning: 'no-encryption' }; });
-  await p.click('#btnAccounts');
+  await p.evaluate(() => document.getElementById('btnAccounts').click());
   ok('without encryption the window says so', await p.locator('#noCrypt').isVisible());
   await p.fill('.arow[data-n="4"] .f-pass', 'x'); await p.click('#aSave'); await p.waitForTimeout(100);
   ok('...and after saving it warns that the password was NOT stored', (await p.locator('#toast').innerText()).includes('NOT saved'), await p.locator('#toast').innerText());

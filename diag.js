@@ -13,7 +13,7 @@ const crypto = require('crypto');
 const electron = require('electron');
 const { app, ipcMain } = electron;
 
-const BUILD = 'lang-56';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
+const BUILD = 'lang-58';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
 const T0 = Date.now();
 const APP_DIR = __dirname;
 const MAX_ERRORS = 40, MAX_LOGS = 150, MAX_TYPES = 80, MAX_FIELDS = 120;
@@ -251,7 +251,7 @@ async function probe(n, wc, opts) {
 // Closing the window only hides the app in the tray, so an update copied over the old files does nothing until the app is quit from the tray and started
 // again. These are the files whose version matters. Their fingerprints are taken when the app starts, and compared later.
 const WATCHED = ['main.js', 'preload.js', 'ws-reader.js', 'accounts.js', 'diag.js', 'diag-core.js', 'team.js', 'tidy.js', 'notify.js', 'history.js', 'schema.js', 'live.js',
-                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js'];
+                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js', 'updates.js'];
 const fingerprint = name => { try { const full = path.join(APP_DIR, name); if (!fs.existsSync(full)) return null; return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 16); } catch (e) { return null; } };
 let startPrints = null;
 function takePrints() { startPrints = {}; WATCHED.forEach(n => { startPrints[n] = fingerprint(n); }); }
@@ -312,6 +312,8 @@ const FEATURES = [
   ['lockdown.js', 'game panels locked down (permissions refused, panel settings forced)', 'will-attach-webview'],
   ['datadir.js', 'your own files kept in the user-data folder', 'function file'],
   ['vault.js', 'password encryption (new and old Electron)', 'decryptStringAsync'],
+  ['updates.js', 'checks GitHub for a newer release (the Update button)', 'releases/latest'],
+  ['preload.js', 'update button bridge', 'updateGet'],
   ['index.html', 'economy mode button', 'id="btnEco"'],
   ['gamenav.js', 'Centro, Market, Mochila, Hunts and Back to last hunt buttons', 'nav:hunt'],
   ['external.js', 'links open in the default browser', 'setWindowOpenHandler'],
@@ -480,6 +482,7 @@ function collect() {
   try { out.analyzer = require('./analyzer').lastInfo(); } catch (e) { out.analyzer = undefined; }
   try { out.nav = require('./gamenav').lastInfo(); } catch (e) { out.nav = undefined; }        // the buttons Centro, Market and Mochila of the top bar
   try { out.datadir = require('./datadir').info(); } catch (e) { out.datadir = undefined; }          // where your own files are (the folder without your user name), and what was moved
+  try { out.updates = require('./updates').info(); } catch (e) { out.updates = undefined; }          // this version, the latest release, when it was checked
   try { out.lockdown = require('./lockdown').info(); } catch (e) { out.lockdown = undefined; }          // what the panels asked for and were refused (permission names and counts)
   try { out.missions = require('./missions').info(); } catch (e) { out.missions = undefined; }          // battle pass, daily missions and eggs: how often the game sent them, what is watched (counts only)
   try { out.economy = require('./economy').info(); } catch (e) { out.economy = undefined; }          // economy mode: is it on, and what the samples of the last 24 hours say
@@ -503,7 +506,8 @@ function init() {
   try { require('./donate-guard').init(); } catch (e) { error('donate-guard', e); }      // the buttons that make a donation (+ Doar, the Diamantes tab, the pay button) cannot be pressed, and a note with a link takes the place of + Doar          // links that a game page opens in a new window go to the default browser
   try { require('./analyzer').init(); } catch (e) { error('analyzer', e); }          // the Analyzer button of the top bar
   try { require('./gamenav').init(); } catch (e) { error('gamenav', e); }            // the buttons Centro, Market and Mochila of the top bar
-  try { require('./economy').init(); } catch (e) { error('economy', e); }            // economy mode (the leaf button) and its measurements, once a minute
+  try { require('./economy').init(); } catch (e) { error('economy', e); }
+  try { require('./updates').init(); } catch (e) { error('updates', e); }            // lang-58: is a newer release out (the Update button of the top bar)            // economy mode (the leaf button) and its measurements, once a minute
   try { hookConsole(); } catch (e) {}
   try { process.on('unhandledRejection', r => error('unhandled-rejection', r)); } catch (e) {}
   try { process.on('uncaughtExceptionMonitor', e => error('uncaught', e)); } catch (e) {}     // only watches: the normal error window still appears

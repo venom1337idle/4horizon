@@ -307,6 +307,7 @@
   /* the list shows 8 whole rows (8 x 40 px) and scrolls one row at a time: it can never stop with a row cut in half */
   .scrollbox { overflow-y: auto; scroll-snap-type: y mandatory; }
   #capList { max-height: 320px; }
+  #todayList { max-height: 359px; }          /* lang-57: a box of its own height with a scroll bar, like Latest captures (both cards end on the same line) */
   .cap { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 11px; margin-bottom: 4px; scroll-snap-align: start; background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); }
   .cap .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cap .mult { width: 52px; text-align: right; } .cap .iv { width: 66px; text-align: right; font-weight: 700; } .cap .ctime { width: 44px; text-align: right; color: var(--dim2); }          /* the time of a capture. (Not "tm": that is the class of a team row in the summary, and its box styling leaked onto every time) */
@@ -363,7 +364,7 @@
           <div class="scrollbox" id="capList"></div>
         </div>
         <div class="card" id="todayCard">
-          <div class="h"><span>Today &middot; 00:00 to 23:59</span><span class="grow"></span><span class="chip" id="todayCount"></span></div>
+          <div class="h"><span>Today’s highlights &middot; 00:00 to 23:59</span><span class="grow"></span><span class="chip" id="todayCount"></span></div>
           <div class="scrollbox" id="todayList"></div>
         </div>
         </div>

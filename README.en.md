@@ -33,7 +33,7 @@ You need **Windows 10 or 11** (64-bit). Other systems are not tested.
 2. Run it. Windows may say *"Windows protected your PC"*: the installer is not code-signed (signing costs money every year). Click **More info › Run anyway**.
 3. Choose where to install it (or keep the default). It puts **4horizon** in the Start menu and on the desktop. No administrator rights are needed.
 
-**To update**: download the new installer and run it; your settings, history and saved logins are kept.
+**To update**: when a new version is out, an **Update** button shows at the top of the window, next to the version number; it opens the new version's page. Download the new installer and run it: your settings, history and saved logins are kept.
 **To uninstall**: Windows Settings › Apps › 4horizon. Your settings, history and saved logins stay in `%APPDATA%\4horizon`; delete that folder too if you want them gone.
 
 ### From the source code
@@ -70,7 +70,7 @@ In the diamond shop, the donation buttons cannot be pressed inside the app: a li
 
 **The game panels are locked down.** They get no permission (camera, microphone, location, notifications, devices...) except writing to the clipboard and full screen; they can only open the game's own address; WebRTC cannot discover your network address. Links the game opens go to your normal browser.
 
-**What else the app contacts.** Besides the game: [PokéAPI](https://pokeapi.co), once, for the names of the Pokémon (saved after that), and PokéAPI's sprites on GitHub for the pictures of the Pokémon. Like any web request, these see your IP address; they get nothing about you or your accounts. There is no analytics or telemetry of any kind.
+**What else the app contacts.** Besides the game: [PokéAPI](https://pokeapi.co), once, for the names of the Pokémon (saved after that), PokéAPI's sprites on GitHub for the pictures of the Pokémon, and 4horizon's list of releases on GitHub (shortly after the start and every 6 hours, to know whether a new version is out). Like any web request, these see your IP address; they get nothing about you or your accounts. There is no analytics or telemetry of any kind.
 
 **The Diagnostics report** contains names of message types and fields, counts and true/false settings, never values from the game, passwords or e-mails. Character names are hidden by default.
 

@@ -21,7 +21,7 @@ def eggs_out(text):            # lang-44: the incubators are rings now (tested b
 def today_out(text):           # lang-47: the day's tracker (tested by run-today) is the last card of the Overview: from its title to the end
     ls = text.split('\n')
     for i, l in enumerate(ls):
-        if l.startswith('Today \u00b7 00:00 to 23:59'): return '\n'.join(ls[:i])
+        if l.startswith('Today\u2019s highlights \u00b7 00:00 to 23:59'): return '\n'.join(ls[:i])
     return text
 def drop_one(items, block):
     items = list(items)

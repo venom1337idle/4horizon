@@ -33,7 +33,7 @@ Você precisa do **Windows 10 ou 11** (64 bits). Outros sistemas não foram test
 2. Abra o arquivo. O Windows pode dizer *"O Windows protegeu o computador"*: o instalador não tem assinatura digital (assinar custa dinheiro todo ano). Clique em **Mais informações › Executar assim mesmo**.
 3. Escolha onde instalar (ou deixe o padrão). Ele coloca o **4horizon** no menu Iniciar e na área de trabalho. Não precisa de administrador.
 
-**Para atualizar**: baixe o instalador novo e abra; as suas configurações, o seu histórico e os seus logins salvos são mantidos.
+**Para atualizar**: quando sai uma versão nova, aparece o botão **Atualizar** no alto da janela, ao lado do número da versão; ele abre a página da versão nova. Baixe o instalador novo e abra: as suas configurações, o seu histórico e os seus logins salvos são mantidos.
 **Para desinstalar**: Configurações do Windows › Aplicativos › 4horizon. As suas configurações, o histórico e os logins salvos ficam em `%APPDATA%\4horizon`; apague essa pasta também se quiser que eles sumam.
 
 ### Pelo código-fonte
@@ -70,7 +70,7 @@ Na loja de diamantes, os botões de doação não podem ser apertados dentro do 
 
 **Os painéis do jogo são travados.** Eles não recebem nenhuma permissão (câmera, microfone, localização, notificações, dispositivos...) a não ser escrever na área de transferência e tela cheia; só podem abrir o endereço do próprio jogo; o WebRTC não consegue descobrir o seu endereço de rede. Os links que o jogo abre vão para o seu navegador normal.
 
-**O que mais o app acessa.** Além do jogo: a [PokéAPI](https://pokeapi.co), uma vez, para os nomes dos Pokémon (guardados depois disso), e as imagens dos Pokémon da PokéAPI no GitHub. Como qualquer acesso à internet, eles veem o seu endereço IP; não recebem nada sobre você ou as suas contas. Não há nenhum tipo de estatística ou telemetria.
+**O que mais o app acessa.** Além do jogo: a [PokéAPI](https://pokeapi.co), uma vez, para os nomes dos Pokémon (guardados depois disso), as imagens dos Pokémon da PokéAPI no GitHub, e a lista de versões do 4horizon no GitHub (logo depois de abrir e a cada 6 horas, para saber se saiu uma versão nova). Como qualquer acesso à internet, eles veem o seu endereço IP; não recebem nada sobre você ou as suas contas. Não há nenhum tipo de estatística ou telemetria.
 
 **O relatório do Diagnóstico** contém nomes de tipos de mensagem e de campos, contagens e configurações sim/não, nunca valores do jogo, senhas ou e-mails. Os nomes dos personagens ficam escondidos por padrão.
 

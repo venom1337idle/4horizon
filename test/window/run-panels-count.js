@@ -32,7 +32,7 @@ const dashLook = p => p.dash().evaluate(() => ({ n: accounts.length, tabs: Array
   ok('after the reload: panels 3 and 4 get NO address (their game page is never loaded) and are not shown; 2 pills; the two side by side', v.src.join('|') === 'https://pokehorizonidle.com|https://pokehorizonidle.com||' && v.shown.join() === 'true,true,false,false' && v.pills === '1,2' && v.cols === 'repeat(2, 1fr)' && v.rows === 'repeat(1, 1fr)', v);
   let d = await dashLook(p);
   ok('...the Summary and the Overview show only accounts 1 and 2 (tabs, table)', d.n === 2 && d.tabs === 'sum,0,1' && d.rows <= 3, d);
-  await p.click('#btnAccounts'); await p.waitForTimeout(250);
+  await p.evaluate(() => document.getElementById('btnAccounts').click()); await p.waitForTimeout(250);
   ok('...Accounts shows only rows 1 and 2 (3 and 4 keep their saved login)', (await p.evaluate(() => Array.from(document.querySelectorAll('#arows .arow')).map(r => r.dataset.n).join())) === '1,2');
   await p.evaluate(() => document.getElementById('aCancel').click());
   await p.click('#btnLoginAll'); await p.waitForTimeout(300);

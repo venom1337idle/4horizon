@@ -409,6 +409,12 @@
       }
       P();
     }
+    if (main && main.updates && typeof main.updates === 'object') {
+      const U = main.updates, agoU = s => (typeof s === 'number' ? ago(s) : 'not yet');
+      P('UPDATES (GitHub is asked for the latest release shortly after the start and every 6 hours)');
+      P('  this version ' + String(U.version || '?').slice(0, 20) + ' \u00b7 latest release ' + (U.latest ? String(U.latest).slice(0, 20) : 'not known yet') + ' \u00b7 ' + (U.available ? 'a NEWER version is out (the Update button shows)' : 'up to date') + ' \u00b7 checked ' + agoU(U.checkedSec) + (U.error ? ' \u00b7 last check failed: ' + String(U.error).slice(0, 80) : ''));
+      P();
+    }
     if (main && main.lockdown !== undefined && main.lockdown) {
       const L = main.lockdown, num = v => (typeof v === 'number' && isFinite(v) && v >= 0 ? Math.round(v) : 0), who = p => (Number(p) === 0 ? 'the app window' : lab(Number(p)));
       P('PANEL LOCKDOWN (the game pages get no permission except the clipboard and full screen, and every panel is forced to safe settings; counts and permission names only)');

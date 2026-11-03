@@ -211,6 +211,10 @@
   .dman li { margin-bottom: 5px; } .dman li b { color: var(--text); } .dman li i { color: var(--dim2); font-style: normal; }
   #diagReport { margin: 0; white-space: pre-wrap; word-break: break-word; font: 11.5px/1.5 Consolas, 'Cascadia Mono', monospace; color: #cfd8e6; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px; }
   .dlg svg.i { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* lang-58: the version of the app, and the Update button (only when a newer release is out) */
+  #appVer { color: var(--dim2, #7f8bb0); font-size: 12px; font-variant-numeric: tabular-nums; padding: 0 4px; white-space: nowrap; }
+  #btnUpdate { border-color: var(--gold, #ffd86b); color: var(--gold, #ffd86b); }
+  #btnUpdate svg { stroke: currentColor; }
 </style>
 </head>
 <body>
@@ -231,7 +235,8 @@
     <button class="tb" id="btnPanel" title="Show or hide the Summary panel"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M2 20h20"/></svg><span class="bl">Panel</span></button>
     <button class="tb" id="btnSimple" title="Show the dashboard, or go back to the four game screens"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span class="bl">Simple</span></button>
     <span class="sep"></span>
-    <button class="tb" id="btnAccounts" title="Saved logins for the four panels"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="bl">Accounts</span></button>
+    <span id="appVer" class="ver" title="The version of 4horizon"></span>
+    <button class="tb up hidden" id="btnUpdate" title="A newer version of 4horizon is out: opens its page, to download the new installer"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg><span class="bl">Update</span></button>
     <button class="tb" id="btnSettings" title="Language, start with the PC, notifications, history and diagnostics"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="bl">Settings</span></button>
   </div>
 
@@ -344,6 +349,10 @@
       <div class="srow">
         <div><b>Game panels</b><span class="sd">How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).</span></div>
         <div class="ctl"><select id="panelsSel" data-no-i18n><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+      </div>
+      <div class="srow">
+        <div><b>Accounts</b><span class="sd">The saved logins of the game panels, used by Log in all (the passwords are encrypted).</span></div>
+        <div class="ctl"><button id="btnAccounts"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Open accounts</button></div>
       </div>
       <div class="srow">
         <div><b>Language</b><span class="sd">The language of the whole app: the screens, the notifications and the tray menu.</span></div>
@@ -528,6 +537,21 @@
       else if (eco.on && !eco.warned) { eco.warned = true; toast(t('Economy mode hides the screens, but muting the games and measuring it need install-diagnostics.js: run it in the project folder and restart the app.'), 'warn'); }
     }
     document.getElementById('btnEco').onclick = () => setEco(!eco.on);
+    // ---------- lang-58: the version of the app in the top bar, and the Update button when a newer release is out (updates.js asks GitHub) ----------
+    async function readUpdate() {
+      if (!api.updateGet) return;
+      let u = null; try { u = await api.updateGet(); } catch (e) { u = null; }
+      if (!u) return;
+      document.getElementById('appVer').textContent = u.version ? 'v' + u.version : '';
+      const b = document.getElementById('btnUpdate');
+      b.classList.toggle('hidden', !u.available);
+      if (u.available) b.title = t('Version {v} is out: opens its page, to download the new installer', { v: u.latest });
+    }
+    document.getElementById('btnUpdate').onclick = async () => {
+      let r = null; try { r = api.updateOpen ? await api.updateOpen() : null; } catch (e) { r = null; }
+      toast(r && r.ok ? t('The page of the new version opens in your browser: download the installer there and run it.') : t('The page of the new version could not be opened.'), r && r.ok ? '' : 'warn');
+    };
+    readUpdate(); setInterval(readUpdate, 10 * 60e3); window.addEventListener('focus', readUpdate);
     // lang-55: the window always starts with the game screens shown. The main process may still think economy mode is on (the window was loaded
     // again while it was on, after a change of Settings › Game panels): it is told, so that the games are not left muted and the minutes are not
     // counted as economy minutes while the screens are shown.
@@ -748,9 +772,10 @@
       modal.classList.remove('hidden');
       const first = modal.querySelector('.f-name'); if (first) first.focus();
     }
-    function closeAccounts() { modal.classList.add('hidden'); document.querySelectorAll('#arows .f-pass').forEach(i => { i.value = ''; }); }
+    let backToSettings = false;                                 // (lang-58) Accounts is opened from Settings: Settings comes back when it is closed
+    function closeAccounts() { modal.classList.add('hidden'); document.querySelectorAll('#arows .f-pass').forEach(i => { i.value = ''; }); if (backToSettings) { backToSettings = false; settingsModal.classList.remove('hidden'); } }
 
-    document.getElementById('btnAccounts').onclick = openAccounts;
+    document.getElementById('btnAccounts').onclick = () => { if (!settingsModal.classList.contains('hidden')) { settingsModal.classList.add('hidden'); backToSettings = true; } openAccounts(); };
     document.getElementById('aCancel').onclick = closeAccounts;
     document.addEventListener('keydown', e => {
       if (e.key !== 'Escape') return;
@@ -822,7 +847,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-56';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-58';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 

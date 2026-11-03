@@ -33,7 +33,7 @@ Only the latest version is looked after.
 
 **Reading the game**
 - The game's messages are read through Chromium's debugger protocol (`ws-reader.js`): read only. The reading sends nothing to the game and changes nothing.
-- Besides the game, the app contacts only PokéAPI (the names of the Pokémon, once) and PokéAPI's sprites on GitHub. No analytics, no telemetry.
+- Besides the game, the app contacts only PokéAPI (the names of the Pokémon, once), PokéAPI's sprites on GitHub, and GitHub's list of 4horizon's releases (`updates.js`: shortly after the start and every 6 hours, to know whether a new version is out; the Update button only opens this repository's release page, nothing is downloaded or installed by the app). No analytics, no telemetry.
 
 ## Known limits
 

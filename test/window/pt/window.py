@@ -1,5 +1,14 @@
 # pt/window.py: the Portuguese texts of this part of the app
 EXACT = {
+  # lang-58: Accounts in Settings; the version and the Update button
+  'The saved logins of the game panels, used by Log in all (the passwords are encrypted).': 'Os logins salvos dos painéis do jogo, usados por Entrar em todas (as senhas são criptografadas).',
+  'Open accounts': 'Abrir contas',
+  'The version of 4horizon': 'A versão do 4horizon',
+  'Update': 'Atualizar',
+  'A newer version of 4horizon is out: opens its page, to download the new installer': 'Saiu uma versão nova do 4horizon: abre a página dela, para baixar o instalador novo',
+  'Version {v} is out: opens its page, to download the new installer': 'A versão {v} saiu: abre a página dela, para baixar o instalador novo',
+  'The page of the new version opens in your browser: download the installer there and run it.': 'A página da versão nova abre no seu navegador: baixe o instalador lá e abra.',
+  'The page of the new version could not be opened.': 'Não foi possível abrir a página da versão nova.',
   # lang-49: the number of game panels
   'Game panels': 'Painéis do jogo',
   'How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).': 'Quantas contas você joga ao mesmo tempo. Os painéis que não estão em uso nem são carregados. Mudar isso recarrega a janela (você continua conectado).',
@@ -116,7 +125,6 @@ EXACT = {
   'Simple': 'Simples',
   'Show the dashboard, or go back to the four game screens': 'Mostrar o dashboard, ou voltar às quatro telas do jogo',
   'Accounts': 'Contas',
-  'Saved logins for the four panels': 'Logins salvos dos quatro painéis',
   'Settings': 'Configurações',
   'Show or hide this game screen': 'Mostrar ou ocultar esta tela do jogo',
   'Zoom in': 'Aumentar zoom',

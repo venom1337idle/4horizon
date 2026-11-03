@@ -1,11 +1,12 @@
 {
   "name": "4horizon",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "4horizon",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "test": "node test/run-all.js",
+    "predist": "node tools/clean-dist.js",
     "dist": "electron-builder --win",
     "pack": "electron-builder --win --dir"
   },

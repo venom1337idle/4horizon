@@ -18,9 +18,9 @@ const hoverInfo = async (p, sel) => { const b = await infoOf(p, sel).boundingBox
   await p.mouse.move(5, 5); await p.waitForTimeout(100);
   ok('nothing is shown when Settings opens', !(await tipState(p)).shown);
   const vis = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .sd')).filter(e => e.offsetParent !== null).length);
-  ok('the descriptions are not written under the settings (none of the 15 is visible)', vis === 0 && (await p.locator('#settingsModal .sd').count()) === 15, vis);
+  ok('the descriptions are not written under the settings (none of the 16 is visible)', vis === 0 && (await p.locator('#settingsModal .sd').count()) === 16, vis);
   const infos = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .info')).map(e => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), glyph: getComputedStyle(e, '::before').content, vis: !!e.offsetParent }; }));
-  ok('every setting that has a description has its own small "i": 15 of them (lang-41: Minimize to tray; lang-49: Game panels), all visible and 17 x 17 px', infos.length === 15 && infos.every(i => i.vis && i.w === 17 && i.h === 17 && i.glyph === '"i"'), infos.slice(0, 2));
+  ok('every setting that has a description has its own small "i": 16 of them (lang-41: Minimize to tray; lang-49: Game panels; lang-58: Accounts), all visible and 17 x 17 px', infos.length === 16 && infos.every(i => i.vis && i.w === 17 && i.h === 17 && i.glyph === '"i"'), infos.slice(0, 2));
 
   // the bug: the tooltip must not show for anything else in the settings
   const tr = await p.locator('#settingsModal .srow', { has: p.locator('#langSel') }).first().boundingBox();
