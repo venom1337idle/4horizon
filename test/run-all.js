@@ -13,7 +13,7 @@
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const GROUPS = ['window', 'main', 'notify'];
-const SKIP_ROOT = new Set(['test', 'tools', 'node_modules', 'dist', 'out', '.git', '.github', 'README.md', 'README.pt-BR.md', 'LICENSE', 'SECURITY.md', 'SECURITY.txt', 'ComoUsar.txt', '.gitignore', '.gitattributes']);
+const SKIP_ROOT = new Set(['test', 'tools', 'node_modules', 'dist', 'out', '.git', '.github', 'README.md', 'README.en.md', 'LICENSE', 'SECURITY.md', 'SECURITY.txt', 'ComoUsar.txt', '.gitignore', '.gitattributes']);
 const SUITE_MS = 300000;
 
 const args = process.argv.slice(2), keep = args.includes('--keep'), words = args.filter(a => !a.startsWith('--'));

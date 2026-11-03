@@ -2,7 +2,7 @@
 ====================
 
 Projeto no GitHub: https://github.com/venom1337idle/4horizon
-(O mesmo texto, formatado para o GitHub: README.pt-BR.md)
+(O mesmo texto, formatado para o GitHub: README.md)
 
 Jogue até quatro contas de Poke Horizon Idle (https://pokehorizonidle.com) lado a lado, com um Resumo ao vivo
 de cada conta, notificações do Windows para o que importa e uma Visão geral do seu dia.
