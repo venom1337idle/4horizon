@@ -822,7 +822,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-55';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-56';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 
@@ -949,11 +949,17 @@
       N_('notifBody').classList.toggle('off', !c.enabled);
     }
     function flashSaved() { const e = N_('nSaved'); e.classList.add('on'); clearTimeout(nSavedTimer); nSavedTimer = setTimeout(() => e.classList.remove('on'), 1800); }
+    // lang-56: the Great catch and Valuable drop settings go to the Summary too: its day's tracker (Today) follows them, as the notifications do
+    function sendRules(c) {
+      try { if (c && c.goodCatch && dash.contentWindow) dash.contentWindow.postMessage({ type: 'rules', goodCatch: { minIV: c.goodCatch.minIV, minQuality: c.goodCatch.minQuality, mode: c.goodCatch.mode }, rareDrop: { minValue: c.rareDrop && c.rareDrop.minValue } }, '*'); } catch (e) {}
+    }
+    async function pushRules() { if (!api.notifyGet) return; try { sendRules(await api.notifyGet()); } catch (e) {} }
+    dash.addEventListener('load', pushRules); pushRules();
     async function sendNotif(patch) {
       try {
         const c = await api.notifySet(patch);
         if (!c) { toast(t('Could not save the notification settings'), 'warn'); return; }
-        fillNotif(c);
+        fillNotif(c); sendRules(c);
         if (c.saved) flashSaved(); else toast(t('Could not save the notification settings'), 'warn');
       } catch (e) { toast(t('Could not save the notification settings'), 'warn'); }
     }

@@ -83,7 +83,7 @@
     "No capture matches these filters.": "Nenhuma captura corresponde a estes filtros.",
     "No drops yet": "Nenhum drop ainda",
     "No other hunts yet. A hunt shows here after {n} minutes or more on it.": "Nenhuma outra hunt ainda. Uma hunt aparece aqui depois de {n} minutos ou mais nela.",
-    "Nothing yet today. Shinies, great catches (IV {iv} or more, or Legendary or better), valuable drops (worth {v} or more each), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.": "Nada ainda hoje. Shinies, ótimas capturas (IV {iv} ou mais, ou Lendária ou melhor), drops valiosos (que valem {v} ou mais cada), ovos chocados, evoluções e novas hunts aparecem aqui, das 00:00 às 23:59, mesmo depois de fechar e abrir o app.",
+    "Nothing yet today. Shinies, great catches and valuable drops (as set in Settings › Notifications), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.": "Nada ainda hoje. Shinies, ótimas capturas e drops valiosos (como definidos em Configurações › Notificações), ovos chocados, evoluções e novas hunts aparecem aqui, das 00:00 às 23:59, mesmo depois de fechar e abrir o app.",
     "Only the Summary uses these choices. The supplies alert follows your auto-catch ball.": "Só o Resumo usa essas escolhas. O alerta de suprimentos segue a sua bola de captura automática.",
     "Only {t} on this hunt so far: spend at least {n} min there for a reliable average": "Só {t} nesta hunt até agora: fique pelo menos {n} min nela para ter uma média confiável",
     "or more each": "ou mais cada",

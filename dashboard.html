@@ -985,12 +985,22 @@ function todayAdd(a, kind, p, key) {
   todaySave();
   return true;
 }
-const isGreatRoll = ev => (typeof ev.quality === 'number' && ev.quality >= GREAT_Q) || /lend|legend|divin|m[ií]t|myth/i.test(String(ev.rarity || ''));
+// lang-56: a great catch and a valuable drop follow Settings › Notifications (Great catch: IV / AND-OR / quality; Valuable drop: worth at least),
+// the same rule as the notifications; the window sends it (type "rules"). Without it (no settings), the rule of lang-47: IV 170, or Legendary or better.
+let todayRule = null;
+const qualityOf = p => (typeof p.q === 'number' ? p.q : (m => (m ? Number(m[1]) : null))(/\u00d7\s*([\d.]+)/.exec(String(p.rarity || ''))));
+function isGreatCatch(iv, q, rarity) {
+  const r = todayRule && todayRule.goodCatch;
+  if (!r) return (typeof iv === 'number' && iv >= GREAT_IV) || (typeof q === 'number' && q >= GREAT_Q) || /lend|legend|divin|m[ií]t|myth/i.test(String(rarity || ''));
+  const ivOk = typeof iv === 'number' && iv >= r.minIV, qOk = typeof q === 'number' && q >= r.minQuality;     // (a number that is missing is not "enough")
+  return r.mode === 'and' ? ivOk && qOk : ivOk || qOk;
+}
+const minDrop = () => (todayRule && todayRule.rareDrop && typeof todayRule.rareDrop.minValue === 'number' ? todayRule.rareDrop.minValue : DROP_HOT);
 function todayCatch(a, ev) {
   if (!ev || !ev.name) return;
-  const iv = typeof ev.iv === 'number' ? ev.iv : null, great = (iv !== null && iv >= GREAT_IV) || isGreatRoll(ev);
-  if (!ev.shiny && !great) return;
-  todayAdd(a, ev.shiny ? 'shiny' : 'catch', { name: ev.name, iv: iv === null ? '' : iv, max: ev.max || 192, rarity: ev.rarity || '' },
+  const iv = typeof ev.iv === 'number' ? ev.iv : null, q = typeof ev.quality === 'number' ? ev.quality : qualityOf({ rarity: ev.rarity });
+  if (!ev.shiny && !isGreatCatch(iv, q, ev.rarity)) return;
+  todayAdd(a, ev.shiny ? 'shiny' : 'catch', { name: ev.name, iv: iv === null ? '' : iv, max: ev.max || 192, rarity: ev.rarity || '', q: typeof q === 'number' ? q : '' },
     'c:' + a.idx + ':' + ev.name + ':' + iv + ':' + ev.quality + ':' + (ev.time || '') + ':' + (ev.shiny ? 1 : 0));
 }
 // what changed since the last look: new expensive drops, evolutions, a level that opens hunts, eggs that hatched
@@ -1005,7 +1015,7 @@ function todayScan() {
       if (b.dropSid === sid && b.drops) {
         Object.keys(q).forEach(n => {
           const d = q[n], unit = typeof d.value === 'number' ? d.value / d.qty : null, more = d.qty - (b.drops[n] || 0);
-          if (more > 0 && unit !== null && unit >= DROP_HOT) todayAdd(a, 'drop', { item: n, n: more, each: unit }, 'd:' + a.idx + ':' + sid + ':' + n + ':' + d.qty);
+          if (more > 0 && unit !== null && unit >= minDrop()) todayAdd(a, 'drop', { item: n, n: more, each: unit }, 'd:' + a.idx + ':' + sid + ':' + n + ':' + d.qty);
         });
       }
       b.dropSid = sid; b.drops = {}; Object.keys(q).forEach(n => { b.drops[n] = q[n].qty; });          // (the first look, and a new session, are the start: what they hold is not announced)
@@ -1043,17 +1053,20 @@ function todayText(x) {
   return '';
 }
 const TODAY_ICON = { shiny: '\u2726', catch: '\u2605', drop: '$', egg: '\u25cf', evo: '\u21e7', hunt: '\u2691' };
+// what is shown: everything, except the great catches and drops that the CURRENT settings do not count (changing a number changes the list at once)
+const todayShown = x => x.kind === 'catch' ? isGreatCatch(x.p && x.p.iv !== '' ? Number(x.p.iv) : null, qualityOf(x.p || {}), x.p && x.p.rarity)
+  : x.kind === 'drop' ? Number(x.p && x.p.each) >= minDrop() : true;
 function drawToday() {
   todayDay();
-  const list = document.getElementById('todayList'), cnt = document.getElementById('todayCount');
-  cnt.textContent = today.items.length ? String(today.items.length) : '';
-  cnt.classList.toggle('hidden', !today.items.length);
-  const html = today.items.length ? today.items.map(x => {
+  const list = document.getElementById('todayList'), cnt = document.getElementById('todayCount'), items = today.items.filter(todayShown);
+  cnt.textContent = items.length ? String(items.length) : '';
+  cnt.classList.toggle('hidden', !items.length);
+  const html = items.length ? items.map(x => {
     const d = new Date(x.t), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     const a = accounts[x.acc], who = a ? accName(a) : esc(x.name);
     const tx = todayText(x);
     return '<div class="ev ' + esc(x.kind) + '"><span class="when">' + hm + '</span><span class="mk">' + (TODAY_ICON[x.kind] || '\u2022') + '</span><span class="tx" title="' + esc(tx.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&')) + '"><span class="dot" style="background:' + COLORS[x.acc % COLORS.length] + '"></span> <span class="who">' + who + ':</span> ' + tx + '</span></div>';
-  }).join('') : '<div class="empty">' + t('Nothing yet today. Shinies, great catches (IV {iv} or more, or Legendary or better), valuable drops (worth {v} or more each), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.', { iv: GREAT_IV, v: '$' + fmt(DROP_HOT) }) + '</div>';
+  }).join('') : '<div class="empty">' + t('Nothing yet today. Shinies, great catches and valuable drops (as set in Settings \u203a Notifications), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.') + '</div>';
   if (list.dataset.html !== html) { list.dataset.html = html; list.innerHTML = html; }
 }
 
@@ -1356,6 +1369,10 @@ window.addEventListener('message', e => {
       if (typeof sumCfg.tab === 'number' && sumCfg.tab >= np) { sumCfg.tab = 'sum'; saveSumCfg(); }
       renderAll();
     }
+  } else if (m.type === 'rules') {                          // lang-56: the Great catch and Valuable drop settings, for the day's tracker
+    const g = m.goodCatch, d = m.rareDrop, num = v => (typeof v === 'number' && isFinite(v) ? v : null);
+    todayRule = (g && num(g.minIV) !== null && num(g.minQuality) !== null) ? { goodCatch: { minIV: g.minIV, minQuality: g.minQuality, mode: g.mode === 'and' ? 'and' : 'or' }, rareDrop: { minValue: d && num(d.minValue) !== null ? d.minValue : DROP_HOT } } : null;
+    try { drawToday(); } catch (err) {}
   } else if (m.type === 'diag-request') {             // the Diagnostics window wants to know what this page sees
     try { e.source.postMessage({ type: 'diag-reply', id: m.id, data: diagData() }, '*'); } catch (err) { diagNote('diag reply: ' + err.message); }
   }

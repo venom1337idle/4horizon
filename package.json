@@ -1,7 +1,7 @@
 {
   "name": "4horizon",
   "version": "1.0.1",
-  "description": "Play up to four Poke Horizon Idle accounts side by side, with a live Summary, notifications and an Overview of your day.",
+  "description": "4horizon",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

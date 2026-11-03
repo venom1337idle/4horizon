@@ -20,7 +20,7 @@ const settle = p => p.waitForTimeout(1300);
   ok('the capture the test data had already sent (Magikarp IV 191), sent again when the Summary was loaded again, is NOT taken as new', emptyNow === 0, emptyNow);
   await p.dash().evaluate(() => { today.items = []; drawToday(); });
   lay.empty = await p.dash().evaluate(() => (document.querySelector('#todayList .empty') || {}).textContent || ''); lay.count = await p.dash().evaluate(() => document.getElementById('todayCount').textContent);
-  ok('...empty, it says what will show there (IV 170, Legendary, the highlight price of the Summary) and that it is kept through a restart', /^Nothing yet today\. Shinies, great catches \(IV 170 or more, or Legendary or better\), valuable drops \(worth \$10K or more each\), hatched eggs, evolutions and new hunts show here/.test(lay.empty) && /also after the app is closed and opened again\.$/.test(lay.empty) && lay.count === '', lay);
+  ok('...empty, it says what will show there (great catches and drops as set in the notification settings) and that it is kept through a restart', /^Nothing yet today\. Shinies, great catches and valuable drops \(as set in Settings › Notifications\), hatched eggs, evolutions and new hunts show here/.test(lay.empty) && /also after the app is closed and opened again\.$/.test(lay.empty) && lay.count === '', lay);
   // ---- captures
   await cat(p, 2, 'Gengar', 120, 1.2, 'Rara', { shiny: true }); await cat(p, 1, 'Magikarp', 175, 1.0, 'Comum'); await cat(p, 3, 'Rhyhorn', 74, 1.8, 'Lendária'); await cat(p, 4, 'Zubat', 150, 1.4, 'Épica'); await cat(p, 1, 'Eevee', 180, 2.9, 'Divina', { shiny: true });
   await settle(p);
@@ -65,9 +65,27 @@ const settle = p => p.waitForTimeout(1300);
   ok('eggs: one whose time was up and is gone from the incubator hatched ("Egg hatched: Charmander")', r[0].kind === 'egg' && r[0].tx === 'trainer2: Egg hatched: Charmander', r[0]);
   await p.s(2, { eggs: [] }); await settle(p);
   ok('...one taken out before its time is not counted as hatched', (await rows(p)).filter(x => x.kind === 'egg').length === 1);
+  // ---- lang-56: Settings › Notifications decide what a great catch and a valuable drop are (as for the notifications)
+  const rules = (iv, q, mode, drop) => p.dash().evaluate(r => { window.postMessage(r, '*'); }, { type: 'rules', goodCatch: { minIV: iv, minQuality: q, mode }, rareDrop: { minValue: drop } });
+  const kinds = async () => (await rows(p)).map(x => x.kind + ':' + x.tx.replace(/^.*?: /, '').split(' · ')[0].replace(/^.*: /, '')).join(',');
+  await cat(p, 3, 'Mankey', 116, 1.79, 'Lendária'); await cat(p, 4, 'Exeggcute', 120, 1.77, 'Lendária'); await cat(p, 1, 'Abra', 176, 1.2, 'Rara'); await settle(p);
+  await rules(175, 2, 'or', 10000); await p.waitForTimeout(300);
+  let k = await kinds();
+  ok('your numbers (IV 175 OR quality 2): the Legendary ×1.79 Mankey and ×1.77 Exeggcute are NOT great catches any more; IV 176 is', !/catch:Mankey/.test(k) && !/catch:Exeggcute/.test(k) && /catch:Abra/.test(k), k);
+  ok('...shinies are always shown', /shiny:Eevee/.test(k) && /shiny:Gengar/.test(k), k);
+  ok('...the count on the card is the number of rows shown', await p.dash().evaluate(() => Number(document.getElementById('todayCount').textContent) === document.querySelectorAll('#todayList .ev').length));
+  await rules(100, 1.7, 'or', 10000); await p.waitForTimeout(300); k = await kinds();
+  ok('lower numbers (IV 100 OR quality 1.7): the Mankey and the Exeggcute come back at once (they were kept)', /catch:Mankey/.test(k) && /catch:Exeggcute/.test(k), k);
+  await rules(110, 1.78, 'and', 10000); await p.waitForTimeout(300); k = await kinds();
+  ok('AND (IV 110 AND quality 1.78): only the Mankey (116, ×1.79) is both', /catch:Mankey/.test(k) && !/catch:Exeggcute/.test(k) && !/catch:Abra/.test(k), k);
+  await rules(175, 2, 'or', 20000); await p.waitForTimeout(300); k = await kinds();
+  ok('Valuable drop "worth at least $20,000": the Water gems ($15K each) are no longer shown', !/drop:/.test(k), k);
+  await rules(175, 2, 'or', 10000); await p.waitForTimeout(300);
+  ok('...at $10,000 they are again', /drop:/.test(await kinds()));
   // ---- kept through a restart, a new day starts empty
   const before = (await rows(p)).map(x => x.tx);
   await p.dash().evaluate(() => location.reload()); await p.waitForTimeout(1600);
+  await rules(175, 2, 'or', 10000); await p.waitForTimeout(300);          // (the window sends the settings each time the Summary is loaded: checked below)
   ok('closed and opened again (the same day): the whole list is still there', JSON.stringify((await rows(p)).map(x => x.tx)) === JSON.stringify(before), (await rows(p)).length);
   await p.clock.setFixedTime(new Date(now + 26 * 3600e3)); await p.dash().evaluate(() => renderAll()); await p.waitForTimeout(300);
   ok('the next day: empty again', (await rows(p)).length === 0 && /^Nothing yet today/.test(await p.dash().evaluate(() => document.querySelector('#todayList .empty').textContent)));
@@ -75,6 +93,16 @@ const settle = p => p.waitForTimeout(1300);
   await p.dash().evaluate(() => { localStorage.setItem('4h.today', '{"date":"' + new Date().toISOString().slice(0, 10) + '","items":[{"t":"x"},null,{"t":1,"kind":"shiny"}],"keys":[5]}'); location.reload(); }); await p.waitForTimeout(1500);
   ok('saved data that makes no sense is left out (no error)', (await rows(p)).length === 0 && p.errors.length === 0, p.errors);
   ok('no JavaScript errors', p.errors.length === 0, p.errors);
+  await p.context().close();
+  // ---- the window sends your notification settings to the Summary when it loads, and again when you change them
+  const NG = `__bridgeObject.notifyGet = async () => (window.__nc || (window.__nc = { enabled: true, events: {}, goodCatch: { minIV: 175, minQuality: 2, mode: 'or' }, rareDrop: { minValue: 10000 }, stopped: { noKillsSeconds: 500, silentSeconds: 500 }, suppliesLow: { minRunwayHours: 1, minSampleMinutes: 10 }, quietHours: {}, cooldownSeconds: 60, sound: true }));
+    __bridgeObject.notifySet = async patch => { const c = await __bridgeObject.notifyGet(); if (patch.goodCatch) Object.assign(c.goodCatch, patch.goodCatch); if (patch.rareDrop) Object.assign(c.rareDrop, patch.rareDrop); c.saved = true; return c; };`;
+  p = await open(b, { w: 1700, h: 1000, extraInit: NG }); await feedAll(p); await p.waitForTimeout(500);
+  ok('at the start the Summary gets your Great catch and Valuable drop settings (IV 175 OR 2, $10,000)', JSON.stringify(await p.dash().evaluate(() => todayRule)) === JSON.stringify({ goodCatch: { minIV: 175, minQuality: 2, mode: 'or' }, rareDrop: { minValue: 10000 } }), await p.dash().evaluate(() => todayRule));
+  await p.click('#btnSettings'); await p.waitForTimeout(300);
+  await p.fill('#nIV', '150'); await p.dispatchEvent('#nIV', 'change'); await p.waitForTimeout(500);
+  ok('...and changing "IV at least" in Settings reaches it at once', (await p.dash().evaluate(() => todayRule && todayRule.goodCatch.minIV)) === 150, await p.dash().evaluate(() => todayRule));
+  ok('no JavaScript errors (settings)', p.errors.length === 0, p.errors);
   await p.context().close();
   // ---- Portuguese, and a list made in English shown in Portuguese
   p = await open(b, { w: 1700, h: 1000 }); await feedAll(p);
