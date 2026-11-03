@@ -32,10 +32,11 @@ const silent = p => p.evaluate(() => { const b = document.getElementById('btnSil
     tips[1] === 'Silent mode: no notifications until you turn it off (the same switch as Notifications in Settings and in the tray menu)|Silent mode|false', tips);
   // ---- economy mode
   let s = await state(p);
-  ok('economy off at the start: the game screens shown, no Overview over them, no cover screen any more', !s.on && !s.simpleLayout && s.wv === 'visible,visible,visible,visible' && !s.cover && s.calls.length === 0, s);
+  ok('lang-55: at the start the main process is told economy mode is OFF (it may still think it is on, after the window was loaded again)', (await p.evaluate(() => JSON.stringify(window.__eco.calls))) === '[false]');
+  ok('economy off at the start: the game screens shown, no Overview over them, no cover screen any more', !s.on && !s.simpleLayout && s.wv === 'visible,visible,visible,visible' && !s.cover && JSON.stringify(s.calls) === '[false]', s);          // (lang-55: the one call is "off", to keep the main process in step)
   await p.click('#btnEco'); await p.waitForTimeout(400);
   s = await state(p);
-  ok('economy on: the button lit, the main process told (economySet(true))', s.on && s.btnOn && s.pressed === 'true' && JSON.stringify(s.calls) === '[true]', s);
+  ok('economy on: the button lit, the main process told (economySet(true))', s.on && s.btnOn && s.pressed === 'true' && JSON.stringify(s.calls) === '[false,true]', s);
   ok('...the game screens are hidden (visibility hidden: not drawn, still running)', s.wv === 'hidden,hidden,hidden,hidden', s.wv);
   ok('...and the Overview takes their place, over the whole space (as with Simple)', s.simpleLayout && s.dash === 'visible' && s.dashCovers && (await overview(p)) !== null, [s, await overview(p)]);
   ok('...without changing your Simple choice (the Simple button stays off)', !s.simpleBtn && s.uiSimple === false, s);
@@ -44,10 +45,12 @@ const silent = p => p.evaluate(() => { const b = document.getElementById('btnSil
   const ov2 = await overview(p);
   ok('while it is on the Overview keeps drawing new numbers', ov2 !== null && ov2 !== ov1, [ov1, ov2]);
   const smp = await p.evaluate(() => window.__4hEcoSample());
-  ok('the counters for the main process are still there', JSON.stringify(smp) === JSON.stringify({ 1: { sid: '501', hunt: 'Crateras dos Torchic', k: 450, x: 45000 } }), smp);
+  ok('the counters for the main process are still there, with the party size (lang-55; 1 when the account hunts alone)', JSON.stringify(smp) === JSON.stringify({ 1: { sid: '501', hunt: 'Crateras dos Torchic', k: 450, x: 45000, ps: 1 } }), smp);
+  await p.evaluate(() => window.__stats(1, { partySize: 2 })); await p.waitForTimeout(200);
+  ok('...in a party of 2: ps 2', (await p.evaluate(() => window.__4hEcoSample()))[1].ps === 2);
   await p.click('#btnEco'); await p.waitForTimeout(500);
   s = await state(p);
-  ok('economy off: back to the game screens (your layout), the main process told (economySet(false))', !s.on && !s.simpleLayout && s.wv === 'visible,visible,visible,visible' && JSON.stringify(s.calls) === '[true,false]', s);
+  ok('economy off: back to the game screens (your layout), the main process told (economySet(false))', !s.on && !s.simpleLayout && s.wv === 'visible,visible,visible,visible' && JSON.stringify(s.calls) === '[false,true,false]', s);
   ok('...the panel header shows what came meanwhile (level 301)', (await p.evaluate(() => document.querySelector('#panel1 .lvl').textContent)).indexOf('301') >= 0);
   // with Simple on before
   await p.evaluate(() => document.getElementById('btnSimple').click()); await p.waitForTimeout(200);

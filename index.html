@@ -528,6 +528,10 @@
       else if (eco.on && !eco.warned) { eco.warned = true; toast(t('Economy mode hides the screens, but muting the games and measuring it need install-diagnostics.js: run it in the project folder and restart the app.'), 'warn'); }
     }
     document.getElementById('btnEco').onclick = () => setEco(!eco.on);
+    // lang-55: the window always starts with the game screens shown. The main process may still think economy mode is on (the window was loaded
+    // again while it was on, after a change of Settings › Game panels): it is told, so that the games are not left muted and the minutes are not
+    // counted as economy minutes while the screens are shown.
+    if (api.economySet) { try { api.economySet(false); } catch (e) {} }
 
     // ---------- silent mode: no notifications ----------
     // It is the same switch as "Notifications" in Settings and in the tray menu (notify-settings.json, "enabled"), so the three always agree.
@@ -555,7 +559,7 @@
       const out = {};
       [1, 2, 3, 4].forEach(n => {
         const d = liveState[n];
-        if (d && d.startedAt !== undefined && d.startedAt !== null && typeof d.defeated === 'number') out[n] = { sid: String(d.startedAt), hunt: String(d.huntName || d.huntId || ''), k: d.defeated, x: typeof d.xpGained === 'number' ? d.xpGained : 0 };
+        if (d && d.startedAt !== undefined && d.startedAt !== null && typeof d.defeated === 'number') out[n] = { sid: String(d.startedAt), hunt: String(d.huntName || d.huntId || ''), k: d.defeated, x: typeof d.xpGained === 'number' ? d.xpGained : 0 , ps: typeof d.partySize === 'number' && d.partySize > 0 ? d.partySize : 1 };
       });
       return out;
     };
@@ -818,7 +822,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-54';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-55';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 

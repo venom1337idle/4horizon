@@ -46,6 +46,20 @@ ok('account 2 at 5 kills/min instead of 13 in economy mode: "slower" (0.38), its
 r = sec(report(a));
 ok('report: "SLOWER in economy mode", "(SLOWED DOWN BY THE BROWSER)", "(FEWER)"', /\n  Account 2 \(trainer2\): SLOWER in economy mode · Crateras: kills\/h 780 off \(39 min\) → 300 on \(40 min\)/.test(r) && /game messages\/min 40 off → 12 on \(FEWER\) · 1-second timer in economy mode: 29 s late on average, at most 58 s \(SLOWED DOWN BY THE BROWSER\)/.test(r), r);
 ok('...account 1, as slowed but hunting normally, says it calmly: "(slowed by the browser; the hunt was not affected)"', /\n  Account 1 \(trainer\d\): hunting normally[^\n]*\n[^\n]*at most 58 s \(slowed by the browser; the hunt was not affected\)\n/.test(r), r.slice(r.indexOf('  Account 1')));
+// lang-55: a party that breaks up in the middle of the normal half: each one's share of the party's kills jumps (here +800 at once). That minute is left out.
+{
+  const lg = hours([{ eco: false, min: 30 }, { eco: true, min: 30 }]);
+  lg.samples.forEach((smp, i) => { const a1 = smp.acc[1]; a1.ps = i < 15 ? 2 : 1; if (i >= 15) a1.k += 800; });
+  const r = E.analyse(lg).acc[1];
+  ok('a party that broke up (the party size changed): that minute is left out, so the jump of the kills does not count (normal, not SLOWER)', r.verdict === 'normal' && r.off.kph === 780 && r.on.kph === 780, [r.verdict, r.off, r.on]);
+  const lg2 = hours([{ eco: false, min: 30 }, { eco: true, min: 30 }]);
+  lg2.samples.forEach((smp, i) => { if (i >= 15) smp.acc[1].k += 800; });
+  const r2 = E.analyse(lg2).acc[1];
+  ok('...(the same jump with no party size, as an older version sampled it, still counts: so the test above does test the new rule)', r2.off.kph > 780 && r2.verdict === 'slower', [r2.verdict, r2.off]);
+  const lg3 = hours([{ eco: false, min: 30 }, { eco: true, min: 30 }]);
+  lg3.samples.forEach(smp => { smp.acc[1].ps = 2; });
+  ok('...a party that stays the same the whole time counts as usual', E.analyse(lg3).acc[1].off.kph === 780 && E.analyse(lg3).acc[1].verdict === 'normal');
+}
 a = E.analyse(hours([{ eco: false, min: 30 }, { eco: true, min: 30, kpm: { 1: 0 } }]));
 ok('no kills at all in economy mode for 30 min: "stalled" → "NOT HUNTING in economy mode (no kills)"', a.acc[1].verdict === 'stalled' && /Account 1 \(trainer\d\): NOT HUNTING in economy mode \(no kills\)/.test(sec(report(a))), a.acc[1]);
 a = E.analyse(hours([{ eco: false, min: 30 }, { eco: true, min: 30, kpm: { 1: 12 } }]));

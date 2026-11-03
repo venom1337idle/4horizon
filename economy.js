@@ -162,7 +162,7 @@ function analyse(lg, at, cur) {
       const ma = (a.msg || {})[n], mb = (b.msg || {})[n];
       if (fin(ma) && fin(mb) && mb >= ma) { A.msg[m].d += mb - ma; A.msg[m].min += dt; }
       const ca = (a.acc || {})[n], cb = (b.acc || {})[n];
-      if (ca && cb && ca.sid === cb.sid && cb.k >= ca.k) {
+      if (ca && cb && ca.sid === cb.sid && cb.k >= ca.k && (ca.ps || 1) === (cb.ps || 1)) {          // (lang-55: a minute in which the party size changed is left out: each one's share of the party's kills jumps then)
         A.seen = true;
         const h = A.hunts[cb.hunt] || (A.hunts[cb.hunt] = { on: { k: 0, x: 0, min: 0 }, off: { k: 0, x: 0, min: 0 } });
         h[m].k += cb.k - ca.k; h[m].x += Math.max(0, cb.x - ca.x); h[m].min += dt;

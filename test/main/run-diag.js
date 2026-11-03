@@ -11,7 +11,7 @@ const UD = electron._USERDATA;
 fs.writeFileSync(path.join(UD, 'accounts.json'), JSON.stringify({ version: 1, autoLogin: true, rows: { 1: { name: 'SECRETNAME', user: 'me@example.com', pass: 'ENCRYPTEDSECRET' }, 2: { name: 'x', user: 'SECRETUSER', pass: '' }, 3: {} } }));
 fs.writeFileSync(path.join(UD, 'species.json'), JSON.stringify({ 1: 'bulbasaur', 2: 'ivysaur' }));
 try { require('fs').mkdirSync(UD, { recursive: true }); } catch (e) {}
-const notifyPath = path.join(UD, 'notify-settings.json'), tidyPath = path.join(UD, 'tidy-settings.json'), histPath = path.join(UD, 'history.json');          // (lang-54: your own files are in the user-data folder)
+const notifyPath = path.join(UD, 'notify-settings.json'), tidyPath = path.join(UD, 'tidy-settings.json'), histPath = path.join(UD, 'history.json');          // (lang-55: your own files are in the user-data folder)
 fs.writeFileSync(notifyPath, JSON.stringify({ enabled: true, events: { shiny: true, rareDrop: false }, goodCatch: { minIV: 175, minQuality: 1.7 }, accountNames: { 1: 'SECRETNAME' }, note: 'SECRETNAME' }));
 fs.writeFileSync(tidyPath, JSON.stringify({ enabled: true, closeAnnouncements: true, announcementWords: ['SECRETNAME'], onlyFirstSeconds: 180 }));
 fs.writeFileSync(histPath, JSON.stringify({ '2026-10-26': { SECRETNAME: { gold: 123456789 } }, '2026-10-27': {} }));
@@ -69,7 +69,7 @@ ok('the log keeps the last 150 lines only', c.logs.length === 150 && c.logs[c.lo
 
 // ---- settings: only counts and true/false
 const s = c.settings;
-ok('saved logins: only counts and flags (2 with a user, 1 with a password, auto login on, encryption available)', s.accounts.saved === 2 && s.accounts.withPassword === 1 && s.accounts.autoLogin === true && s.accounts.encryption === require('./vault').info().available && Object.keys(s.accounts).sort().join() === 'autoLogin,encryption,file,panels,saved,vault,withPassword' && s.accounts.vault.api === 'sync' && !/pass":"|S:/.test(JSON.stringify(s.accounts.vault)), s.accounts);          // (lang-54: what vault.js knows; counts only)
+ok('saved logins: only counts and flags (2 with a user, 1 with a password, auto login on, encryption available)', s.accounts.saved === 2 && s.accounts.withPassword === 1 && s.accounts.autoLogin === true && s.accounts.encryption === require('./vault').info().available && Object.keys(s.accounts).sort().join() === 'autoLogin,encryption,file,panels,saved,vault,withPassword' && s.accounts.vault.api === 'sync' && !/pass":"|S:/.test(JSON.stringify(s.accounts.vault)), s.accounts);          // (lang-55: what vault.js knows; counts only)
 ok('notification settings: true/false and numbers kept, typed text (names) dropped', s.notify.enabled === true && s.notify.events.shiny === true && s.notify.events.rareDrop === false && s.notify.goodCatch.minIV === 175 && !('accountNames' in s.notify) && !('note' in s.notify), s.notify);
 ok('tidy settings: the typed words are dropped, the switches kept', s.tidy.enabled === true && s.tidy.onlyFirstSeconds === 180 && !('announcementWords' in s.tidy), s.tidy);
 ok('history: how many days (2), never what is in them', s.history.days === 2 && JSON.stringify(s.history).indexOf('123456789') < 0, s.history);
@@ -129,7 +129,7 @@ ok('copy puts the text on the clipboard', H['diag:copy'](ours, 'hello report') =
 
   // ---- the build, and files that change after the app started
   const c6 = diag.collect();
-  ok('the build marker is in the report ("lang-54"), so what RUNS can be told from what is on the disk', c6.meta.build === 'lang-54' && diag.BUILD === 'lang-54', c6.meta);
+  ok('the build marker is in the report ("lang-55"), so what RUNS can be told from what is on the disk', c6.meta.build === 'lang-55' && diag.BUILD === 'lang-55', c6.meta);
   ok('right after the start nothing is stale', Array.isArray(c6.staleFiles) && c6.staleFiles.length === 0, c6.staleFiles);
   const tidyFile = path.join(__dirname, 'tidy.js'), tidyText = fs.readFileSync(tidyFile, 'utf8');
   fs.writeFileSync(tidyFile, tidyText + '\n// an update was copied over\n');
