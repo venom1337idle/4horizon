@@ -1,0 +1,6 @@
+# text files are stored with LF line endings; Git on Windows gives you CRLF in your folder if you want it
+* text=auto eol=lf
+*.png binary
+*.ico binary
+# the plain-text notes for players (ComoUsar.txt, SECURITY.txt): Windows line endings, so that every Notepad shows them right
+*.txt text eol=crlf

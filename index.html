@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>4horizon</title>
+<link rel="stylesheet" href="theme.css">
+<script src="i18n.js"></script>
+<script src="i18n-pt.js"></script>
+<script src="theme.js"></script>
+<script src="diag-core.js"></script>
+<style>
+  body { display: flex; flex-direction: column; overflow: hidden;
+         background: radial-gradient(1200px 520px at 75% -12%, #141f40 0%, transparent 62%), var(--bg); }
+
+  /* ---------- top bar ---------- */
+  #bar { height: 54px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 14px;
+         background: linear-gradient(180deg, #131d3a, #0c1326); border-bottom: 1px solid rgba(227, 192, 107, .30);
+         box-shadow: 0 6px 18px rgba(0, 0, 0, .4); overflow-x: auto; overflow-y: hidden; white-space: nowrap; position: relative; z-index: 5; }
+  #bar::-webkit-scrollbar { height: 0; }
+  .brand { display: flex; align-items: center; gap: 9px; margin-right: 8px; }
+  .brand .mark { display: none; }
+  .sep { width: 1px; height: 26px; background: linear-gradient(180deg, transparent, var(--line2), transparent); margin: 0 6px; flex: none; }
+  .grow { flex: 1; min-width: 8px; }
+  #bar button { font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: 34px; border-radius: var(--r-sm); flex: none; }
+  #bar svg.i { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .cta { padding: 0 16px; font-size: 13px; }
+  /* the view buttons use the same capitals as the game's own tabs (Geral, D\00favidas, Com\00e9rcio) */
+  #bar .tb.sq { width: 28px; height: 28px; padding: 0; justify-content: center; gap: 0; }
+  /* economy mode: the game screens are not drawn (the games keep running) and the Overview takes their place, as with Simple */
+  body.eco #grid webview { visibility: hidden; }
+  #bar #btnEco.on { color: var(--green); border-color: var(--green); }
+  #bar #btnSilent .b-off { display: none; } #bar #btnSilent.on .b-off { display: inline; }
+  #bar #btnSilent.on { color: var(--orange); border-color: var(--orange); }
+  #bar .sep.far { margin: 0 12px; }                         /* economy and silent mode stand apart from the Analyzer button, so one is not pressed for the other */
+  .tb { background: transparent; border: 1px solid transparent; color: #c6d0ea; padding: 0 12px; font-family: var(--serif) !important; font-weight: 700; font-size: 12px; letter-spacing: .06em; }
+  .tb:hover { background: rgba(255, 255, 255, .05); color: #fff; }
+  .tb.on { color: var(--gold); border-color: var(--gold); background: linear-gradient(180deg, var(--tile-a), var(--tile-b));
+           box-shadow: inset 0 0 0 1px rgba(227, 192, 107, .18), 0 0 14px rgba(227, 192, 107, .12); }
+  .pill { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); color: var(--text); padding: 0 12px; font-size: 12px; font-weight: 600; max-width: 140px; }
+  .pill:hover { border-color: var(--line2); }
+  .pill .lbl { overflow: hidden; text-overflow: ellipsis; }
+  /* narrower windows: the top bar buttons keep their icons (the hover text says what each one does) and give up their words; narrower still (under 1330 px) the spaces shrink, and under 1000 px the wordmark gives way too */
+  @media (max-width: 999px) { .brand img[alt="4horizon"] { display: none !important; } .brand .mark { display: block; } }          /* the inline style on the wordmark would win without !important */
+  @media (max-width: 1699px) { #bar .tb .bl { display: none; } #bar .tb { padding: 0 9px; } }
+  @media (max-width: 1329px) { #bar { gap: 5px; padding: 0 10px; } .sep { margin: 0 2px; } #btnLoginAll .bl { display: none; } .cta { padding: 0 11px; } .pill { max-width: 96px; padding: 0 9px; } }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
+  .pill:not(.on) { opacity: .5; }
+  .pill:not(.on) .dot { background: #4a5678; box-shadow: none; }
+  #accBtns { display: flex; gap: 6px; }
+
+  /* ---------- the stage: the 4 game screens, and the dashboard on top of them ---------- */
+  #stage { flex: 1; min-height: 0; position: relative; }
+  #grid { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: grid; gap: 6px; padding: 4px;        /* little space around the screens and between them */
+         
+          grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  #dash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; background: var(--bg); display: none; }   /* an iframe needs an explicit height */
+  body.simple #dash { display: block; width: 100%; }                         /* the dashboard covers the game screens */
+  body.panelonly #dash { display: block; width: 336px; border-right: 1px solid var(--line); }   /* only the summary, beside the game screens */
+  body.panelonly #grid { left: 336px; }
+
+  /* ---------- one card per game panel, like the game's own hunt card ---------- */
+  /* the look of the boxes of the calibration plan: dark navy inside, a thin neutral outline, and the colour of the account on the line at the top (and on the thin line under the header) */
+  .panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: var(--plan-fill, #0c1222);
+           border: 1px solid var(--line); border-top: 3px solid var(--c, var(--line2)); border-radius: 6px; box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
+  .phead { flex: none; height: 54px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 10px; min-width: 0; user-select: none;
+           background: var(--plan-fill, #0c1222); border-bottom: 1px solid color-mix(in srgb, var(--c, var(--gold)) 60%, transparent); }
+  .ptxt { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; line-height: 1.15; }
+  .pname { font-family: var(--serif); font-weight: 700; font-size: 15px; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* the status line under the name, like "Planta \00b7 Floresta" on the game's card */
+  .chip { margin-top: 3px; font-size: 11.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .chip::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: currentColor; vertical-align: 1px; box-shadow: 0 0 6px currentColor; }
+  .chip.hunt { color: #d4f5da; } .chip.stop { color: #ffb4b4; } .chip.conn { color: #c2d4ff; } .chip.wait { color: #b5bfd8; }
+  /* the buttons of each panel: "Back to last hunt" right after the name, and Centro, Market, Mochila, Hunts in the free middle of the header. They give way when the header is narrow. */
+  .phead { container-type: inline-size; container-name: ph; }
+  .pnav { display: flex; gap: 4px; flex: none; }
+  .phead .pn { width: 30px; height: 30px; border-radius: 9px; }
+  .phead .pback { width: auto; height: 26px; padding: 0 11px 0 8px; gap: 6px; border-radius: 13px; background: rgba(227, 192, 107, .12); border: 1px solid rgba(227, 192, 107, .55); color: var(--gold); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .phead .pback:hover { background: rgba(227, 192, 107, .24); color: #fff; }
+  .phead .pback svg { width: 14px; height: 14px; }
+  .phead .pn.busy, .phead .pback.busy { opacity: .5; pointer-events: none; }
+  @container ph (max-width: 800px) { .phead .pback .pbt { display: none; } .phead .pback { width: 27px; padding: 0; } }
+  @container ph (max-width: 610px) { .pnav { display: none; } }
+  @container ph (max-width: 470px) { .phead .lvl { display: none; } }
+  .phead .zoom { display: flex; align-items: center; gap: 2px; color: rgba(255, 255, 255, .78); font-size: 11px; flex: none; }
+  .phead .zv { min-width: 40px; text-align: center; cursor: pointer; font-weight: 600; }
+  .phead .zv:hover { color: #fff; }
+  .phead button { font: inherit; cursor: pointer; background: rgba(255, 255, 255, .07); border: 0; color: #eef3ff; width: 27px; height: 27px; border-radius: 8px;
+                  display: inline-flex; align-items: center; justify-content: center; flex: none; padding: 0; }
+  .phead button:hover { background: rgba(255, 255, 255, .15); color: #fff; }
+  .phead svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .panel webview { display: flex; flex: 1 1 auto; min-height: 0; width: 100%; background: #05080f; }
+
+  /* ---------- small message at the bottom ---------- */
+  #toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); max-width: 80vw; padding: 10px 18px; border-radius: 12px;
+           background: linear-gradient(180deg, #16203f, #0e1529); border: 1px solid var(--line2); border-left: 3px solid var(--gold); color: var(--text);
+           box-shadow: 0 10px 30px rgba(0, 0, 0, .6); z-index: 50; display: none; }
+  #toast.warn { border-left-color: var(--orange); color: var(--orange); }
+  #toast.bad { border-left-color: var(--red); color: var(--red); }
+
+  /* ---------- Saved accounts ---------- */
+  #modal { position: fixed; inset: 0; background: rgba(3, 6, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 40; }
+  #modal.hidden, .hidden { display: none !important; }
+  .dlg { width: min(680px, 94vw); background: linear-gradient(180deg, #14203f, #0d1428); border: 1px solid rgba(227, 192, 107, .5); border-radius: 18px;
+         padding: 22px 24px 18px; box-shadow: 0 24px 70px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 255, 255, .06); }
+  .dlg h2 { margin: 0 0 8px; font-family: var(--serif); font-size: 19px; letter-spacing: .08em; color: var(--gold); }
+  .dlg p { margin: 0 0 14px; color: var(--dim); font-size: 12px; line-height: 1.55; }
+  .arow { display: grid; grid-template-columns: 12px 92px 1fr 1fr auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .arow .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .dlg input[type=text], .dlg input[type=password] { height: 36px; background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 11px; font: inherit; min-width: 0; }
+  .dlg input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(227, 192, 107, .15); }
+  .dlg button { font: inherit; cursor: pointer; height: 36px; border-radius: var(--r-sm); background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); color: #dbe4ee;
+                border: 1px solid var(--line); padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .dlg button:hover { border-color: var(--line2); }
+  .dlg button.trash { padding: 0 9px; }
+  .dlg button.primary { background: linear-gradient(180deg, var(--gold-a) 0%, var(--gold-b) 55%, var(--gold-c) 100%); color: var(--on-gold); border: 1px solid rgba(249, 234, 196, .65);
+                        font-weight: 700; padding: 0 24px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 2px 12px rgba(227, 192, 107, .22); }
+  .dlg .foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .dlg .foot label { color: var(--dim); font-size: 12px; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+  .dlg .warn { color: var(--gold); font-size: 12px; margin: 0 0 10px; }
+  /* ---------- Diagnostics ---------- */
+  #settingsModal { position: fixed; inset: 0; background: rgba(3, 6, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 42; }
+  .srow { display: flex; align-items: center; gap: 16px; padding: 13px 0; border-top: 1px solid var(--line); }
+  .srow > div { flex: 1; min-width: 0; }
+  .srow b { display: block; color: var(--text); font-size: 13px; }
+  .srow .sd { display: block; margin-top: 3px; color: var(--dim); font-size: 12px; line-height: 1.5; }
+  .srow select, .srow button { flex: none; min-width: 170px; }
+  #settingsModal .dlg { display: flex; flex-direction: column; max-height: 92vh; }
+  #settingsModal .sbody { overflow-y: auto; min-height: 0; margin: 0 -8px; padding: 0 8px; }
+  .shead { display: flex; align-items: baseline; gap: 12px; margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line2); font-family: var(--serif); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+  .shead .saved { margin-left: auto; font-family: inherit; font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--green, #6fdc8c); opacity: 0; transition: opacity .25s; }
+  .shead .saved.on { opacity: 1; }
+  .srow.stack { flex-direction: column; align-items: stretch; gap: 9px; }
+  .checks.cols { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, auto); grid-auto-flow: column; column-gap: 28px; row-gap: 8px; width: 100%; }        /* 5 and 4 (lang-41): the alerts of the hunt on the left, the ones of progress (new hunt, battle pass, daily mission, egg) on the right */
+  .checks { display: flex; flex-direction: column; gap: 7px; flex: none; width: 330px; }
+  .checks label, .srow label.tick { display: flex; gap: 8px; align-items: center; color: var(--text); font-size: 12.5px; cursor: pointer; }
+  #notifBody.off { opacity: .45; }
+  /* every setting has the same control area on the right (same left edge, same right edge, the same three columns for the boxes), and its name is on the line of the first control */
+  #settingsModal .srow { align-items: flex-start; }
+  #settingsModal .srow > div:first-child { flex: 1; min-width: 0; min-height: 34px; display: flex; flex-direction: column; justify-content: center; }
+  #settingsModal .srow.cap > div:first-child { margin-top: 17px; }
+  #settingsModal .ctl { flex: none; width: 400px; display: grid; grid-template-columns: 136px 104px 136px; column-gap: 12px; row-gap: 6px; align-items: center; }
+  #settingsModal .ctl > * { grid-column: 1 / -1; justify-self: start; }
+  #settingsModal .ctl > .f1 { grid-column: 1; }
+  #settingsModal .ctl > .f2 { grid-column: 2 / 4; }        /* the second boxes start under the E of the AND | OR choice */
+  #settingsModal .ctl > .f3 { grid-column: 3; }             /* only the Quality box of Great catch is to the right of the choice */
+  #settingsModal .ctl > .mid { grid-column: 2; align-self: end; }
+  #settingsModal .ctl > .tick { min-height: 34px; display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 12.5px; cursor: pointer; }
+  #settingsModal .ctl > select, #settingsModal .ctl > button { width: 232px; min-width: 0; height: 34px; box-sizing: border-box; }
+  #settingsModal .f { display: flex; flex-direction: column; gap: 4px; width: 136px; line-height: 13px; color: var(--dim); font-size: 11px; white-space: nowrap; }
+  #settingsModal .f input { width: 100%; height: 34px; background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 9px; font: inherit; min-width: 0; box-sizing: border-box; }
+  #settingsModal .f input[type=time] { color-scheme: dark; }
+  #settingsModal .ctl.off .f { opacity: .5; }
+  .seg { display: inline-flex; width: 104px; height: 34px; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; background: var(--bg2); box-sizing: border-box; }
+  .ctl .seg label { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--dim); user-select: none; }
+  .ctl .seg label + label { border-left: 1px solid var(--line); }
+  .ctl .seg input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; left: 0; top: 0; cursor: pointer; }
+  .ctl .seg label:hover { color: var(--text); }
+  .ctl .seg label:has(input:checked) { background: linear-gradient(180deg, var(--gold-a) 0%, var(--gold-b) 55%, var(--gold-c) 100%); color: var(--on-gold); }
+  .ctl .seg label:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: -2px; }
+  /* the description of a setting is not written under it: it is a tooltip, shown when the pointer rests on the setting */
+  #settingsModal .sd { display: none; }
+  #settingsModal .srow { padding: 10px 0; }
+  /* the small "i" after the name of a setting is the only thing that shows its description (a tooltip) */
+  #settingsModal .info { display: inline-block; width: 17px; height: 17px; margin-left: 9px; border: 1px solid var(--dim2); border-radius: 50%; color: var(--dim2); font: italic 700 12px/15px Georgia, serif; text-align: center;
+                         vertical-align: -3px; text-transform: none; letter-spacing: 0; opacity: .8; cursor: help; user-select: none; }
+  #settingsModal .info::before { content: 'i'; }
+  #settingsModal .info:hover, #settingsModal .info:focus-visible { color: var(--gold); border-color: var(--gold); opacity: 1; outline: none; }
+  .note { display: block; margin-top: 5px; color: var(--gold); font-size: 12px; line-height: 1.45; }
+  #tip { position: fixed; z-index: 60; max-width: 340px; padding: 10px 13px; border-radius: 10px; background: linear-gradient(180deg, #1a2646, #0f172e); border: 1px solid var(--line2); border-left: 3px solid var(--gold);
+         color: var(--text); font-size: 12px; line-height: 1.55; box-shadow: 0 12px 34px rgba(0, 0, 0, .65); pointer-events: none; }
+  /* History: the totals are in a dropdown */
+  #historyHost .hxToggle { display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; margin: 2px 0 0; padding: 0 12px; text-align: left; cursor: pointer; font: inherit; color: var(--text);
+                           background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r-sm); }
+  #historyHost .hxToggle:hover { border-color: var(--line2); }
+  #historyHost .hxToggle .lbl { font-weight: 600; font-size: 13px; }
+  #historyHost .hxToggle .sum { margin-left: auto; color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #historyHost .chev { width: 7px; height: 7px; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(-45deg); transition: transform .15s; flex: none; margin: 0 3px 0 1px; }
+  #historyHost .card.open .chev { transform: rotate(45deg); }
+  #historyHost .card.compact:not(.open) #hxOut { display: none; }
+  #historyHost .card.compact.open #hxOut { margin-top: 10px; }
+  #settingsModal .dlg { width: min(780px, 95vw); }
+  #historyHost { padding: 12px 0 4px; }
+  #historyHost .card { background: none; border: 0; box-shadow: none; padding: 0; margin: 0; }
+  #historyHost #hxOut { overflow-x: auto; }
+  #historyHost table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  #historyHost th { text-align: left; font-size: 10px; letter-spacing: .12em; color: var(--dim); font-weight: 700; padding: 7px; border-bottom: 1px solid var(--line); white-space: nowrap; text-transform: uppercase; }
+  #historyHost td { padding: 7px; border-bottom: 1px solid #141d3a; white-space: nowrap; }
+  #historyHost .xp { color: var(--blue); }
+  #historyHost select, #historyHost .btn { height: 34px; box-sizing: border-box; }
+  #settingsModal .foot { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  #diagModal { position: fixed; inset: 0; background: rgba(3, 6, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 41; }
+  .dlg.wide { width: min(940px, 96vw); max-height: 92vh; display: flex; flex-direction: column; }
+  #diagModal .foot { flex-wrap: wrap; }
+  .dtabs { display: flex; gap: 8px; margin: 0 0 12px; }
+  .dtabs button.on { border-color: var(--gold); color: var(--gold); }
+  .dbody { overflow: auto; min-height: 120px; max-height: calc(92vh - 250px); padding-right: 6px; }
+  .dsum { font-size: 12px; color: var(--dim); margin: 0 0 10px; }
+  .ditem { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .ditem:first-child { border-top: 0; }
+  .dstat { align-self: start; text-align: center; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 3px 0; border-radius: 999px; border: 1px solid var(--line2); color: var(--dim); }
+  .s-ok .dstat { color: var(--green); border-color: rgba(110, 231, 160, .45); background: rgba(110, 231, 160, .08); }
+  .s-warn .dstat { color: var(--orange); border-color: rgba(242, 180, 92, .5); background: rgba(242, 180, 92, .08); }
+  .s-fail .dstat { color: var(--red); border-color: rgba(255, 138, 138, .5); background: rgba(255, 138, 138, .08); }
+  .ditem b { color: var(--text); }
+  .ditem .dd { color: var(--dim); font-size: 12px; }
+  .ditem ul { margin: 5px 0 0; padding-left: 16px; color: var(--dim); font-size: 11.5px; line-height: 1.5; }
+  .ditem .dtodo { margin-top: 5px; color: var(--gold); font-size: 12px; }
+  .dman { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .dman h3 { margin: 0 0 6px; font-family: var(--serif); font-size: 13px; letter-spacing: .1em; color: var(--gold); font-weight: 600; }
+  .dman ol { margin: 0; padding-left: 20px; font-size: 12px; color: var(--dim); line-height: 1.55; }
+  .dman li { margin-bottom: 5px; } .dman li b { color: var(--text); } .dman li i { color: var(--dim2); font-style: normal; }
+  #diagReport { margin: 0; white-space: pre-wrap; word-break: break-word; font: 11.5px/1.5 Consolas, 'Cascadia Mono', monospace; color: #cfd8e6; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px; }
+  .dlg svg.i { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+  <div id="bar">
+    <div class="brand">
+      <img class="mark" src="logo.png" alt="" width="28" height="28">                       <!-- only in a very narrow window (below 1000 px), where the logo does not fit -->
+      <img src="brand.png" alt="4horizon" height="40" style="display:block">
+    </div>
+    <button class="cta" id="btnLoginAll" title="Sign in every panel that has a saved login"><svg class="i" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg><span class="bl">Log in all</span></button>
+    <button class="tb" id="btnReloadAll" title="Reload all four game panels"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span class="bl">Reload all</span></button>
+    <span class="sep"></span>
+    <div id="accBtns"></div>
+    <span class="grow"></span>
+    <button class="tb sq" id="btnEco" title="Economy mode: hides the game screens and shows the Overview, to save your computer while you are away. The games keep hunting." aria-label="Economy mode" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></button>
+    <button class="tb sq" id="btnSilent" title="Silent mode: no notifications until you turn it off (the same switch as Notifications in Settings and in the tray menu)" aria-label="Silent mode" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path class="b-on" d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path class="b-off" d="M3 3l18 18"/></svg></button>
+    <span class="sep far"></span>
+    <button class="tb sq" id="btnAnalyzer" title="Analyzer: opens or closes the Hunt Analyzer of the game on all the accounts" aria-label="Analyzer"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></button>
+    <button class="tb" id="btnPanel" title="Show or hide the Summary panel"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M2 20h20"/></svg><span class="bl">Panel</span></button>
+    <button class="tb" id="btnSimple" title="Show the dashboard, or go back to the four game screens"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span class="bl">Simple</span></button>
+    <span class="sep"></span>
+    <button class="tb" id="btnAccounts" title="Saved logins for the four panels"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="bl">Accounts</span></button>
+    <button class="tb" id="btnSettings" title="Language, start with the PC, notifications, history and diagnostics"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="bl">Settings</span></button>
+  </div>
+
+
+  <div id="stage">
+    <div id="grid">
+      <!-- allowpopups: without it Electron refuses every window the game asks for (the Wiki, a Twitch or Kick stream, the vote buttons) before the app is asked; external.js then sends each one to the default browser and answers "deny", so no window of the app opens -->
+      <div class="panel" id="panel1" data-n="1" style="--c:#ecbafe">
+        <div class="phead">
+          <span class="emb"><b>1</b></span>
+          <span class="ptxt"><span class="pname">Conta 1</span><span class="chip wait">Waiting</span></span>
+          <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
+          <span class="grow"></span>
+          <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
+          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
+          <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+          <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+        </div>
+        <webview id="p1" data-src="https://pokehorizonidle.com" partition="persist:conta1" allowpopups></webview>
+      </div>
+      <div class="panel" id="panel2" data-n="2" style="--c:#5995fb">
+        <div class="phead">
+          <span class="emb"><b>2</b></span>
+          <span class="ptxt"><span class="pname">Conta 2</span><span class="chip wait">Waiting</span></span>
+          <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
+          <span class="grow"></span>
+          <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
+          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
+          <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+          <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+        </div>
+        <webview id="p2" data-src="https://pokehorizonidle.com" partition="persist:conta2" allowpopups></webview>
+      </div>
+      <div class="panel" id="panel3" data-n="3" style="--c:#05d6bd">
+        <div class="phead">
+          <span class="emb"><b>3</b></span>
+          <span class="ptxt"><span class="pname">Conta 3</span><span class="chip wait">Waiting</span></span>
+          <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
+          <span class="grow"></span>
+          <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
+          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
+          <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+          <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+        </div>
+        <webview id="p3" data-src="https://pokehorizonidle.com" partition="persist:conta3" allowpopups></webview>
+      </div>
+      <div class="panel" id="panel4" data-n="4" style="--c:#f46683">
+        <div class="phead">
+          <span class="emb"><b>4</b></span>
+          <span class="ptxt"><span class="pname">Conta 4</span><span class="chip wait">Waiting</span></span>
+          <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
+          <span class="grow"></span>
+          <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
+          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
+          <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+          <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+        </div>
+        <webview id="p4" data-src="https://pokehorizonidle.com" partition="persist:conta4" allowpopups></webview>
+      </div>
+    </div>
+    <iframe id="dash" src="dashboard.html"></iframe>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="modal" class="hidden">
+    <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+      <h2 id="dlgTitle">Saved accounts</h2>
+      <p>Fill in the e-mail/username and password for each panel. Passwords are encrypted on this PC and never leave it. "Log in all" does what you would: on a panel that is signed out it presses "Entrar" to open the login window, waits for the Cloudflare check to pass by itself (it never touches that box), types the e-mail and password and presses "Entrar". A panel that is signed in is left alone. Nothing else in the game is touched.</p>
+      <div class="warn hidden" id="noCrypt">Passwords cannot be saved on this computer (no encryption available). Names and e-mails can still be saved.</div>
+      <div id="arows"></div>
+      <div class="foot">
+        <label title="If a panel shows the login form again, sign it in again. Tries at most 3 times in 15 minutes."><input type="checkbox" id="autoLogin"> Log in again by itself if a session drops</label>
+        <span class="grow"></span>
+        <button id="aCancel">Cancel</button>
+        <button class="primary" id="aSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="diagModal" class="hidden">
+    <div class="dlg wide" role="dialog" aria-modal="true" aria-labelledby="diagTitle">
+      <h2 id="diagTitle">Diagnostics <span id="diagBuild" style="font-size:11px;letter-spacing:.04em;color:var(--dim2);font-family:var(--sans, inherit)"></span></h2>
+      <p id="diagIntro">The self-check looks at what the app can see by itself. The report is one block of text you can copy and send: it holds names of things, counts and true / false, never passwords, e-mails or numbers from the game.</p>
+      <div class="dtabs"><button id="dtCheck" class="on">Self-check</button><button id="dtReport">Report</button></div>
+      <div id="diagCheck" class="dbody"></div>
+      <div id="diagRepWrap" class="dbody hidden"><pre id="diagReport"></pre></div>
+      <div class="foot">
+        <label title="Replace the character names by Account 1, 2, 3, 4 in the report"><input type="checkbox" id="diagHide" checked> Hide character names</label>
+        <span class="grow"></span>
+        <button id="diagProbe" title="Describe the page each panel is showing (its shape only, never what is typed), whether it is signed out or not. It is added to the report.">Look at login pages</button>
+        <button id="diagRefresh">Refresh</button>
+        <button id="diagSave">Save as file…</button>
+        <button class="primary" id="diagCopy">Copy report</button>
+        <button id="diagClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tip" class="hidden" role="tooltip"></div>
+
+  <div id="settingsModal" class="hidden">
+    <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+      <h2 id="setTitle">Settings</h2>
+      <div class="sbody">
+      <div class="srow">
+        <div><b>Game panels</b><span class="sd">How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).</span></div>
+        <div class="ctl"><select id="panelsSel" data-no-i18n><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+      </div>
+      <div class="srow">
+        <div><b>Language</b><span class="sd">The language of the whole app: the screens, the notifications and the tray menu.</span></div>
+        <div class="ctl"><select id="langSel" data-no-i18n><option value="en">English</option><option value="pt-BR">Português (Brasil)</option></select></div>
+      </div>
+      <div class="srow">
+        <div><b>Start with the PC</b><span class="sd">Opens 4horizon by itself when you sign in to Windows, so that the alerts and the history keep going after a restart.</span><span class="note hidden" id="sNote"></span></div>
+        <div class="ctl"><label class="tick"><input type="checkbox" id="sStartup"> Start 4horizon with the PC</label><label class="tick"><input type="checkbox" id="sHidden"> Start hidden in the tray</label></div>
+      </div>
+      <div class="srow">
+        <div><b>Minimize to tray</b><span class="sd">Minimizing the window hides 4horizon in the tray, as closing it does. Click the tray icon to bring it back.</span></div>
+        <div class="ctl"><label class="tick"><input type="checkbox" id="sTray"> Hide in the tray when minimized</label></div>
+      </div>
+      <div class="shead"><span>Notifications</span><span class="saved" id="nSaved">Saved</span></div>
+      <div class="srow">
+        <div><b>Windows notifications</b><span class="sd">Alerts that pop up on your screen, even when the window is hidden in the tray. The tray menu has the same switch.</span></div>
+        <div class="ctl"><label class="tick"><input type="checkbox" id="nEnabled"> Enabled</label></div>
+      </div>
+      <div id="notifBody">
+        <div class="srow stack">
+          <div><b>Tell me when</b><span class="sd">Untick what you do not want to hear about.</span></div>
+          <div class="checks cols" id="evChecks">
+            <label><input type="checkbox" data-ev="shiny"> A shiny is captured</label>
+            <label><input type="checkbox" data-ev="goodCatch"> A great catch (the numbers are below)</label>
+            <label><input type="checkbox" data-ev="rareDrop"> A valuable item drops</label>
+            <label><input type="checkbox" data-ev="suppliesLow"> Balls or potions are running low</label>
+            <label><input type="checkbox" data-ev="stopped"> An account stops hunting, gets no kills or goes silent</label>
+            <label><input type="checkbox" data-ev="huntUnlocked"> A new hunt unlocks</label>
+            <label><input type="checkbox" data-ev="battlePass"> A battle pass mission is completed</label>
+            <label><input type="checkbox" data-ev="dailyQuest"> A daily mission is completed</label>
+            <label><input type="checkbox" data-ev="eggReady"> An egg is ready to hatch</label>
+          </div>
+        </div>
+        <div class="srow cap">
+          <div><b>Great catch</b><span class="sd">A catch counts as great by its IV and its quality. OR: it notifies when a catch reaches at least one of the two numbers. AND: it notifies only when a catch reaches both. The IV goes up to 192. The quality is the number after the × of a catch (Rara ×1.37, Lendária ×1.78). To ignore one of the two: with OR put a number above the highest possible, with AND put 0.</span></div>
+          <div class="ctl"><label class="f f1">IV at least<input type="number" id="nIV" min="0" max="200" step="1"></label><div class="seg mid" id="nMode" role="radiogroup"><label><input type="radio" name="gcMode" value="and"><span data-word="AND"></span></label><label><input type="radio" name="gcMode" value="or"><span data-word="OR"></span></label></div><label class="f f3">Quality at least<input type="number" id="nQuality" min="0" max="5" step="0.05"></label></div>
+        </div>
+        <div class="srow cap">
+          <div><b>Valuable drop</b><span class="sd">The price of ONE item at the NPC shop. An item worth less than this does not notify.</span></div>
+          <div class="ctl"><label class="f f1">Worth at least $<input type="number" id="nDrop" min="0" step="1000"></label></div>
+        </div>
+        <div class="srow cap">
+          <div><b>Supplies running low</b><span class="sd">Warns when the balls or the potions of an account will run out within this time at the pace of the current hunt. It needs some minutes of hunting to know the pace.</span></div>
+          <div class="ctl"><label class="f f1">Hours left<input type="number" id="nRunway" min="0.25" max="48" step="0.25"></label><label class="f f2">Minutes of hunting<input type="number" id="nSample" min="1" max="240" step="1"></label></div>
+        </div>
+        <div class="srow cap">
+          <div><b>Stopped</b><span class="sd">Warns when an account that is hunting gets no kills for this long, or leaves the hunt (the city, for example) and is not back within that time; and when nothing arrives from its game for the second time.</span></div>
+          <div class="ctl"><label class="f f1">No kills (seconds)<input type="number" id="nNoKills" min="30" max="7200" step="30"></label><label class="f f2">No data (seconds)<input type="number" id="nSilent" min="30" max="7200" step="30"></label></div>
+        </div>
+        <div class="srow">
+          <div><b>Quiet hours</b><span class="sd">No alerts between these two times (the time of this computer). An alert that happens then is not shown later. A window like 23:00 to 07:00 crosses midnight. The test button still works.</span></div>
+          <div class="ctl" id="nQuietBox">
+            <label class="tick"><input type="checkbox" id="nQuiet"> Keep quiet between</label>
+            <label class="f f1">From<input type="time" id="nQFrom" step="60"></label><label class="f f2">Until<input type="time" id="nQTo" step="60"></label>
+            <label class="tick"><input type="checkbox" id="nQShiny"> Shinies still notify</label>
+          </div>
+        </div>
+        <div class="srow">
+          <div><b>Sound and start</b><span class="sd">The Windows notification sound, and the notice that tells you the alerts are on each time the app starts.</span></div>
+          <div class="ctl"><label class="tick"><input type="checkbox" id="nSound"> Play the sound</label><label class="tick"><input type="checkbox" id="nStartup"> Tell me when the app starts</label></div>
+        </div>
+        <div class="srow">
+          <div><b>Try it</b><span class="sd">Shows a notification now, with the sound setting above.</span></div>
+          <div class="ctl"><button id="nTest">Send test notification</button></div>
+        </div>
+      </div>
+      <p class="note hidden" id="nNeedInstall" style="margin:10px 0 0">The notification settings need install-diagnostics.js: run it in the project folder and restart the app.</p>
+      <div class="shead" data-tip-from="#histNote"><span>HISTORY · DAILY TOTALS, SAVED ON THIS COMPUTER</span><span class="sd" id="histNote">Gold is loot + captures sold − balls and potions, the same balance the game shows. Only what this app saw is counted: the first session of an account is not counted (the app does not know when it started), and gaps of more than 10 minutes (app closed, PC asleep) are skipped. In a party, kills are this account’s share of the shared counter. A day runs from midnight to midnight, local time.</span></div>
+      <div id="historyHost" data-compact="1"></div>
+      <div class="srow">
+        <div><b>Diagnostics</b><span class="sd">Check that everything works, and copy a report to send.</span></div>
+        <div class="ctl"><button id="btnDiag" title="Check that everything works, and copy a report to send">Open diagnostics</button></div>
+      </div>
+      </div>
+      <div class="foot"><span class="grow"></span><button class="primary" id="setClose">Close</button></div>
+    </div>
+  </div>
+
+  <script>
+    const t = (en, p) => I18N.t(en, p);                        // the text of the app in the chosen language (English is the key); see i18n.js
+    const grid = document.getElementById('grid');
+    const dash = document.getElementById('dash');
+    // NOT named "bridge": the preload script locks window.bridge, and a page may not declare a variable with the same name
+    const api = window.bridge || {};
+    const eco = { on: false, since: 0, warned: false };           // economy mode (see setEco)
+    // one colour per account, from theme.js (the same ones the dashboard uses)
+    const COLORS = (window.HG_ACCOUNT || [{ base: '#ecbafe' }, { base: '#5995fb' }, { base: '#05d6bd' }, { base: '#f46683' }]).map(c => c.base);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ---------- what the buttons remember between runs ----------
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('hg.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+      set(k, v) { try { localStorage.setItem('hg.' + k, JSON.stringify(v)); } catch (e) {} }
+    };
+    const ui = { simple: !!store.get('simple', false), panel: !!store.get('panel', false), hidden: store.get('hidden', []), solo: null };   // solo = the panel that is expanded
+    const zooms = store.get('zoom', {});          // zoom of each panel, kept between runs
+    // ---------- how many game panels are in use (Settings › Game panels, 1 to 4, kept in the window storage; 4 at first) ----------
+    // A panel not in use gets no address, so its game page is never loaded; its pill, its account in the Summary and its row in Accounts are not shown.
+    const PANELS = (() => { const v = Math.floor(Number(store.get('panels', 4))); return v >= 1 && v <= 4 ? v : 4; })();
+    const inUse = n => n >= 1 && n <= PANELS;
+    for (let n = 1; n <= PANELS; n++) { const w = document.getElementById('p' + n); if (w && w.dataset.src) w.setAttribute('src', w.dataset.src); }
+    const savedNames = {};      // names typed in the Accounts window
+    const gameNames = {};       // character names read from the game
+
+    // ---------- small message ----------
+    let toastTimer = null;
+    function toast(text, kind) {
+      const t = document.getElementById('toast');
+      t.textContent = text; t.className = kind || ''; t.style.display = 'block';
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.display = 'none'; }, 6000);
+    }
+
+    // ---------- the account pills (show / hide a game screen) ----------
+    const labelOf = n => savedNames[n] || gameNames[n] || ('Conta ' + n);
+    // kept for the Diagnostics window
+    const uiErrors = [], lastStatsAt = {};
+    let lastLogin = null;
+    const uiNote = msg => { uiErrors.push({ t: Date.now(), msg: String(msg).slice(0, 300) }); if (uiErrors.length > 30) uiErrors.shift(); };
+    window.addEventListener('error', e => uiNote((e.message || 'error') + (e.filename ? ' (' + String(e.filename).split('/').pop() + ':' + e.lineno + ')' : '')));
+    window.addEventListener('unhandledrejection', e => uiNote('unhandled rejection: ' + (e.reason && e.reason.message || e.reason)));
+    const isShown = n => inUse(n) && (ui.solo ? ui.solo === n : ui.hidden.indexOf(n) < 0);
+    function renderPills() {
+      const box = document.getElementById('accBtns');
+      let html = '';
+      for (let n = 1; n <= PANELS; n++) {
+        html += '<button class="pill' + (isShown(n) ? ' on' : '') + '" data-panel="' + n + '" style="--c:' + COLORS[n - 1] + '" title="' + esc(labelOf(n)) + ' \u00b7 ' + t('Show or hide this game screen') + '">' +
+                '<span class="dot"></span><span class="lbl">' + esc(labelOf(n)) + '</span></button>';
+      }
+      if (box.dataset.html !== html) { box.dataset.html = html; box.innerHTML = html; }
+      renderHeads();
+    }
+    function updateGrid() {
+      let visible = 0;
+      const shownPanels = [];
+      for (let n = 1; n <= 4; n++) {
+        const shown = isShown(n), el = document.getElementById('panel' + n);
+        el.style.display = shown ? '' : 'none';
+        el.style.gridColumn = '';
+        if (shown) { visible++; shownPanels.push(el); }
+      }
+      grid.style.gridTemplateColumns = 'repeat(' + (visible <= 1 ? 1 : 2) + ', 1fr)';
+      grid.style.gridTemplateRows = 'repeat(' + (visible <= 2 ? 1 : 2) + ', 1fr)';
+      if (visible === 3) shownPanels[2].style.gridColumn = '1 / -1';        // three screens: two on top and the third across the whole bottom, so no quarter of the window stays empty
+    }
+
+    // ---------- Simple (dashboard or game screens) and Panel (the Summary) ----------
+    // the Summary follows the screen that is expanded: when a screen is expanded (or another one is chosen in the top bar) and the Summary panel is shown (the Panel button), the Summary is asked to show that account.
+    // It is one way only: choosing an account in the Summary never changes a screen here. The Summary ignores the request when its lock is on.
+    // Leaving Simple (back to the game screens) takes the Summary to the expanded screen again, even when another account was chosen in the Summary meanwhile.
+    let followed = null;                                // the expanded screen the Summary was last taken to (null: none, or the Summary panel is hidden)
+    function followSummary() {
+      const want = (ui.solo && ui.panel) ? ui.solo : null;
+      if (want === followed) return;
+      followed = want;                                   // (hiding the Summary panel forgets it, so that showing it again takes it to the expanded screen)
+      if (want && dash.contentWindow) { try { dash.contentWindow.postMessage({ type: 'focus', account: want }, '*'); } catch (e) {} }
+    }
+    function sendLayout() {
+      if (dash.contentWindow) dash.contentWindow.postMessage({ type: 'layout', summary: ui.panel, main: ui.simple || eco.on, panels: PANELS }, '*');
+    }
+    function applyUI() {
+      document.body.classList.toggle('simple', ui.simple || eco.on);                 // economy mode shows the Overview, as Simple does (without changing your Simple choice)
+      document.body.classList.toggle('panelonly', !(ui.simple || eco.on) && ui.panel);
+      document.getElementById('btnSimple').classList.toggle('on', ui.simple);
+      document.getElementById('btnPanel').classList.toggle('on', ui.panel);
+      store.set('simple', ui.simple); store.set('panel', ui.panel); store.set('hidden', ui.hidden);
+      renderPills(); updateGrid(); sendLayout(); followSummary();
+    }
+    document.getElementById('btnSimple').onclick = () => { ui.simple = !ui.simple; if (!ui.simple) followed = null; applyUI(); };   // (forgetting it makes followSummary send the expanded screen again)
+    document.getElementById('btnPanel').onclick = () => { ui.panel = !ui.panel; applyUI(); };
+
+    // ---------- economy mode (turned on and off by hand only) ----------
+    // While it is on the four game screens are hidden (the browser then stops drawing them) and the Overview takes their place, as with Simple; the panel headers,
+    // which are behind it, are not updated, and the main process mutes the game panels. The games keep running: nothing of them is paused.
+    // The main process notes CPU, memory and the pace of each account once a minute (economy.js); the Diagnostics report says whether it works.
+    async function setEco(on) {
+      eco.on = !!on; eco.since = Date.now();
+      document.body.classList.toggle('eco', eco.on);
+      const b = document.getElementById('btnEco'); b.classList.toggle('on', eco.on); b.setAttribute('aria-pressed', String(eco.on));
+      applyUI();
+      if (!eco.on) { renderHeads(); renderPills(); }
+      if (api.economySet) { try { await api.economySet(eco.on); } catch (e) {} }
+      else if (eco.on && !eco.warned) { eco.warned = true; toast(t('Economy mode hides the screens, but muting the games and measuring it need install-diagnostics.js: run it in the project folder and restart the app.'), 'warn'); }
+    }
+    document.getElementById('btnEco').onclick = () => setEco(!eco.on);
+
+    // ---------- silent mode: no notifications ----------
+    // It is the same switch as "Notifications" in Settings and in the tray menu (notify-settings.json, "enabled"), so the three always agree.
+    // The button shows it as it is: read at the start, after each change made here or in Settings, and when the window gets the focus (the tray menu may have changed it).
+    function showSilent(on) { const b = document.getElementById('btnSilent'); b.classList.toggle('on', !!on); b.setAttribute('aria-pressed', String(!!on)); }
+    async function readSilent() { if (!api.notifyGet) return; try { const c = await api.notifyGet(); if (c) showSilent(!c.enabled); } catch (e) {} }
+    let silentBusy = false;
+    document.getElementById('btnSilent').onclick = async () => {
+      if (silentBusy) return;
+      if (!api.notifyGet || !api.notifySet) { toast(t('Silent mode needs install-diagnostics.js: run it in the project folder and restart the app.'), 'warn'); return; }
+      silentBusy = true;
+      try {
+        const now = await api.notifyGet(), c = now ? await api.notifySet({ enabled: !now.enabled }) : null;
+        if (!c || !c.saved) { toast(t('Could not save the notification settings'), 'warn'); if (c) showSilent(!c.enabled); return; }
+        showSilent(!c.enabled);
+        try { if (typeof fillNotif === 'function') fillNotif(c); } catch (e) {}
+        toast(c.enabled ? t('Silent mode off: notifications are on again') : t('Silent mode on: no notifications until you turn it off'));
+      } catch (e) { toast(t('Could not save the notification settings'), 'warn'); }
+      finally { silentBusy = false; }
+    };
+    window.addEventListener('focus', readSilent);
+    readSilent();
+    // the counters of each account's hunt session, read by the main process once a minute (economy.js): which session, which hunt, kills and XP so far
+    window.__4hEcoSample = () => {
+      const out = {};
+      [1, 2, 3, 4].forEach(n => {
+        const d = liveState[n];
+        if (d && d.startedAt !== undefined && d.startedAt !== null && typeof d.defeated === 'number') out[n] = { sid: String(d.startedAt), hunt: String(d.huntName || d.huntId || ''), k: d.defeated, x: typeof d.xpGained === 'number' ? d.xpGained : 0 };
+      });
+      return out;
+    };
+    // the Analyzer button: the main process opens or closes the Hunt Analyzer of the game on every account (it presses the game's own buttons); here only the answer is told
+    const analyzerWhy = r => ({ 'not signed in': t('not signed in'), 'button not found': t('the Análise button was not found'), 'did not open': t('it did not open'), 'did not close': t('it did not close'), 'no close button': t('no close button found'), 'page did not answer': t('the page did not answer') }[r] || String(r || '?'));
+    function analyzerMessage(r) {
+      if (!r || r.action === 'none') return { text: t('No game screen is ready yet.'), warn: true };
+      const done = r.results.filter(x => x.ok && !x.skipped).length, bad = r.results.filter(x => !x.ok), open = r.action === 'open';
+      const head = done ? t(open ? (done === 1 ? 'Hunt Analyzer opened on {n} account' : 'Hunt Analyzer opened on {n} accounts') : (done === 1 ? 'Hunt Analyzer closed on {n} account' : 'Hunt Analyzer closed on {n} accounts'), { n: done }) : '';
+      const tail = bad.map(x => t('Account {n}', { n: x.n }) + ': ' + analyzerWhy(x.reason)).join(' \u00b7 ');
+      return { text: head + (head && tail ? ' \u00b7 ' : '') + tail, warn: bad.length > 0 };
+    }
+    let analyzerBusy = false;
+    document.getElementById('btnAnalyzer').onclick = async () => {
+      if (analyzerBusy) return;
+      if (!api.analyzerToggle) { toast(t('The Analyzer button needs install-diagnostics.js: run it in the project folder and restart the app.'), 'warn'); return; }
+      analyzerBusy = true;
+      try { const m = analyzerMessage(await api.analyzerToggle()); toast(m.text, m.warn ? 'warn' : ''); }
+      catch (e) { toast(t('Could not reach the game screens.'), 'warn'); }
+      finally { analyzerBusy = false; }
+    };
+    // Centro, Market and Mochila: the main process presses the game's own buttons in the panel that is expanded; here only a failure is told (the panel itself shows the rest)
+    const navBusy = {}, backBusy = {};
+    const BACK_AFTER_MS = (window.__BACK_AFTER_MS !== undefined) ? window.__BACK_AFTER_MS : 6000;        // not on a hunt for this long before "Back to last hunt" shows (a hunt that is about to start does not flash it)
+    function navWhy(what, r) {
+      if (r === 'button not found') return what === 'bag' ? t('the Mochila button was not found') : what === 'hunts' ? t('the Hunts button was not found') : t('the Centro button was not found');
+      return ({ 'market button not found': t('the Market button did not appear after Centro'), 'hunts button not found': t('the Hunts button was not found'), 'hunts panel did not open': t('the Hunts panel did not open'), 'search box not found': t('the search box of the Hunts panel was not found'), 'hunt not found': t('that hunt was not found in the Hunts panel'), 'hunt did not open': t('the Hunts panel did not show that hunt, so Ca\u00e7ar was not pressed'), 'not signed in': t('not signed in'), 'page did not answer': t('the page did not answer'), 'no game screen': t('No game screen is ready yet.'), 'bad request': t('Could not reach the game screens.') }[r]) || String(r || '?');
+    }
+    // the buttons of a panel (Centro, Market, Mochila, Hunts): the main process presses the game's own buttons in THAT panel; here only a failure is told (the panel itself shows the rest)
+    async function navGo(n, what, btn) {
+      if (navBusy[n]) return;
+      if (!api.navGo) { toast(t('The Centro, Market, Mochila and Hunts buttons need install-diagnostics.js: run it in the project folder and restart the app.'), 'warn'); return; }
+      navBusy[n] = true; btn.classList.add('busy');
+      try { const r = await api.navGo(what, n); if (!r) toast(t('Could not reach the game screens.'), 'warn'); else if (!r.ok) toast(t('Account {n}', { n: n }) + ': ' + navWhy(what, r.reason), 'warn'); }
+      catch (e) { toast(t('Could not reach the game screens.'), 'warn'); }
+      finally { navBusy[n] = false; btn.classList.remove('busy'); }
+    }
+    // "Back to last hunt": the hunt the panel was on before it left it (kept between runs); the main process opens the Hunts panel of the game and starts it
+    async function goLastHunt(n, btn) {
+      const memo = huntMemo[n];
+      if (backBusy[n] || !memo) return;
+      if (!api.navHunt) { toast(t('The Back to last hunt button needs install-diagnostics.js: run it in the project folder and restart the app.'), 'warn'); return; }
+      backBusy[n] = true; btn.classList.add('busy');
+      try {
+        const r = await api.navHunt(n, memo), name = memo.name || memo.id;
+        if (!r) toast(t('Could not reach the game screens.'), 'warn');
+        else if (!r.ok) toast(t('Account {n}', { n: n }) + ': ' + navWhy('lasthunt', r.reason), 'warn');
+        else if (r.already) toast(t('You are already hunting there: {name}', { name: name }));
+        else toast(t('Going back to the hunt: {name}', { name: name }));
+      } catch (e) { toast(t('Could not reach the game screens.'), 'warn'); }
+      finally { backBusy[n] = false; btn.classList.remove('busy'); }
+    }
+    document.getElementById('accBtns').addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('[data-panel]');
+      if (!b) return;
+      const n = Number(b.dataset.panel), i = ui.hidden.indexOf(n);
+      if (ui.solo) { ui.solo = (ui.solo === n) ? null : n; applyUI(); return; }      // expanded: another pill switches panel, the same one goes back
+      if (i >= 0) ui.hidden.splice(i, 1); else ui.hidden.push(n);
+      applyUI();
+    });
+    dash.addEventListener('load', () => { sendLayout(); followed = null; followSummary(); });
+
+    // ---------- the panel headers ----------
+    const lastHunt = {};                                  // when each panel last sent a hunt update
+    const huntMemo = store.get('huntMemo', {});           // the last hunt each panel was on { id, name }, kept between runs
+    const idleSince = {};                                 // since when each panel is not on a hunt
+    const SVG_EXPAND = '<svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+    const SVG_RESTORE = '<svg viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>';
+    function duration(minutes) {
+      minutes = Math.max(0, Math.floor(Number(minutes) || 0));
+      return minutes >= 60 ? Math.floor(minutes / 60) + 'h ' + String(minutes % 60).padStart(2, '0') + 'm' : (minutes < 1 ? '<1m' : minutes + 'm');
+    }
+    function chipFor(n) {
+      const d = liveState[n];
+      if (!d || !d.live) return { cls: 'wait', text: t('Waiting') };
+      const hunt = d.huntName || d.huntId || '';
+      const fresh = lastHunt[n] && (Date.now() - lastHunt[n] < 180000);
+      if (d.startedAt === undefined) return { cls: 'conn', text: t('Connected') };
+      const tail = (hunt ? ' \u00b7 ' + hunt : '') + (d.minutes !== undefined ? ' \u00b7 ' + duration(d.minutes) : '');
+      if (d.active === false || !fresh) return { cls: 'stop', text: t('Stopped') + (hunt ? ' \u00b7 ' + hunt : '') };
+      return { cls: 'hunt', text: t('Hunting') + tail };
+    }
+    function renderHeads() {
+      if (eco.on) return;                                     // economy mode: nothing is drawn (it is drawn again when the mode is turned off)
+      for (let n = 1; n <= 4; n++) {
+        const el = document.getElementById('panel' + n); if (!el) continue;
+        el.querySelector('.pname').textContent = labelOf(n);
+        // the header takes the colour of its ACCOUNT: the same as the dot in the top bar and in the dashboard
+        const ac = (window.HG_ACCOUNT || [])[n - 1] || { a: '#1a2548', b: '#28396e', base: '#e3c06b' };
+        el.style.setProperty('--h1', ac.a); el.style.setProperty('--h2', ac.b); el.style.setProperty('--hedge', ac.base);
+        el.querySelector('.emb b').textContent = String(n);
+        const lv = (liveState[n] || {}).level, lvl = el.querySelector('.lvl');
+        lvl.textContent = lv ? 'Nv. ' + lv : ''; lvl.classList.toggle('hidden', !lv);
+        const c = chipFor(n), chip = el.querySelector('.chip');
+        chip.className = 'chip ' + c.cls; chip.textContent = c.text; chip.title = c.text;
+        // the last hunt of the panel: remembered while it hunts; "Back to last hunt" shows when it is online, is not on a hunt (for a few seconds) and knows one
+        const ls = liveState[n] || {};
+        if (c.cls === 'hunt' && (ls.huntId || ls.huntName)) {
+          const m = huntMemo[n];
+          if (!m || m.id !== (ls.huntId || '') || m.name !== (ls.huntName || '')) { huntMemo[n] = { id: String(ls.huntId || '').slice(0, 40), name: String(ls.huntName || '').slice(0, 60) }; store.set('huntMemo', huntMemo); }
+        }
+        if (c.cls === 'hunt' || c.cls === 'wait') idleSince[n] = 0;
+        else if (!idleSince[n]) { idleSince[n] = performance.now() || 1; setTimeout(renderHeads, BACK_AFTER_MS + 150); }       // (a clock that cannot jump back or forward)
+        const bk = el.querySelector('.pback'), memo = huntMemo[n];
+        // (lang-43 to 45 waited for the game's travelReadyAt here; it is not the Hunts countdown: the game lets you travel at any time. lang-46: no timer is waited for)
+        const showBack = !!(memo && (memo.name || memo.id) && idleSince[n] && performance.now() - idleSince[n] >= BACK_AFTER_MS);
+        bk.classList.toggle('hidden', !showBack);
+        if (showBack) bk.title = t('Back to last hunt') + ': ' + (memo.name || memo.id);
+        el.querySelector('.zv').textContent = Math.round((zooms[n] || 1) * 100) + '%';
+        const ex = el.querySelector('.ex');
+        const solo = ui.solo === n;
+        ex.title = solo ? t('Back to all panels') : t('Expand: show only this panel');
+        if (ex.dataset.solo !== String(solo)) { ex.dataset.solo = String(solo); ex.innerHTML = solo ? SVG_RESTORE : SVG_EXPAND; }
+      }
+    }
+    function setZoom(n, f) {
+      f = Math.min(3, Math.max(0.5, Math.round(f * 10) / 10));
+      zooms[n] = f; store.set('zoom', zooms);
+      try { document.getElementById('p' + n).setZoomFactor(f); } catch (e) {}      // only works once the page has loaded: it is applied again then
+      renderHeads();
+    }
+    for (let n = 1; n <= 4; n++) {
+      document.getElementById('p' + n).addEventListener('dom-ready', () => { if (zooms[n]) { try { document.getElementById('p' + n).setZoomFactor(zooms[n]); } catch (e) {} } });
+    }
+    grid.addEventListener('click', e => {
+      const panel = e.target.closest && e.target.closest('.panel'); if (!panel) return;
+      const n = Number(panel.dataset.n), w = document.getElementById('p' + n);
+      if (e.target.closest('.zm')) setZoom(n, (zooms[n] || 1) - 0.1);
+      else if (e.target.closest('.zp')) setZoom(n, (zooms[n] || 1) + 0.1);
+      else if (e.target.closest('.zv')) setZoom(n, 1);
+      else if (e.target.closest('.rl')) { try { w.reload(); } catch (err) {} }
+      else if (e.target.closest('.pn')) { const b = e.target.closest('.pn'); navGo(n, b.dataset.nav, b); }
+      else if (e.target.closest('.pback')) goLastHunt(n, e.target.closest('.pback'));
+      else if (e.target.closest('.ex')) { ui.solo = (ui.solo === n) ? null : n; applyUI(); }
+    });
+    grid.addEventListener('dblclick', e => {                                    // double-click on the header = expand / go back
+      const head = e.target.closest && e.target.closest('.phead');
+      if (!head || e.target.closest('button') || e.target.closest('.zoom')) return;
+      const n = Number(head.parentElement.dataset.n);
+      ui.solo = (ui.solo === n) ? null : n; applyUI();
+    });
+    setInterval(renderHeads, 15000);
+
+    // ---------- Reload all, Log in all ----------
+    document.getElementById('btnReloadAll').onclick = () => {
+      let n = 0;
+      document.querySelectorAll('webview').forEach(w => { try { w.reload(); n++; } catch (e) {} });
+      toast(n ? t('Reloading the game panels\u2026') : t('The game panels are not ready yet'), n ? '' : 'warn');
+    };
+    const WHY = { 'no-saved-login': 'no saved login', 'no-login-form': 'already signed in (no login form)', 'panel-not-ready': 'panel not ready',
+                  'no-username-field': 'login form not understood', 'no-login-button': 'login button not found', 'looks-like-register': 'form looks like a sign-up form', 'script-error': 'could not run', 'login-form-not-found': 'signed out, but no password box was found (Diagnostics describes the page)', 'captcha-not-solved': 'the Cloudflare check did not pass by itself: click it once, then press Log in all again', 'cannot-decrypt': 'saved password cannot be read' };
+    // what to tell about one panel. "Already signed in" is only a guess from the page having no login box, so it comes with its evidence.
+    const whyText = x => x.ok ? t('login sent') : (x.reason === 'no-login-form' && typeof x.lastMsgSec === 'number') ? t('already signed in (it sent game data {s} s ago)', { s: x.lastMsgSec }) : (WHY[x.reason] ? t(WHY[x.reason]) : x.reason);
+    async function doLogin(which) {
+      if (!api.accountsLogin) { toast(t('Saved accounts are not installed yet. Run install-accounts.js.'), 'warn'); return; }
+      toast(t('Logging in\u2026'));
+      let r;
+      try { r = await api.accountsLogin(which); } catch (e) { toast(t('Could not log in: {msg}', { msg: e.message }), 'bad'); return; }
+      const list = ((r && r.results) || []).filter(x => inUse(Number(x.n)));          // (a panel not in use is not loaded: nothing to say about it)
+      lastLogin = { at: Date.now(), results: list.map(x => ({ n: x.n, ok: !!x.ok, reason: x.reason || '', lastMsgSec: typeof x.lastMsgSec === 'number' ? x.lastMsgSec : null })) };
+      if (!list.length) { toast(t('Nothing to log in'), 'warn'); return; }
+      const sent = list.filter(x => x.ok).length;
+      toast(list.map(x => labelOf(x.n) + ': ' + whyText(x)).join('   \u00b7   '), sent ? '' : 'warn');
+    }
+    document.getElementById('btnLoginAll').onclick = () => doLogin('all');
+
+    // ---------- Accounts window ----------
+    const modal = document.getElementById('modal');
+    const trashSvg = '<svg class="i" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></svg>';
+    const brushSvg = '<svg class="i" viewBox="0 0 24 24"><path d="M19 3l2 2-9 9-3-3 10-8zM9 14c-3 0-4 2-4 4 0 1-1 2-2 3 4 1 8 0 9-4"/></svg>';
+
+    async function openAccounts() {
+      let d = null;
+      try { d = api.accountsGet ? await api.accountsGet() : null; } catch (e) { d = null; }
+      if (!d) { toast(t('Saved accounts are not installed yet. Run install-accounts.js.'), 'warn'); return; }
+      document.getElementById('noCrypt').classList.toggle('hidden', !!d.encryption);
+      document.getElementById('autoLogin').checked = !!d.autoLogin;
+      document.getElementById('arows').innerHTML = d.rows.filter(r => inUse(r.n)).map(r =>
+        '<div class="arow" data-n="' + r.n + '" data-had="' + (r.hasPassword ? 1 : 0) + '">' +
+          '<span class="dot" style="background:' + COLORS[r.n - 1] + '"></span>' +
+          '<input type="text" class="f-name" placeholder="' + t('Name') + '" maxlength="40" value="' + esc(r.name) + '" autocomplete="off">' +
+          '<input type="text" class="f-user" placeholder="' + t('E-mail or username') + '" maxlength="200" value="' + esc(r.user) + '" autocomplete="off">' +
+          '<input type="password" class="f-pass" placeholder="' + (r.hasPassword ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 ' + t('(saved)') : t('Password')) + '" maxlength="500" autocomplete="new-password">' +
+          '<button class="clr" title="' + t('Empty the browser cache of this panel (you stay signed in)') + '">' + brushSvg + t('Clear cache') + '</button>' +
+          '<button class="trash" title="' + t('Remove this saved account') + '">' + trashSvg + '</button></div>').join('');
+      modal.classList.remove('hidden');
+      const first = modal.querySelector('.f-name'); if (first) first.focus();
+    }
+    function closeAccounts() { modal.classList.add('hidden'); document.querySelectorAll('#arows .f-pass').forEach(i => { i.value = ''; }); }
+
+    document.getElementById('btnAccounts').onclick = openAccounts;
+    document.getElementById('aCancel').onclick = closeAccounts;
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (!diagModal.classList.contains('hidden')) diagModal.classList.add('hidden');
+      else if (!settingsModal.classList.contains('hidden')) closeSettings();
+      else if (!modal.classList.contains('hidden')) closeAccounts();
+      else if (ui.solo) { ui.solo = null; applyUI(); }
+    });
+
+    document.getElementById('arows').addEventListener('click', async e => {
+      const row = e.target.closest && e.target.closest('.arow');
+      if (!row) return;
+      const n = Number(row.dataset.n);
+      if (e.target.closest('.clr')) {
+        const r = api.accountsClearCache ? await api.accountsClearCache(n) : null;
+        toast(r && r.ok ? t('Cache cleared for {name} (you stay signed in)', { name: labelOf(n) }) : t('Could not clear the cache'), r && r.ok ? '' : 'warn');
+      } else if (e.target.closest('.trash')) {
+        row.querySelector('.f-name').value = ''; row.querySelector('.f-user').value = ''; row.querySelector('.f-pass').value = '';
+        row.querySelector('.f-pass').placeholder = t('Password');
+        row.dataset.removed = '1';
+      }
+    });
+    document.getElementById('arows').addEventListener('input', e => {
+      const row = e.target.closest && e.target.closest('.arow');
+      if (row) delete row.dataset.removed;              // typing again cancels a removal
+    });
+
+    document.getElementById('aSave').onclick = async () => {
+      const rows = Array.prototype.map.call(document.querySelectorAll('#arows .arow'), row => {
+        const o = { n: Number(row.dataset.n), name: row.querySelector('.f-name').value.trim(), user: row.querySelector('.f-user').value.trim() };
+        const pw = row.querySelector('.f-pass').value;
+        if (row.dataset.removed) o.clearAll = true;
+        else if (pw) o.password = pw;                    // only a password that was typed now is sent; an untouched one stays as it is
+        return o;
+      });
+      let r = null;
+      try { r = await api.accountsSave({ autoLogin: document.getElementById('autoLogin').checked, rows: rows }); } catch (e) { r = null; }
+      if (!r || !r.ok) { toast(t('Could not save the accounts'), 'bad'); return; }
+      rows.forEach(o => { if (o.name) savedNames[o.n] = o.name; else delete savedNames[o.n]; });
+      renderPills();
+      closeAccounts();
+      toast(r.warning === 'no-encryption' ? t('Saved, but passwords were NOT saved: encryption is not available here') : t('Saved'), r.warning ? 'warn' : '');
+    };
+
+    // ---------- numbers coming straight from the game's connection (see ws-reader.js) ----------
+    const liveState = {};
+    if (api.onStats) {
+      api.onStats((n, data) => {
+        liveState[n] = Object.assign(liveState[n] || {}, data);
+        lastStatsAt[n] = Date.now();
+        if (data && data.startedAt !== undefined) lastHunt[n] = Date.now();
+        renderHeads();
+        if (data && data.name && gameNames[n] !== data.name) { gameNames[n] = data.name; renderPills(); }
+        if (dash.contentWindow) dash.contentWindow.postMessage({ type: 'live', account: n, data: data }, '*');
+      });
+    }
+    // if the dashboard page finishes loading later, give it everything it missed
+    dash.addEventListener('load', () => {
+      for (const n in liveState) dash.contentWindow.postMessage({ type: 'live', account: Number(n), data: liveState[n], replay: true }, '*');      // (replay: what it already had; the day's tracker does not take it as new)
+    });
+
+    // names saved in the Accounts window
+    (async () => {
+      try {
+        const d = api.accountsGet ? await api.accountsGet() : null;
+        if (d) { d.rows.forEach(r => { if (r.name) savedNames[r.n] = r.name; }); renderPills(); }
+      } catch (e) {}
+    })();
+
+    // ---------- Diagnostics ----------
+    const diagModal = document.getElementById('diagModal');
+    const UI_BUILD = 'lang-54';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const dg = { data: null, result: null, tab: 'check' };
+    const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
+
+    function askDashboard() {                                   // what does the dashboard see? (it answers with counts and true / false)
+      return new Promise(resolve => {
+        const id = Math.random().toString(36).slice(2);
+        let done = false;
+        const on = ev => { if (ev.data && ev.data.type === 'diag-reply' && ev.data.id === id) { done = true; window.removeEventListener('message', on); resolve(ev.data.data); } };
+        window.addEventListener('message', on);
+        try { dash.contentWindow.postMessage({ type: 'diag-request', id: id }, '*'); } catch (e) { window.removeEventListener('message', on); return resolve(null); }
+        setTimeout(() => { if (!done) { window.removeEventListener('message', on); resolve(null); } }, 1500);
+      });
+    }
+    async function gather() {
+      let main = null;
+      try { main = api.diagGet ? await api.diagGet() : null; } catch (e) { main = null; }
+      const dashData = await askDashboard();
+      const names = {};
+      for (let n = 1; n <= 4; n++) { const nm = gameNames[n] || savedNames[n]; if (nm) names[n] = nm; }
+      const statsAge = {};
+      for (let n = 1; n <= 4; n++) statsAge[n] = age(lastStatsAt[n]);
+      const ui = {
+        build: UI_BUILD,
+        bridge: { diagGet: !!api.diagGet, diagProbe: !!api.diagProbe, diagCopy: !!api.diagCopy, accountsGet: !!api.accountsGet, accountsLogin: !!api.accountsLogin, notifyGet: !!api.notifyGet, notifySet: !!api.notifySet, startupSet: !!api.startupSet, analyzerToggle: !!api.analyzerToggle, navGo: !!api.navGo, navHunt: !!api.navHunt, economySet: !!api.economySet, getHistory: !!api.getHistory, onStats: !!api.onStats },
+        lastLogin: lastLogin ? { ageSec: age(lastLogin.at), results: lastLogin.results } : null,
+        errors: uiErrors.map(x => ({ ageSec: age(x.t), msg: x.msg })), statsAgeSec: statsAge, names: names, panels: PANELS
+      };
+      return { main: main, dash: dashData, ui: ui };
+    }
+    const STATUS = { get ok() { return t('OK'); }, get warn() { return t('LOOK'); }, get fail() { return t('FAIL'); }, get unknown() { return '?'; } };
+    function drawDiag() {
+      if (!dg.data) return;
+      const res = HGDiag.analyse({ main: dg.data.main, dash: dg.data.dash, ui: dg.data.ui, hideNames: document.getElementById('diagHide').checked, lang: I18N.getLang() });
+      dg.result = res;
+      const ab = dg.data.main && dg.data.main.meta && dg.data.main.meta.build;
+      document.getElementById('diagBuild').textContent = t('window {w} \u00b7 app {a}', { w: UI_BUILD, a: ab || t('old (no build)') });
+      const count = s => res.checks.filter(c => c.status === s).length;
+      document.getElementById('diagCheck').innerHTML =
+        '<div class="dsum">' + t('{ok} fine \u00b7 {warn} to look at \u00b7 {fail} failed \u00b7 {unknown} cannot tell yet', { ok: count('ok'), warn: count('warn'), fail: count('fail'), unknown: count('unknown') }) + '</div>' +
+        res.checks.map(c => '<div class="ditem s-' + c.status + '"><span class="dstat">' + STATUS[c.status] + '</span><div><b>' + esc(c.title) + '</b> <span class="dd">' + esc(c.detail) + '</span>' +
+          (c.lines.length ? '<ul>' + c.lines.map(l => '<li>' + esc(l) + '</li>').join('') + '</ul>' : '') + (c.todo && c.status !== 'ok' ? '<div class="dtodo">\u2192 ' + esc(c.todo) + '</div>' : '') + '</div></div>').join('') +
+        '<div class="dman"><h3>' + t('ONLY YOU CAN JUDGE THESE') + '</h3><ol>' + res.manual.map(m => '<li><b>' + esc(m.title) + '.</b> ' + esc(m.how) + ' <i>' + t('Look for:') + '</i> ' + esc(m.look) + '</li>').join('') + '</ol></div>';
+      document.getElementById('diagReport').textContent = res.report;
+    }
+    function diagTab(which) {
+      dg.tab = which;
+      document.getElementById('dtCheck').classList.toggle('on', which === 'check');
+      document.getElementById('dtReport').classList.toggle('on', which === 'report');
+      document.getElementById('diagCheck').classList.toggle('hidden', which !== 'check');
+      document.getElementById('diagRepWrap').classList.toggle('hidden', which !== 'report');
+    }
+    async function openDiag() {
+      diagModal.classList.remove('hidden');
+      document.getElementById('diagCheck').innerHTML = '<div class="dsum">' + t('Looking at the app\u2026') + '</div>';
+      try { dg.data = await gather(); drawDiag(); }
+      catch (e) { document.getElementById('diagCheck').innerHTML = '<div class="dsum">' + t('Could not collect the diagnostics: {msg}', { msg: esc(e.message) }) + '</div>'; }
+    }
+    async function copyText(text) {
+      try { if (api.diagCopy && await api.diagCopy(text) === true) return true; } catch (e) {}
+      try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+      return false;
+    }
+    document.getElementById('btnDiag').onclick = () => { closeSettings(); openDiag(); };
+    document.getElementById('diagClose').onclick = () => diagModal.classList.add('hidden');
+    document.getElementById('diagRefresh').onclick = openDiag;
+    document.getElementById('diagProbe').onclick = async () => {
+      if (!api.diagProbe) { toast(t('Looking at login pages needs install-diagnostics.js (run it again)'), 'warn'); return; }
+      toast(t('Looking at the panels that are signed out\u2026'));
+      try {
+        const r = await api.diagProbe();
+        await openDiag();
+        const all = (r || []).length, out = (r || []).filter(x => !x.signedIn).length;
+        toast(all ? t(all > 1 ? 'Looked at {n} panels ({m} not sending data). It is in the Report tab' : 'Looked at {n} panel ({m} not sending data). It is in the Report tab', { n: all, m: out }) : t('There is no game panel to look at yet'), all ? '' : 'warn');
+      } catch (e) { toast(t('Could not look: {msg}', { msg: e.message }), 'bad'); }
+    };
+    // the names are hidden at first (a report is often pasted somewhere public); a choice made here is kept for the next time
+    document.getElementById('diagHide').checked = store.get('diagHide', true) !== false;
+    document.getElementById('diagHide').onchange = () => { store.set('diagHide', document.getElementById('diagHide').checked); drawDiag(); };
+    document.getElementById('dtCheck').onclick = () => diagTab('check');
+    document.getElementById('dtReport').onclick = () => diagTab('report');
+    document.getElementById('diagCopy').onclick = async () => {
+      if (!dg.result) return;
+      toast((await copyText(dg.result.report)) ? t('Report copied: paste it in the chat') : t('Could not copy. Use Save as file instead'), '');
+    };
+    document.getElementById('diagSave').onclick = async () => {
+      if (!dg.result) return;
+      try { const f = api.diagSave ? await api.diagSave(dg.result.report) : null; toast(f ? t('Saved') : (api.diagSave ? t('Not saved') : t('Saving needs install-diagnostics.js')), f ? '' : 'warn'); } catch (e) { toast(t('Could not save: {msg}', { msg: e.message }), 'bad'); }
+    };
+    diagModal.addEventListener('mousedown', e => { if (e.target === diagModal) diagModal.classList.add('hidden'); });
+
+    // ---------- Settings: the language, and the way to History and Diagnostics ----------
+    const settingsModal = document.getElementById('settingsModal');
+    const langSel = document.getElementById('langSel');
+    function closeSettings() { settingsModal.classList.add('hidden'); }
+    const panelsSel = document.getElementById('panelsSel');
+    panelsSel.onchange = () => {                                  // a new number of game panels: kept, and the window is loaded again with it
+      const v = Math.floor(Number(panelsSel.value));
+      if (!(v >= 1 && v <= 4) || v === PANELS) return;
+      store.set('panels', v);
+      if (ui.hidden.some(n => n > v)) { ui.hidden = ui.hidden.filter(n => n <= v); store.set('hidden', ui.hidden); }
+      toast(t('{n} game panels: the window is loading again\u2026', { n: v }));
+      setTimeout(() => location.reload(), 700);
+    };
+    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
+    document.getElementById('setClose').onclick = closeSettings;
+    settingsModal.addEventListener('mousedown', e => { if (e.target === settingsModal) closeSettings(); });
+    // ---------- Settings: the notifications (the main process keeps them in notify-settings.json and checks every value; this only shows them and asks for changes) ----------
+    const N_ = id => document.getElementById(id);
+    const N_NUM = [['nIV', 'goodCatch', 'minIV'], ['nQuality', 'goodCatch', 'minQuality'], ['nDrop', 'rareDrop', 'minValue'], ['nRunway', 'suppliesLow', 'minRunwayHours'], ['nSample', 'suppliesLow', 'minSampleMinutes'], ['nNoKills', 'stopped', 'noKillsSeconds'], ['nSilent', 'stopped', 'silentSeconds']];
+    const N_FLAG = [['nEnabled', 'enabled'], ['nSound', 'sound'], ['nStartup', 'startupNotice']];
+    const fillWords = () => { document.querySelectorAll('#nMode [data-word]').forEach(e => { e.textContent = t(e.dataset.word); }); };      // AND / OR: E / OU in Portuguese
+    const N_QUIET_FLAG = [['nQuiet', 'enabled'], ['nQShiny', 'allowShiny']], N_QUIET_TIME = [['nQFrom', 'from'], ['nQTo', 'to']];
+    let nCfg = null, nSavedTimer = null;
+    function fillNotif(c) {
+      try { showSilent(!c.enabled); } catch (e) {}
+      nCfg = c;
+      N_FLAG.forEach(f => { N_(f[0]).checked = !!c[f[1]]; });
+      document.querySelectorAll('#notifBody [data-ev]').forEach(b => { b.checked = c.events[b.dataset.ev] !== false; });
+      N_NUM.forEach(f => { N_(f[0]).value = c[f[1]][f[2]]; });
+      document.querySelectorAll('#nMode input').forEach(r => { r.checked = r.value === (c.goodCatch.mode === 'and' ? 'and' : 'or'); });
+      N_QUIET_FLAG.forEach(f => { N_(f[0]).checked = !!c.quietHours[f[1]]; });
+      N_QUIET_TIME.forEach(f => { N_(f[0]).value = c.quietHours[f[1]]; });
+      N_('nQuietBox').classList.toggle('off', !c.quietHours.enabled);
+      N_('notifBody').classList.toggle('off', !c.enabled);
+    }
+    function flashSaved() { const e = N_('nSaved'); e.classList.add('on'); clearTimeout(nSavedTimer); nSavedTimer = setTimeout(() => e.classList.remove('on'), 1800); }
+    async function sendNotif(patch) {
+      try {
+        const c = await api.notifySet(patch);
+        if (!c) { toast(t('Could not save the notification settings'), 'warn'); return; }
+        fillNotif(c);
+        if (c.saved) flashSaved(); else toast(t('Could not save the notification settings'), 'warn');
+      } catch (e) { toast(t('Could not save the notification settings'), 'warn'); }
+    }
+    async function loadNotif() {
+      const ok = !!(api.notifyGet && api.notifySet);
+      N_('nNeedInstall').classList.toggle('hidden', ok);
+      document.querySelectorAll('#nEnabled, #notifBody input, #notifBody button').forEach(e => { e.disabled = !ok; });
+      if (!ok) { N_('notifBody').classList.add('off'); return; }
+      try { const c = await api.notifyGet(); if (c) fillNotif(c); } catch (e) {}
+    }
+    N_FLAG.forEach(f => { N_(f[0]).onchange = () => sendNotif({ [f[1]]: N_(f[0]).checked }); });
+    document.querySelectorAll('#notifBody [data-ev]').forEach(b => { b.onchange = () => sendNotif({ events: { [b.dataset.ev]: b.checked } }); });
+    document.querySelectorAll('#nMode input').forEach(r => { r.onchange = () => { if (r.checked) sendNotif({ goodCatch: { mode: r.value } }); }; });
+    fillWords();
+    N_QUIET_FLAG.forEach(f => { N_(f[0]).onchange = () => sendNotif({ quietHours: { [f[1]]: N_(f[0]).checked } }); });
+    N_QUIET_TIME.forEach(f => {
+      N_(f[0]).onchange = () => {
+        const v = N_(f[0]).value;
+        if (!/^\d\d:\d\d$/.test(v)) { if (nCfg) N_(f[0]).value = nCfg.quietHours[f[1]]; return; }       // a time that was cleared goes back to what it was
+        sendNotif({ quietHours: { [f[1]]: v } });
+      };
+    });
+    N_NUM.forEach(f => {
+      N_(f[0]).onchange = () => {
+        const v = parseFloat(N_(f[0]).value);
+        if (!isFinite(v)) { if (nCfg) N_(f[0]).value = nCfg[f[1]][f[2]]; return; }          // an empty box goes back to what it was
+        sendNotif({ [f[1]]: { [f[2]]: v } });
+      };
+    });
+    N_('nTest').onclick = async () => { try { toast((await api.notifyTest()) ? t('Test notification sent') : t('Could not send the test'), ''); } catch (e) { toast(t('Could not send the test'), 'warn'); } };
+    // ---------- Settings: start with the PC (Windows keeps this in its list of startup apps; the main process asks it and changes it) ----------
+    const S_ = id => document.getElementById(id);
+    let sCfg = null;
+    function fillStartup(c) {
+      sCfg = c;
+      S_('sStartup').checked = !!c.enabled; S_('sHidden').checked = !!c.hidden;
+      S_('sTray').checked = c.toTray === true; S_('sTray').disabled = typeof c.toTray !== 'boolean';          // an older settings.js does not know it
+      S_('sStartup').disabled = !c.supported; S_('sHidden').disabled = !c.supported || !c.enabled || !c.hiddenReady;
+      const note = S_('sNote');
+      note.textContent = !c.supported ? t('Starting with the PC works on Windows only.') : (!c.hiddenReady ? t('"Start hidden" needs install-diagnostics.js: run it in the project folder and restart the app.') : '');
+      note.classList.toggle('hidden', !note.textContent);
+    }
+    async function loadStartup() {
+      const ok = !!(api.startupGet && api.startupSet), note = S_('sNote');
+      S_('sStartup').disabled = !ok; S_('sHidden').disabled = true; S_('sTray').disabled = !ok;
+      if (!ok) { note.textContent = t('Starting with the PC needs install-diagnostics.js: run it in the project folder and restart the app.'); note.classList.remove('hidden'); return; }
+      try { const c = await api.startupGet(); if (c) fillStartup(c); } catch (e) {}
+    }
+    async function sendStartup(patch) {
+      try {
+        const c = await api.startupSet(patch);
+        const bad = 'toTray' in patch ? t('Could not save the setting') : t('Could not change the start with the PC');
+        if (!c) { toast(bad, 'warn'); return; }
+        fillStartup(c);
+        toast(c.saved === false ? bad : t('Saved'), c.saved === false ? 'warn' : '');
+      } catch (e) { toast('toTray' in patch ? t('Could not save the setting') : t('Could not change the start with the PC'), 'warn'); }
+    }
+    S_('sStartup').onchange = () => sendStartup({ enabled: S_('sStartup').checked });
+    S_('sHidden').onchange = () => sendStartup({ hidden: S_('sHidden').checked });
+    S_('sTray').onchange = () => sendStartup({ toTray: S_('sTray').checked });
+    // ---------- Settings: the tooltips (the description of a setting stays in the page, hidden; the small "i" after the name of the setting shows its text when the pointer rests on it) ----------
+    (function () {
+      const tip = document.getElementById('tip'), DELAY = 450;
+      let timer = null, pending = null, shownFor = null, lastX = 0, lastY = 0;
+      const makeInfo = () => { const e = document.createElement('span'); e.className = 'info'; e.tabIndex = 0; e.setAttribute('role', 'img'); return e; };
+      settingsModal.querySelectorAll('.srow').forEach(row => { const b = row.querySelector(':scope > div > b'); if (b && row.querySelector(':scope > div > .sd')) b.appendChild(makeInfo()); });
+      const hd = settingsModal.querySelector('.shead[data-tip-from] > span:first-child'); if (hd) hd.appendChild(makeInfo());
+      const sourceOf = info => {
+        const row = info.closest('.srow'); if (row) return row.querySelector(':scope > div > .sd');
+        const head = info.closest('.shead[data-tip-from]'); return head ? document.querySelector(head.getAttribute('data-tip-from')) : null;
+      };
+      const targetOf = node => (node && node.closest) ? node.closest('.info') : null;
+      function hide() { clearTimeout(timer); timer = null; pending = null; shownFor = null; tip.classList.add('hidden'); }
+      function show(el, x, y) {
+        const src = sourceOf(el), txt = src ? src.textContent.replace(/\s+/g, ' ').trim() : '';
+        if (!txt) return;
+        tip.textContent = txt; tip.style.left = '0px'; tip.style.top = '0px'; tip.classList.remove('hidden');
+        const r = tip.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight;
+        let left = x + 14, top = y + 22;
+        if (left + r.width > W - 8) left = Math.max(8, W - r.width - 8);
+        if (top + r.height > H - 8) top = Math.max(8, y - r.height - 14);
+        tip.style.left = left + 'px'; tip.style.top = top + 'px'; shownFor = el;
+      }
+      function arm(el, x, y) { if (el === pending || el === shownFor) return; hide(); pending = el; lastX = x; lastY = y; timer = setTimeout(() => { timer = null; if (pending === el) show(el, lastX, lastY); }, DELAY); }
+      settingsModal.addEventListener('mousemove', e => { const el = targetOf(e.target); if (!el || !settingsModal.contains(el)) { hide(); return; } lastX = e.clientX; lastY = e.clientY; arm(el, e.clientX, e.clientY); });
+      settingsModal.addEventListener('mouseleave', hide);
+      settingsModal.addEventListener('mousedown', hide);
+      settingsModal.addEventListener('wheel', hide, true);
+      settingsModal.addEventListener('scroll', hide, true);
+      settingsModal.addEventListener('keydown', hide, true);
+      settingsModal.addEventListener('focusin', e => { const el = targetOf(e.target); if (!el || !el.matches(':focus-visible')) return; const r = el.getBoundingClientRect(); hide(); pending = el; timer = setTimeout(() => { timer = null; if (pending === el) show(el, r.left + 8, r.top + 8); }, DELAY); });
+      settingsModal.addEventListener('focusout', hide);
+      new MutationObserver(() => { if (settingsModal.classList.contains('hidden')) hide(); }).observe(settingsModal, { attributes: true, attributeFilter: ['class'] });
+    })();
+    const postLang = () => { try { dash.contentWindow.postMessage({ type: 'lang', lang: I18N.getLang() }, '*'); } catch (e) {} };
+    // everything that says something in this window, written again in the language that is chosen
+    function applyLanguage() {
+      I18N.dom(document.body);                            // the text that is written in the page itself
+      fillWords();                                        // AND / OR
+      renderPills(); renderHeads();                       // the text that the script writes
+      langSel.value = I18N.getLang();
+      if (!settingsModal.classList.contains('hidden')) loadStartup();                // its note is written again in the language
+      if (!diagModal.classList.contains('hidden') && dg.data) drawDiag();
+      postLang();
+    }
+    I18N.onChange(applyLanguage);
+    langSel.onchange = async () => {
+      const id = I18N.normalize(langSel.value);
+      I18N.save(id); I18N.setLang(id);                    // the window and the dashboard change at once...
+      try { if (api.langSet) await api.langSet(id); } catch (e) {}      // ...the main process (tray, notifications) is told, and keeps it for the next start
+    };
+    dash.addEventListener('load', postLang);
+    // at the start: the language this window used last time, then what the main process says (it keeps the file, and knows the language of the computer on the very first start)
+    I18N.load();
+    if (I18N.getLang() !== 'en') applyLanguage();
+    (async () => {
+      try {
+        const l = api.langGet ? await api.langGet() : null;
+        if (l && I18N.normalize(l) !== I18N.getLang()) { I18N.save(l); I18N.setLang(l); }
+      } catch (e) {}
+    })();
+
+    applyUI();
+  </script>
+  <script src="history-ui.js"></script>
+</body>
+</html>

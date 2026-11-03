@@ -1,0 +1,1369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard</title>
+<link rel="stylesheet" href="theme.css">
+<script src="i18n.js"></script>
+<script src="i18n-pt.js"></script>
+<script src="theme.js"></script>
+<style>
+  html, body { overflow: hidden; }
+  #app { display: flex; height: 100vh; background: radial-gradient(1000px 520px at 78% -12%, #141f40 0%, transparent 62%), var(--bg); }
+
+  /* ---------- Summary side panel ---------- */
+  #side { width: 336px; min-width: 336px; background: linear-gradient(180deg, #101a33, #0b1224); border-right: 1px solid var(--line); display: flex; flex-direction: column; position: relative; }
+  .side-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px; font-family: var(--serif); font-weight: 700; font-size: 13px; letter-spacing: .18em; color: var(--gold); }
+  .side-head .grow { flex: 1; }
+  .icon-btn { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); color: var(--dim); border-radius: var(--r-sm); width: 30px; height: 28px; cursor: pointer; font-size: 13px; }
+  .icon-btn:hover { color: var(--gold); border-color: var(--gold); }
+  #tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
+  .tab { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); color: var(--dim); padding: 5px 9px; border-radius: var(--r-sm); cursor: pointer;
+         font-size: 11.5px; font-weight: 600; max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab { display: inline-flex; align-items: center; gap: 6px; }
+  .tab .dot { width: 8px; height: 8px; flex: none; }
+  .tab:hover { color: var(--text); border-color: var(--line2); }
+  .tab.on { color: var(--gold); border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(227, 192, 107, .18), 0 0 12px rgba(227, 192, 107, .12); }
+  #sideBody { flex: 1; overflow-y: auto; }
+  /* when the window is not tall enough for the all-accounts Summary, it gets tighter in two steps (set by the script) */
+  body.tight .side-head { padding: 8px 16px 6px; }
+  body.tight #tabs { padding-bottom: 8px; }
+  body.tight .strip { padding: 7px 14px; } body.tight .strip > div { padding: 6px 4px; }
+  body.tight .sec { padding: 8px 16px 8px; } body.tight .sec-h { padding-bottom: 4px; margin-bottom: 6px; }
+  body.tight .stat { padding: 6px 4px; } body.tight .duo .col { padding: 8px 0; } body.tight .kv .v { font-size: 15px; }
+  body.tight .acard { padding: 5px 6px; } body.tight .acard .ln { margin-top: 1px; }
+  body.tighter .strip { padding: 4px 12px; } body.tighter .strip > div { padding: 4px 3px; } body.tighter .sec { padding: 6px 14px 5px; } body.tighter .stat { padding: 4px 3px; } body.tighter .stat .l { font-size: 9px; letter-spacing: .04em; } body.tighter .duo .col { padding: 5px 0; } body.tighter .acard { padding: 4px 6px; }
+  body.tighter .strip .v { font-size: 16px; } body.tighter .stat .v { font-size: 15px; } body.tighter .acard .ln.dim { display: none; } body.tighter .acard { padding: 3px 6px; } body.tighter .acard .ln { margin-top: 0; font-size: 11.5px; } body.tighter .acard .ln.balls { font-size: 11px; } body.tighter .acard .top { font-size: 12.5px; } body.tighter .side-head { padding: 5px 16px 3px; } body.tighter #tabs { padding-bottom: 5px; } body.tighter .sec-h { margin-bottom: 4px; padding-bottom: 3px; } body.tighter .sec-h .chip { display: none; }
+  /* last resort, a very short window: the four tiles of the session go (the three numbers above and every account stay) */
+  body.tightest .sess .grid4 { display: none; } body.tightest .sess .sec-h { margin-bottom: 0; }
+
+  /* a section: its label in Cinzel with a fading gold line, like "DROPS" on the game's card */
+  .sec { padding: 12px 16px 12px; }          /* the sections are separated by the fading line under their titles, not by boxes or hard lines */
+  .sec-h { display: flex; align-items: center; gap: 8px; font-family: var(--serif); font-weight: 700; font-size: 11.5px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase;
+           padding-bottom: 6px; margin-bottom: 10px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
+  .sec-h .chip { margin-left: auto; background: rgba(0, 0, 0, .3); border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; color: var(--text);
+                 letter-spacing: 0; text-transform: none; font-family: var(--sans); font-size: 11px; font-weight: 600; }
+  .sec.flush { padding: 0; }
+
+  /* the numbers: tiles like the ones in the Hunt Analyzer */
+  .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 14px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
+  .strip > div { text-align: center; padding: 10px 6px; border-radius: var(--r); background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); }
+  .strip .v { font-size: 19px; font-weight: 700; }
+  .strip .l { font-size: 10px; letter-spacing: .1em; color: var(--dim); margin-top: 2px; font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+  .stat { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r); padding: 9px 6px; }
+  .stat .v { font-size: 18px; font-weight: 700; }
+  .stat .l { font-size: 10px; letter-spacing: .08em; color: var(--dim); text-transform: uppercase; font-weight: 600; }
+  .grid4 .v { font-size: 16px; }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+  .row .k { color: #c9d2ea; } .row .v { font-weight: 700; }
+  /* supplies and assets: two columns side by side, no boxes, a fading line between them */
+  .duo { display: grid; grid-template-columns: 1fr 1fr; padding: 0 16px; }
+  .duo .col { padding: 12px 0 12px; min-width: 0; }
+  .duo .col:first-child { padding-right: 14px; }
+  .duo .col:last-child { padding-left: 14px; position: relative; }
+  .duo .col:last-child::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 10px; width: 1px; background: linear-gradient(180deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0)); }
+  .kv { display: flex; align-items: baseline; gap: 7px; padding: 2px 0; }
+  .kv .v { font-size: 17px; font-weight: 700; }
+  .kv .l { font-size: 10px; letter-spacing: .08em; color: var(--dim); text-transform: uppercase; font-weight: 600; }
+  .big2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center; }
+  .big2 .v { font-size: 21px; }
+
+  .pos { color: var(--green); } .neg { color: var(--red); } .blue { color: var(--blue); } .gold { color: var(--gold); } .pink { color: var(--pink); } .dim { color: var(--dim); } .orange { color: var(--orange); }
+
+  /* the account header: coloured by the type of its hunt, with the ringed emblem and the level pill, like the game's hunt card */
+  .prof { display: flex; gap: 11px; align-items: center; padding: 12px 14px; min-height: 62px;
+          background: linear-gradient(100deg, var(--h1, #1a2548) 0%, var(--h2, #28396e) 100%); border-top: 2px solid var(--hedge, var(--gold)); border-bottom: 1px solid rgba(0, 0, 0, .4); }
+  .prof .ptxt { flex: 1; min-width: 0; line-height: 1.2; }
+  .prof .nm { font-family: var(--serif); font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+  .prof .loc { color: rgba(255, 255, 255, .78); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vip { background: rgba(0, 0, 0, .4); border: 1px solid var(--gold); color: var(--gold); font-family: var(--sans); font-size: 10px; padding: 0 6px; border-radius: 999px; font-weight: 700; }
+  .wealthbar { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .wealthbar .gold { font-size: 16px; } .wealthbar .dia { color: var(--gem); margin-left: auto; }
+  .partychip { flex-basis: 100%; font-size: 11px; font-weight: 500; color: var(--orange); }
+
+  /* the team: one row per Pok\u00e9mon, like the game's "EQUIPE" panel */
+  .tm { display: flex; gap: 10px; align-items: center; padding: 8px 9px; margin-bottom: 7px; background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); }
+  .tm.act { border-color: rgba(227, 192, 107, .75); background: linear-gradient(180deg, #131c36, #0c1426); box-shadow: inset 0 0 0 1px rgba(227, 192, 107, .16), 0 0 12px rgba(227, 192, 107, .10); }
+  .spr { position: relative; width: 42px; height: 42px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;
+         background: radial-gradient(circle at 50% 35%, #111b33, #04070d); border: 2px solid #34406a; }
+  .tm.act .spr { border-color: var(--gold); }
+  .spr img { width: 38px; height: 38px; image-rendering: pixelated; }
+  .spr .ini { display: none; font-family: var(--serif); font-size: 17px; font-weight: 700; color: var(--dim); }
+  .spr.nospr img { display: none; } .spr.nospr .ini { display: block; }
+  .tmb { flex: 1; min-width: 0; }
+  .tmt { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+  .tmn { font-family: var(--serif); font-weight: 700; font-size: 13.5px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tml { font-weight: 700; font-size: 11.5px; color: var(--teal); flex: none; }
+  .pb { position: relative; height: 13px; margin-top: 3px; background: #05080f; border-radius: 7px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .7); }
+  .pb > i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 7px; }
+  .pb.hp > i { background: linear-gradient(180deg, #8be05a, #3fa32a); }
+  .pb.hp.mid > i { background: linear-gradient(180deg, #ffc66e, #d98a1f); }
+  .pb.hp.low > i { background: linear-gradient(180deg, #ff9a9a, #c93b3b); }
+  .pb.xp > i { background: linear-gradient(180deg, #7b95ff, #3b57d6); }
+  .prof .pb.slim { height: 10px; margin-top: 6px; max-width: 230px; background: rgba(0, 0, 0, .4); }
+  .prof .pb.slim > span { font-size: 8px; }
+  /* the Summary of one account, a little more compact (lang-40): a lower band, smaller tiles with their text centred, no line above the team */
+  body.oneacc .prof { padding: 7px 12px; min-height: 0; gap: 10px; }
+  body.oneacc .prof .emb { width: 30px; height: 30px; font-size: 14px; }
+  body.oneacc .prof .nm { font-size: 15px; }
+  body.oneacc .prof .loc { font-size: 11.5px; margin-top: 1px; }
+  body.oneacc .prof .pb.slim { margin-top: 4px; height: 9px; }
+  body.oneacc .prof .lvl { font-size: 11.5px; padding: 2px 10px; }
+  body.oneacc .wealthbar { padding: 7px 16px; }
+  body.oneacc .strip { padding: 8px 12px; gap: 7px; border-bottom: 0; }
+  body.oneacc .strip > div { padding: 6px 4px; }
+  body.oneacc .strip .v { font-size: 17px; }
+  body.oneacc .strip .l { font-size: 9.5px; margin-top: 1px; }
+  body.oneacc .stat { padding: 6px 4px; text-align: center; }
+  body.oneacc .stat .v { font-size: 16px; }
+  body.oneacc .stat .l { font-size: 9.5px; }
+  body.oneacc .grid2 { gap: 7px; }
+  /* the team: the active Pok\u00e9mon in a card (HP and XP), the others as small icons under it */
+  .tm.lead { margin-bottom: 6px; padding: 7px 9px; }
+  .tm.lead .pb { height: 11px; margin-top: 3px; border-radius: 6px; } .tm.lead .pb > i { border-radius: 6px; } .tm.lead .pb > span { font-size: 9px; }
+  .tm.lead .spr { width: 40px; height: 40px; } .tm.lead .spr img { width: 36px; height: 36px; }
+  .tm.noact { border-color: #1d2848; }
+  .tmrow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tmrow .spr { width: 30px; height: 30px; border-width: 1.5px; cursor: default; } .tmrow .spr img { width: 28px; height: 28px; } .tmrow .spr .ini { font-size: 12px; }
+  /* a shiny one: an iridescent edge, a soft glow and a star (no animation: nothing to redraw all the time) */
+  .tm.lead.shiny { border: 2px solid transparent; padding: 6px 8px;
+                   background: linear-gradient(180deg, rgba(60, 38, 82, .92), rgba(16, 20, 44, .96)) padding-box, linear-gradient(115deg, #ffe08a, #ff8fd0, #8fd8ff, #b8ff8f, #ffe08a) border-box;
+                   box-shadow: 0 0 16px rgba(255, 143, 208, .38), 0 0 6px rgba(255, 224, 138, .35), inset 0 0 18px rgba(255, 143, 208, .10); }
+  .tm.lead.shiny .spr { border: 2px solid transparent; background: radial-gradient(circle at 50% 35%, #4a3570, #0b0c1c) padding-box, linear-gradient(135deg, #ffe08a, #ff8fd0, #8fd8ff) border-box; box-shadow: 0 0 12px rgba(255, 224, 138, .45); }
+  .tm.lead.shiny .tmn { background: linear-gradient(90deg, #ffe9a8, #ffb3e1, #b5e6ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tm.lead.shiny .tml { color: #ffd6f0; }
+  .tm.lead .shy { color: #ffe08a; margin-right: 4px; text-shadow: 0 0 6px rgba(255, 224, 138, .6); }
+  .tmrow .spr.shiny { border-color: #ffd86b; box-shadow: 0 0 6px rgba(255, 216, 107, .45); }
+  .pb > span { position: absolute; top: 0; bottom: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .9); }
+  .mon { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 9px 11px; }
+  .mon .t { display: flex; justify-content: space-between; font-weight: 600; }
+  .bar { height: 8px; background: #070b14; border-radius: 5px; overflow: hidden; margin-top: 6px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6); }
+  .bar > i { display: block; height: 100%; border-radius: 5px; }
+  /* "Lucro Atual": the profit bar */
+  .balance { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; border-radius: var(--r); font-weight: 700; border: 1px solid; }
+  .balance.up { background: linear-gradient(90deg, rgba(110, 231, 160, .16), rgba(110, 231, 160, .04)); border-color: rgba(110, 231, 160, .38); color: var(--green); }
+  .balance.down { background: linear-gradient(90deg, rgba(255, 138, 138, .16), rgba(255, 138, 138, .04)); border-color: rgba(255, 138, 138, .38); color: var(--red); }
+
+  .cmp { width: 100%; font-size: 12px; }
+  .cmp th { text-align: right; color: var(--dim); font-weight: 600; font-size: 10px; letter-spacing: .1em; padding: 2px 0 6px; }
+  .cmp td { text-align: right; padding: 3px 0; } .cmp td:first-child, .cmp th:first-child { text-align: left; }
+  /* the hunt the comparison is made with: a button that opens the list (the previous hunt, the 5 best) */
+  .cmp-dd { display: flex; align-items: center; gap: 6px; width: 100%; margin: -4px 0 6px; padding: 2px 7px; background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r-sm);
+            color: var(--dim); font: inherit; font-size: 11px; line-height: 1.45; text-align: left; cursor: pointer; }
+  .cmp-dd .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmp-dd svg { flex: none; transition: transform .15s; } .cmp-dd.on svg { transform: rotate(180deg); }
+  .cmp-dd:hover, .cmp-dd.on { color: var(--text); border-color: var(--purple); }
+  .cmp-dd:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
+  .cmp-dd .rk, #cmpMenu .rk { color: var(--purple); font-weight: 700; }
+  .cmp-dd .lo, #cmpMenu .lo { color: var(--orange); }
+  #cmpMenu { position: absolute; left: 10px; right: 10px; z-index: 41; overflow-y: auto; padding: 4px 0 6px; background: #0e1730; border: 1px solid var(--purple); border-radius: var(--r); box-shadow: 0 14px 34px rgba(0, 0, 0, .6); font-size: 12px; }
+  #cmpMenu .cm-h { font: 700 10px/1 var(--serif); letter-spacing: .14em; color: var(--dim); text-transform: uppercase; margin: 8px 12px 5px; }
+  #cmpMenu .cm-modes { display: flex; gap: 4px; margin: 0 12px 2px; }
+  #cmpMenu .cm-modes button { flex: 1; padding: 4px 0; background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--dim); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+  #cmpMenu .cm-modes button:hover { color: var(--text); }
+  #cmpMenu .cm-modes button.on { color: var(--purple); border-color: var(--purple); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); }
+  #cmpMenu .cm-item { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; column-gap: 6px; width: 100%; padding: 5px 12px; background: none; border: 0; border-left: 2px solid transparent; color: var(--text); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+  #cmpMenu .cm-item:hover, #cmpMenu .cm-item:focus-visible { background: rgba(255, 255, 255, .05); outline: none; }
+  #cmpMenu .cm-item.sel { border-left-color: var(--purple); background: rgba(255, 255, 255, .04); }
+  #cmpMenu .cm-item .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #cmpMenu .cm-item .val { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #cmpMenu .cm-item .sub { grid-column: 2 / 4; color: var(--dim); font-size: 11px; }
+  #cmpMenu .cm-item .here { color: var(--teal); }
+  #cmpMenu .cm-empty, #cmpMenu .cm-note { margin: 2px 12px; color: var(--dim); font-size: 11px; line-height: 1.45; }
+  #cmpMenu .cm-note { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+  #cmpTip { position: fixed; z-index: 60; max-width: 300px; padding: 9px 11px; background: #0b1224; border: 1px solid var(--line2); border-radius: var(--r-sm); box-shadow: 0 10px 26px rgba(0, 0, 0, .55);
+            color: var(--text); font-size: 11.5px; line-height: 1.45; pointer-events: none; }
+  #cmpTip p { margin: 0 0 6px; } #cmpTip p:last-child { margin: 0; } #cmpTip b { color: var(--purple); }
+  /* lists of drops and captures: rows like bars; a rare one gets the purple accent of the game's rare drop */
+  .drops .row { background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); padding: 7px 11px; margin-bottom: 5px; font-size: 12px; }
+  .drops .q { color: var(--dim2); font-size: 10px; }
+  /* the drops: an item worth 10,000 or more (the price of ONE at the NPC shop) has a gold edge and a gold tint, one worth 100,000 or more a stronger one and a star */
+  .drops .row { align-items: center; gap: 8px; }
+  .drops .row .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drops .row.hot { background: linear-gradient(90deg, rgba(227, 192, 107, .17), rgba(227, 192, 107, .04)); border-color: rgba(227, 192, 107, .5); box-shadow: inset 3px 0 0 var(--gold); }
+  .drops .row.hot .nm { color: var(--gold); font-weight: 700; }
+  .drops .row.hot .gold { color: var(--gold); font-weight: 700; }
+  .drops .row.top { background: linear-gradient(90deg, rgba(227, 192, 107, .30), rgba(227, 192, 107, .08)); border-color: rgba(227, 192, 107, .8); box-shadow: inset 3px 0 0 var(--gold), 0 0 14px rgba(227, 192, 107, .22); }
+  .drops .row.hot .q { color: rgba(227, 192, 107, .75); }
+  .row.rare, .cap.rare { background: var(--purple-tint); border-color: rgba(180, 120, 255, .45); box-shadow: inset 3px 0 0 var(--purple-edge); color: var(--purple); }
+  .row.rare .gold, .row.rare .q { color: var(--purple); }
+
+  /* the per-account list: no boxes, one fading line between the accounts */
+  .acard { padding: 8px 6px; cursor: pointer; border-radius: var(--r-sm); }
+  .acard + .acard { border-top: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
+  .acard:hover { background: rgba(227, 192, 107, .05); }
+  .acard .top { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .acard .top .money { margin-left: auto; color: var(--gold); font-weight: 700; font-size: 12px; }
+  .acard .top .dia { color: var(--gem); font-weight: 700; font-size: 12px; }
+  /* the gem (the picture of the diamonds) and the colour of the numbers that go with it: the colour of the gem itself */
+  :root { --gem: #75cff8; }
+  .gem { height: 1.15em; width: auto; vertical-align: -.2em; margin-right: 3px; }
+  .gemc { color: var(--gem); }
+  /* the settings of the Summary: opens under the header, over the Summary */
+  #side-btn-on, #btnSumSettings.on, #btnSumLock.on { color: var(--gold); border-color: var(--gold); }
+  #sumSettings { position: absolute; top: 48px; left: 10px; right: 10px; z-index: 40; max-height: calc(100% - 62px); overflow-y: auto; padding: 10px 14px 12px; background: #0e1730; border: 1px solid var(--gold); border-radius: var(--r); box-shadow: 0 14px 34px rgba(0, 0, 0, .6); }
+  #sumSettings .ss-scope { font-size: 11px; color: var(--dim); margin: 0 0 4px; }
+  #sumSettings .ss-h { font: 700 10.5px/1 var(--serif); letter-spacing: .16em; color: var(--dim); text-transform: uppercase; margin: 12px 0 5px; padding-bottom: 5px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
+  #sumSettings .ss-row { display: flex; align-items: center; gap: 9px; padding: 4px 2px; font-size: 13px; cursor: pointer; color: var(--text, #e6ebf7); }
+  #sumSettings .ss-row:hover { background: rgba(255, 255, 255, .04); }
+  #sumSettings .ss-row .n { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+  #sumSettings .ss-row.off .nm { color: var(--dim); }
+  #sumSettings .ss-row.zero .nm { color: #9aa6c4; }
+  #sumSettings .ss-row .nm .gone { font-size: 11px; color: var(--dim2, #6f7b99); }
+  #sumSettings .ss-cb { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; flex: none; margin: 0; border-radius: 3px; background: #e9edf5; border: 1px solid #9aa6bf; position: relative; cursor: pointer; }
+  #sumSettings .ss-cb:checked { background: #3fb86b; border-color: #3fb86b; }
+  #sumSettings .ss-cb:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  #sumSettings .ss-cb:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #sumSettings select, #sumSettings input[type=number] { background: #0b1224; color: var(--text, #e6ebf7); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 8px; font: inherit; font-size: 12.5px; }
+  #sumSettings .ss-line { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 3px 2px; flex-wrap: wrap; }
+  #sumSettings input[type=number] { width: 92px; }
+  #sumSettings .ss-note { margin-top: 10px; font-size: 11px; line-height: 1.45; color: var(--dim); }
+  #sumSettings .ss-empty { font-size: 12px; color: var(--dim); padding: 4px 2px; }
+  .acard .ln.balls { gap: 2px 6px; font-size: 11px; }
+  .acard .ln.balls b { color: #fff; font-weight: 700; }
+  .acard .ln { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; margin-top: 3px; color: #c9d2ea; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+
+  /* ---------- main column ---------- */
+  #mainCol { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topTabs { display: flex; gap: 8px; padding: 14px 18px 0; align-items: center; }
+  #topTabs .vt { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); color: var(--dim); padding: 7px 16px; border-radius: var(--r-sm); cursor: pointer;
+                 font-family: var(--serif); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
+  #topTabs .vt:hover { color: var(--text); border-color: var(--line2); }
+  #topTabs .vt.on { color: var(--gold); border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(227, 192, 107, .18), 0 0 14px rgba(227, 192, 107, .12); }
+  #topTabs .sp { flex: 1; }
+  #topTabs .live { font-size: 11px; color: var(--dim2); }
+  #mainScroll { flex: 1; overflow-y: auto; padding: 14px 18px 24px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 14px; }
+  .kpi { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04); }
+  .kpi .v { font-size: 26px; font-weight: 700; letter-spacing: -.5px; }
+  .kpi .l { font-size: 10px; letter-spacing: .12em; color: var(--dim); margin-top: 4px; text-transform: uppercase; font-weight: 600; }
+
+  .card { background: linear-gradient(180deg, #131c36, #0e1629); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); }
+  .card h2, .card .h { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; font-size: 12px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase;
+                       padding-bottom: 7px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 70%) 1; }
+  .card .h .grow { flex: 1; }
+  .card table { width: 100%; border-collapse: collapse; }
+  .card th { text-align: left; font-size: 10px; letter-spacing: .12em; color: var(--dim); font-weight: 700; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; text-transform: uppercase; }
+  .card td { padding: 8px 7px; border-bottom: 1px solid #141d3a; white-space: nowrap; }
+  .card th { padding-left: 7px; padding-right: 7px; }
+  /* long texts are cut with "..." instead of pushing the Status column out of view */
+  #tableWrap td:nth-child(2), #tableWrap td:nth-child(3) { max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+  #tableWrap td:nth-child(10) { max-width: 230px; overflow: hidden; text-overflow: ellipsis; }
+  #tableWrap td:nth-child(11) { max-width: 350px; overflow: hidden; text-overflow: ellipsis; }
+  .card tr:last-child td { border-bottom: 0; }
+  #tableWrap { overflow-x: auto; }
+  #tableWrap th.sortable { cursor: pointer; } #tableWrap th.sortable:hover { color: var(--gold); }
+  #tableWrap tbody tr { cursor: pointer; } #tableWrap tbody tr:hover td { background: rgba(227, 192, 107, .05); }
+  #tableWrap tbody tr.sel td { background: rgba(227, 192, 107, .10); }
+  #tableWrap tr.total td { font-weight: 700; border-top: 1px solid var(--line2); }
+  .xp { color: var(--blue); }
+  .tw { font-weight: 700; }      /* a tier word (Comum, Rara...) is bold, as in the game's capture log */
+  .badge { display: inline-block; padding: 2px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid; }
+  .b-wait { color: var(--dim); border-color: var(--line); background: #131b36; }
+  .b-conn { color: var(--blue); border-color: rgba(157, 180, 255, .35); background: #172552; }
+  .b-hunt { color: var(--green); border-color: rgba(110, 231, 160, .35); background: #123524; }
+  .b-stop { color: var(--red); border-color: rgba(255, 138, 138, .35); background: #3a1620; }
+
+  .caps { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+  .eggs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px 28px; }
+  .eggcol .top { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 8px; }
+  .eggcol .top .cnt { margin-left: auto; color: var(--dim); font-weight: 500; }
+  .egg { margin-bottom: 10px; }
+  .egg .t { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
+  .egg .raw { color: var(--dim2); font-size: 11px; word-break: break-word; margin-top: 3px; line-height: 1.5; }
+  .egg .bar > i { background: linear-gradient(90deg, #3d863a, var(--green)); }
+  /* lang-44: each egg is a ring that fills as it incubates (green, darker at the start and brighter at the tip), with the % and the time LEFT inside */
+  .rings { display: flex; flex-wrap: wrap; gap: 10px 12px; }
+  .ring { width: 78px; text-align: center; }
+  .ring .dial { position: relative; width: 78px; height: 78px; }
+  .ring .arc { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#1d6b3a 0deg, var(--tip) calc(var(--p) * 3.6deg), rgba(255, 255, 255, .09) calc(var(--p) * 3.6deg));
+               -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px)); mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px)); }
+  .ring.ready .arc { box-shadow: none; filter: drop-shadow(0 0 5px rgba(120, 240, 150, .45)); }
+  .ring .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+  .ring .in b { font-size: 16px; font-weight: 700; color: #fff; }
+  .ring .in span { font-size: 11px; color: var(--dim); white-space: nowrap; }
+  .ring.ready .in span { color: var(--green); font-weight: 600; }
+  .ring .nm { margin-top: 4px; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* the captures card is the left half of its row; the right half is left empty for another table */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .split > .card { margin-bottom: 14px; min-width: 0; }
+  /* the day's tracker (lang-47): one row per thing worth seeing, newest first */
+  #todayList .ev { display: grid; grid-template-columns: 40px 16px minmax(0, 1fr); align-items: center; column-gap: 8px; height: 36px; box-sizing: border-box; padding: 0 11px; margin-bottom: 4px; border-radius: var(--r-sm);
+                   background: var(--bg2); border: 1px solid #141d3a; font-size: 12px; }
+  #todayList .ev .when { color: var(--dim2); font-variant-numeric: tabular-nums; }
+  #todayList .ev .mk { text-align: center; font-size: 13px; }
+  #todayList .ev .tx { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #todayList .ev .tx .who { color: var(--dim); }
+  #todayList .ev.shiny { border-color: rgba(255, 216, 107, .55); background: linear-gradient(90deg, rgba(255, 216, 107, .14), rgba(255, 143, 208, .05)); }
+  #todayList .ev.shiny .mk, #todayList .ev.drop .mk { color: var(--gold); }
+  #todayList .ev.catch .mk { color: var(--purple); } #todayList .ev.egg .mk { color: var(--green); } #todayList .ev.evo .mk { color: var(--blue); } #todayList .ev.hunt .mk { color: var(--teal); }
+  #todayList .empty { color: var(--dim); font-size: 12px; padding: 8px 2px; line-height: 1.5; }
+  #future { min-width: 0; }
+  /* the list shows 8 whole rows (8 x 40 px) and scrolls one row at a time: it can never stop with a row cut in half */
+  .scrollbox { overflow-y: auto; scroll-snap-type: y mandatory; }
+  #capList { max-height: 320px; }
+  .cap { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 11px; margin-bottom: 4px; scroll-snap-align: start; background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); }
+  .cap .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cap .mult { width: 52px; text-align: right; } .cap .iv { width: 66px; text-align: right; font-weight: 700; } .cap .ctime { width: 44px; text-align: right; color: var(--dim2); }          /* the time of a capture. (Not "tm": that is the class of a team row in the summary, and its box styling leaked onto every time) */
+  .empty { color: var(--dim); padding: 14px 4px; font-size: 12px; line-height: 1.7; }
+  /* layout chosen with the top bar's Panel and Simple buttons */
+  body.no-summary #side { display: none; }
+  body.no-main #mainCol { display: none; }
+  body.no-main #side { width: 100%; min-width: 0; border-right: 0; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="side-head"><span>SUMMARY</span><span class="grow"></span><button class="icon-btn" id="btnSumLock" title="Lock the Summary on what it shows now, so it does not follow the expanded screen" aria-label="Lock the Summary" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button><button class="icon-btn" id="btnSumSettings" title="Summary settings" aria-label="Summary settings"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
+    <div id="sumSettings" class="hidden" role="dialog" aria-label="Summary settings"></div>
+    <div id="cmpMenu" class="hidden" role="listbox" aria-label="Compare with"></div>
+    <div id="cmpTip" class="hidden" role="tooltip"></div>
+    <div id="tabs"></div>
+    <div id="sideBody"></div>
+  </aside>
+
+  <section id="mainCol">
+    <div id="topTabs">
+      <button class="vt on" data-view="overview">Overview</button>
+      <span class="sp"></span><span class="live" id="liveNote"></span>
+    </div>
+    <div id="mainScroll">
+      <div id="view-overview">
+        <div class="kpis" id="kpis"></div>
+        <div class="card">
+          <div class="h"><span>Per account &middot; click a header to sort, a row to open it in the summary</span><span class="grow"></span>
+            <label style="letter-spacing:0;text-transform:none">Best catch:
+              <select id="bestMode"><option value="iv">IV</option><option value="quality">Quality</option></select></label>
+          </div>
+          <div id="tableWrap"></div>
+        </div>
+        <div class="card hidden" id="eggCard">
+          <div class="h"><span>Incubators &middot; breeding, every account</span></div>
+          <div class="eggs" id="eggGrid"></div>
+        </div>
+        <div class="split">
+        <div class="card">
+          <div class="h"><span>Latest captures &middot; all accounts</span></div>
+          <div class="caps">
+            <select id="capAcc"><option value="all">all</option></select>
+            <input type="text" id="capSearch" placeholder="Search Pok&eacute;mon" style="width:122px">
+            <select id="capRar"><option value="all">all rarities</option></select>
+            <input type="number" id="capIv" placeholder="IV &ge;" min="0" max="192" style="width:64px">
+            <input type="number" id="capQ" placeholder="&times; &ge;" min="0" step="0.1" style="width:64px">
+            <select id="capSort" title="Order of the list" aria-label="Order of the list"><option value="new">latest</option><option value="iv">highest IV</option><option value="q">highest quality</option><option value="ivq">IV &times; Quality</option></select>
+            <button class="btn" id="capShiny" title="Shiny only">&#10022; shiny only</button>
+          </div>
+          <div class="scrollbox" id="capList"></div>
+        </div>
+        <div class="card" id="todayCard">
+          <div class="h"><span>Today &middot; 00:00 to 23:59</span><span class="grow"></span><span class="chip" id="todayCount"></span></div>
+          <div class="scrollbox" id="todayList"></div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="hunt-data.js"></script>
+<script>
+const t = (en, p) => I18N.t(en, p);            // the text of the app in the chosen language (English is the key); see i18n.js
+const tt = s => s;                                // marks a text that is looked up later, where it is shown (a column title kept in a list)
+I18N.load();
+// errors of this page, kept for the Diagnostics window (index.html asks for them)
+const diagErrors = [];
+function diagNote(msg) { diagErrors.push({ t: Date.now(), msg: String(msg).slice(0, 300) }); if (diagErrors.length > 30) diagErrors.shift(); }
+window.addEventListener('error', e => diagNote((e.message || 'error') + (e.filename ? ' (' + String(e.filename).split('/').pop() + ':' + e.lineno + ')' : '')));
+window.addEventListener('unhandledrejection', e => diagNote('unhandled rejection: ' + (e.reason && e.reason.message || e.reason)));
+// =====================================================================================
+//  Data model. live.js (loaded below) fills `accounts` from the game's own connection.
+// =====================================================================================
+// one colour per account, from theme.js (the same ones the top bar and the panels use)
+const COLORS = (window.HG_ACCOUNT || [{ base: '#ecbafe' }, { base: '#5995fb' }, { base: '#05d6bd' }, { base: '#f46683' }]).map(c => c.base);
+const accounts = [0, 1, 2, 3].map(i => ({ idx: i, name: 'Conta ' + (i + 1) }));
+let selected = 'sum';                 // 'sum' or the index of an account
+let bestMode = 'iv';                  // iv | quality | score (live.js adds the third option)
+const sortState = { key: 'name', dir: 1 };
+const capFilter = { acc: 'all', text: '', rar: 'all', iv: 0, q: 0, shiny: false, sort: (() => { try { const v = localStorage.getItem('4h.capSort'); return ['new', 'iv', 'q', 'ivq'].indexOf(v) >= 0 ? v : 'new'; } catch (e) { return 'new'; } })() };   // the order is kept on this computer, the filters are not
+const captureLog = [];                // every capture seen since this page opened, newest first
+
+const SESSION_KEYS = ['defeated', 'xpGained', 'captures', 'lootSell', 'captureSell', 'suppliesCost', 'ballsUsed', 'healsUsed', 'profit',
+  'minutes', 'sessionTime', 'goldH', 'xpH', 'killsH', 'killsHAll', 'partyKills', 'drops', 'lastCaught', 'recentCatches', 'bestIV', 'bestQ', 'bestS',
+  'shinyCaptured', 'catchesSeen', 'lastProgress'];
+
+// called by live.js when a new hunt starts: keep a summary of the hunt that just ended for the "previous hunt" comparison
+function resetSession(a) {
+  if ((a.minutes || 0) >= 2 && a.hunt) {
+    a.prev = { hunt: a.hunt, goldH: a.goldH || 0, xpH: a.xpH || 0, killsH: a.killsH || 0, minutes: a.minutes };
+  }
+  huntLogRecord(a); huntLogSave(true);                // the hunt that ends is kept with its last numbers
+  delete a.__sid;
+  SESSION_KEYS.forEach(k => { delete a[k]; });
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// the hunts of each account, kept on this computer, for the comparison with the best ones ("4h.hunts")
+// one entry per hunt session (the game's own session: its startedAt), with the averages the game shows for it: { h: hunt, m: minutes, g: gold/h, x: xp/h, k: kills/h, q: order }
+// the session that is running is kept too (it is updated while it runs), so a session is not lost when the app is closed; it is left out of the comparison while it runs
+// ---------------------------------------------------------------------------------------------------------------
+const HUNTKEY = '4h.hunts', HUNT_KEEP = 200, HUNT_MIN = 2, HUNT_GOOD = 30;          // at most 200 sessions per account; sessions under 2 min are not kept; 30 min = the suggested time for a reliable average
+const huntLog = (() => {
+  let o = {}; try { o = JSON.parse(localStorage.getItem(HUNTKEY)) || {}; } catch (e) {}
+  const fin = v => typeof v === 'number' && isFinite(v);
+  const out = { 1: {}, 2: {}, 3: {}, 4: {} }; let q = 0;
+  [1, 2, 3, 4].forEach(n => {
+    const src = o && o.acc && typeof o.acc[n] === 'object' && o.acc[n] ? o.acc[n] : {};
+    Object.keys(src).slice(0, HUNT_KEEP * 2).forEach(sid => {
+      const e = src[sid];
+      if (!e || typeof e.h !== 'string' || !e.h || !fin(e.m) || e.m < HUNT_MIN || e.m > 1e6 || !fin(e.g) || !fin(e.x) || !fin(e.k) || !fin(e.q)) return;
+      out[n][String(sid).slice(0, 60)] = { h: e.h.slice(0, 80), m: e.m, g: e.g, x: e.x, k: e.k, q: e.q }; q = Math.max(q, e.q);
+    });
+  });
+  return { acc: out, q: q, dirty: false, savedAt: -1e9, error: false };
+})();
+let huntSidN = 0;
+const huntSid = a => (a.startedAt !== undefined && a.startedAt !== null) ? 's' + String(a.startedAt).slice(0, 40) : (a.__sid || null);
+function huntLogRecord(a) {                          // keeps (or updates) the session of an account that is running
+  if (!a || !a.hunt || n0(a.minutes) < HUNT_MIN) return;
+  let sid = huntSid(a);
+  if (!sid) sid = a.__sid = 'l' + Date.now() + '-' + (++huntSidN);          // the game sent no start time: one id for as long as this session lasts here
+  const box = huntLog.acc[a.idx + 1]; if (!box) return;
+  const old = box[sid], e = { h: String(a.hunt).slice(0, 80), m: n0(a.minutes), g: n0(a.goldH), x: n0(a.xpH), k: n0(a.killsH), q: old ? old.q : ++huntLog.q };
+  if (old && old.h === e.h && old.m === e.m && old.g === e.g && old.x === e.x && old.k === e.k) return;
+  box[sid] = e; huntLog.dirty = true;
+  const ids = Object.keys(box);
+  if (ids.length > HUNT_KEEP) ids.sort((x, y) => box[x].q - box[y].q).slice(0, ids.length - HUNT_KEEP).forEach(id => { delete box[id]; });       // the oldest go first
+}
+function huntLogSave(now) {                          // at most every 20 s while a hunt runs, at once when a hunt ends or the page closes
+  if (!huntLog.dirty) return;
+  const t0 = performance.now();
+  if (!now && t0 - huntLog.savedAt < 20000) return;
+  huntLog.savedAt = t0; huntLog.dirty = false;
+  try { localStorage.setItem(HUNTKEY, JSON.stringify({ v: 1, acc: huntLog.acc })); huntLog.error = false; } catch (e) { huntLog.error = true; }
+}
+window.addEventListener('pagehide', () => huntLogSave(true));
+window.addEventListener('beforeunload', () => huntLogSave(true));
+// the hunts an account did before the session that runs now, each one the average of all its time (a long visit counts more than a short one)
+function huntStats(a) {
+  const box = huntLog.acc[a.idx + 1] || {}, cur = huntSid(a), by = {};
+  Object.keys(box).forEach(sid => {
+    if (sid === cur) return;
+    const e = box[sid], s = by[e.h] || (by[e.h] = { name: e.h, m: 0, g: 0, x: 0, k: 0, n: 0, q: 0 });
+    s.m += e.m; s.g += e.g * e.m; s.x += e.x * e.m; s.k += e.k * e.m; s.n++; s.q = Math.max(s.q, e.q);
+  });
+  return Object.keys(by).map(h => { const s = by[h]; return { name: s.name, minutes: s.m, goldH: s.g / s.m, xpH: s.x / s.m, killsH: s.k / s.m, visits: s.n, q: s.q }; });
+}
+// the best hunts for one way of ranking: $ = gold/h, XP = xp/h, $+XP = both together, each against the best hunt of the account (so that millions of XP do not drown the gold)
+function huntRanked(list, mode) {
+  const maxG = Math.max(0, ...list.map(s => s.goldH)), maxX = Math.max(0, ...list.map(s => s.xpH));
+  const score = s => mode === 'xp' ? s.xpH : mode === 'gold' ? s.goldH : (maxG > 0 ? s.goldH / maxG : 0) + (maxX > 0 ? s.xpH / maxX : 0);
+  return list.map(s => Object.assign({}, s, { score: score(s) })).sort((x, y) => (y.score - x.score) || (y.minutes - x.minutes) || x.name.localeCompare(y.name));
+}
+// the previous hunt of an account: the one this page saw end, or else the last one kept on this computer (after the app was started again)
+function huntPrev(a) {
+  if (a.prev) return a.prev;
+  const box = huntLog.acc[a.idx + 1] || {}, cur = huntSid(a);
+  let best = null; Object.keys(box).forEach(sid => { if (sid !== cur && (!best || box[sid].q > best.q)) best = box[sid]; });
+  return best ? { hunt: best.h, goldH: best.g, xpH: best.x, killsH: best.k, minutes: best.m } : null;
+}
+// what the comparison of an account shows: the hunt chosen in the list, or else the previous hunt, or else the best one
+let cmpOpen = null;                                   // the account whose list is open (null: closed)
+const cmpSel = {};                                    // per account: the name of the hunt chosen in the list (none: the previous hunt)
+function cmpPick(a) {
+  const prev = huntPrev(a), ranked = huntRanked(huntStats(a), sumCfg.rank), want = cmpSel[a.idx];
+  if (want) { const i = ranked.findIndex(s => s.name === want); if (i >= 0) return { kind: 'hunt', v: ranked[i], rank: i + 1 }; }
+  if (prev) return { kind: 'prev', v: prev };
+  return ranked.length ? { kind: 'hunt', v: ranked[0], rank: 1 } : null;
+}
+const huntTime = m => { m = Math.round(n0(m)); return m < 60 ? t('{n} min', { n: fmt(m) }) : t('{h}h {m}m', { h: fmt(Math.floor(m / 60)), m: String(m % 60).padStart(2, '0') }); };
+function cmpMenuHtml(a) {
+  const pick = cmpPick(a), prev = huntPrev(a), ranked = huntRanked(huntStats(a), sumCfg.rank), mode = sumCfg.rank;
+  const val = s => mode === 'xp' ? '<span class="blue">' + fmt(s.xpH) + ' ' + t('XP/h') + '</span>'
+    : mode === 'gold' ? '<span class="' + signCls(s.goldH) + '">' + sgn(s.goldH) + '/h</span>'
+    : '<span class="' + signCls(s.goldH) + '">' + sgn(s.goldH) + '</span> <span class="dim">&middot;</span> <span class="blue">' + fmt(s.xpH) + ' XP</span>';
+  const modeBtn = (m, label) => '<button type="button" data-rank="' + m + '" role="radio" aria-checked="' + (mode === m) + '"' + (mode === m ? ' class="on"' : '') + '>' + label + '</button>';
+  let h = '<div class="cm-h">' + t('Rank by') + '</div><div class="cm-modes" role="radiogroup" aria-label="' + t('Rank by') + '">' + modeBtn('gold', '$') + modeBtn('xp', 'XP') + modeBtn('both', '$+XP') + '</div>';
+  if (prev) {
+    h += '<div class="cm-h">' + t('Previous hunt') + '</div>' +
+      '<button type="button" class="cm-item' + (pick && pick.kind === 'prev' ? ' sel' : '') + '" data-cmp="prev" role="option" aria-selected="' + !!(pick && pick.kind === 'prev') + '"><span class="rk"></span><span class="nm">' + esc(prev.hunt) + '</span><span class="val">' + val(prev) + '</span>' +
+      '<span class="sub">' + t('{n} min', { n: fmt(prev.minutes) }) + '</span></button>';
+  }
+  h += '<div class="cm-h">' + (mode === 'xp' ? t('Best 5 by XP per hour') : mode === 'gold' ? t('Best 5 by gold per hour') : t('Best 5 by gold and XP together')) + '</div>';
+  if (!ranked.length) h += '<div class="cm-empty">' + t('No other hunts yet. A hunt shows here after {n} minutes or more on it.', { n: HUNT_MIN }) + '</div>';
+  let thin = false;
+  ranked.slice(0, 5).forEach((s, i) => {
+    const lo = s.minutes < HUNT_GOOD, on = pick && pick.kind === 'hunt' && pick.v.name === s.name; thin = thin || lo;
+    h += '<button type="button" class="cm-item' + (on ? ' sel' : '') + (lo ? ' thin' : '') + '" data-cmp="' + esc(s.name) + '" role="option" aria-selected="' + !!on + '"' +
+      (lo ? ' title="' + t('Only {t} on this hunt so far: spend at least {n} min there for a reliable average', { t: huntTime(s.minutes), n: HUNT_GOOD }) + '"' : '') + '>' +
+      '<span class="rk">#' + (i + 1) + '</span><span class="nm">' + esc(s.name) + '</span><span class="val">' + val(s) + '</span>' +
+      '<span class="sub">' + huntTime(s.minutes) + (lo ? ' <span class="lo">\u25cb</span>' : '') + ' &middot; ' + (s.visits === 1 ? t('1 visit') : t('{n} visits', { n: fmt(s.visits) })) + (s.name === a.hunt ? ' &middot; <span class="here">' + t('here now') + '</span>' : '') + '</span></button>';
+  });
+  if (thin) h += '<div class="cm-note"><span class="lo">\u25cb</span> ' + t('Under {n} min on this hunt: the average can still change a lot.', { n: HUNT_GOOD }) + '</div>';
+  return h;
+}
+function cmpTipHtml() {
+  return '<p>' + t('Choose what this hunt is compared with: the previous hunt, or one of the 5 best hunts of this account, from best to worst.') + '</p>' +
+    '<p>' + t('Rank by: <b>$</b> gold per hour, <b>XP</b> XP per hour, <b>$+XP</b> both together (each as a share of this account\u2019s best hunt, then added).') + '</p>' +
+    '<p>' + t('Each hunt is the average of all the time this account spent on it, kept on this computer.') + '</p>' +
+    '<p>' + t('For a reliable average spend at least {n} minutes on a hunt (in one visit or several); 1 hour or more is best. Hunts with less are marked \u25cb.', { n: HUNT_GOOD }) + '</p>';
+}
+// the list opens under the button (or above it when there is no room below) and stays where it is while the Summary is drawn again
+function placeCmpMenu() {
+  const menu = document.getElementById('cmpMenu'), btn = document.getElementById('cmpBtn'), a = cmpOpen === null ? null : accounts[cmpOpen];
+  if (cmpOpen !== null && (!btn || !a || selected !== cmpOpen)) { cmpOpen = null; if (btn) { btn.classList.remove('on'); btn.setAttribute('aria-expanded', 'false'); } }
+  menu.classList.toggle('hidden', cmpOpen === null);
+  if (cmpOpen === null) return;
+  const html = cmpMenuHtml(a);
+  if (menu.dataset.html !== html) { menu.dataset.html = html; menu.innerHTML = html; }
+  const side = document.getElementById('side').getBoundingClientRect(), r = btn.getBoundingClientRect();
+  menu.style.maxHeight = ''; const need = menu.scrollHeight + 2;
+  const below = side.bottom - r.bottom - 10, above = r.top - side.top - 10;
+  const down = need <= below || below >= above, room = Math.max(80, down ? below : above);
+  menu.style.maxHeight = Math.min(need, room) + 'px';
+  menu.style.top = (down ? r.bottom - side.top + 4 : r.top - side.top - 4 - Math.min(need, room)) + 'px';
+}
+function setCmpOpen(v) {
+  cmpOpen = v; hideCmpTip();
+  const btn = document.getElementById('cmpBtn');
+  if (btn) { btn.classList.toggle('on', cmpOpen !== null); btn.setAttribute('aria-expanded', String(cmpOpen !== null)); }
+  placeCmpMenu();
+}
+// the explanation shows when the pointer stays on the button for a moment (the button is drawn again every second, so it is not the browser's own tooltip)
+let cmpTipTimer = null, cmpTipQuiet = false;            // quiet: the button was pressed, so the explanation waits until the pointer has left it (as a browser tooltip does)
+function showCmpTip() {
+  const tip = document.getElementById('cmpTip'), btn = document.getElementById('cmpBtn');
+  if (!btn || cmpOpen !== null) return hideCmpTip();
+  tip.classList.remove('hidden');
+  const r = btn.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+  const left = Math.max(6, Math.min(r.left, innerWidth - w - 6));
+  const top = (r.top - h - 8 >= 6) ? r.top - h - 8 : Math.min(innerHeight - h - 6, r.bottom + 8);
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+function hideCmpTip() { clearTimeout(cmpTipTimer); cmpTipTimer = null; document.getElementById('cmpTip').classList.add('hidden'); }
+const cmpTipShown = () => !document.getElementById('cmpTip').classList.contains('hidden');
+document.addEventListener('pointermove', e => {
+  const over = !!(e.target.closest && e.target.closest('#cmpBtn'));
+  if (!over) { cmpTipQuiet = false; if (cmpTipTimer || cmpTipShown()) hideCmpTip(); return; }
+  if (!cmpTipShown() && !cmpTipTimer && cmpOpen === null && !cmpTipQuiet) cmpTipTimer = setTimeout(() => { cmpTipTimer = null; showCmpTip(); }, 450);
+});
+document.documentElement.addEventListener('pointerleave', () => { cmpTipQuiet = false; hideCmpTip(); });
+document.addEventListener('focusin', e => { if (e.target.id === 'cmpBtn' && e.target.matches(':focus-visible') && cmpOpen === null) showCmpTip(); });
+document.addEventListener('focusout', e => { if (e.target.id === 'cmpBtn') hideCmpTip(); });
+// opened with the pointer when it goes DOWN (the Summary is drawn again every second, and a click split between two drawings would be lost); the keyboard opens it with Enter or Space
+document.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const btn = e.target.closest && e.target.closest('#cmpBtn');
+  if (btn) { e.preventDefault(); cmpTipQuiet = true; setCmpOpen(cmpOpen === null ? selected : null); return; }
+  if (cmpOpen !== null && !document.getElementById('cmpMenu').contains(e.target)) setCmpOpen(null);
+  hideCmpTip();
+});
+document.addEventListener('click', e => {
+  const btn = e.target.closest && e.target.closest('#cmpBtn');
+  if (btn && e.detail === 0) { setCmpOpen(cmpOpen === null ? selected : null); if (cmpOpen !== null) { const f = document.querySelector('#cmpMenu .cm-item.sel') || document.querySelector('#cmpMenu .cm-item'); if (f) f.focus(); } return; }
+  const rk = e.target.closest && e.target.closest('#cmpMenu [data-rank]');
+  if (rk) { const m = rk.getAttribute('data-rank'); sumCfg.rank = m; saveSumCfg(); renderAll(); if (e.detail === 0) { const f = document.querySelector('#cmpMenu [data-rank="' + m + '"]'); if (f) f.focus(); } return; }
+  const it = e.target.closest && e.target.closest('#cmpMenu [data-cmp]');
+  if (it && cmpOpen !== null) {
+    const v = it.getAttribute('data-cmp');
+    if (v === 'prev') delete cmpSel[cmpOpen]; else cmpSel[cmpOpen] = v;
+    setCmpOpen(null); renderAll();
+    const b = document.getElementById('cmpBtn'); if (b && e.detail === 0) b.focus();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (cmpOpen === null) return;
+  if (e.key === 'Escape') { setCmpOpen(null); const b = document.getElementById('cmpBtn'); if (b) b.focus(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    const items = Array.from(document.querySelectorAll('#cmpMenu .cm-item')); if (!items.length) return;
+    const i = items.indexOf(document.activeElement); e.preventDefault();
+    items[(i < 0 ? 0 : (i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length)].focus();
+  }
+});
+
+function minutesAgo(t) {
+  const m = /(\d+):(\d+)/.exec(t || '');
+  if (!m) return 0;
+  const now = new Date();
+  let d = now.getHours() * 60 + now.getMinutes() - (Number(m[1]) * 60 + Number(m[2]));
+  if (d < 0) d += 1440;
+  return d;
+}
+
+// live.js replaces this with the version that uses the game's data
+function refreshDerived() {
+  accounts.forEach(a => { a.status = a.live ? 'Connected' : 'Waiting'; a.bestCatch = a.bestCatch || '\u2014'; a.lastCatch = a.lastCatch || '\u2014'; });
+}
+
+// =====================================================================================
+//  Small helpers
+// =====================================================================================
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const n0 = v => (typeof v === 'number' && isFinite(v)) ? v : 0;
+const gemImg = '<img class="gem" src="gem.png" alt="">';
+// the choices of the Summary (kept on this computer): the kinds of balls and potions that are NOT counted, the type of best catch, and from which price a drop is highlighted
+const SUMKEY = '4h.summary';
+const sumCfg = (() => {
+  let o = {}; try { o = JSON.parse(localStorage.getItem(SUMKEY)) || {}; } catch (e) {}
+  const off = {}; if (o.off && typeof o.off === 'object') Object.keys(o.off).slice(0, 60).forEach(k => { if (o.off[k] === true) off[String(k).slice(0, 40)] = true; });
+  const tab = (o.tab === 'sum' || (Number.isInteger(o.tab) && o.tab >= 0 && o.tab <= 3)) ? o.tab : 'sum';
+  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold' };
+})();
+let sumOpen = false;                                   // is the panel of the settings open
+const saveSumCfg = () => { try { localStorage.setItem(SUMKEY, JSON.stringify(sumCfg)); } catch (e) {} };
+if (sumCfg.locked) selected = sumCfg.tab;                // locked: it starts on what it was locked on
+// balls and potions of an account: the sum of the kinds that are checked (when the reader does not send the kinds, the total it always sent)
+// the options of the game, listed even when there is none: the real Pok\u00e9 Balls (what Pok\u00e9mon DROP is not a ball: earth-ball is Bola de Terra, worth $1, and shadow-ball too) and the potions.
+// A ball the account itself is set to use (auto-catch) is a ball as well. Anything else the accounts have of these kinds (a potion with another name) is added to the list.
+const BALL_OPTIONS = ['ultra-ball', 'great-ball', 'poke-ball', 'luxury-ball', 'idle-ball', 'master-ball'];
+const POTION_OPTIONS = ['small-potion', 'potion', 'gift-potion', 'super-potion', 'great-potion', 'ultra-potion'];
+const ballKinds = () => { const s = new Set(BALL_OPTIONS); accounts.forEach(a => { if (a.autoBall) s.add(String(a.autoBall)); }); return s; };
+const typeSum = (types, off, allow) => Object.keys(types).reduce((s, id) => s + ((off[id] || (allow && !allow.has(id))) ? 0 : n0(types[id])), 0);
+const ballsOf = a => (a.ballTypes && typeof a.ballTypes === 'object') ? typeSum(a.ballTypes, sumCfg.off, ballKinds()) : n0(a.balls);
+const potionsOf = a => (a.potionTypes && typeof a.potionTypes === 'object') ? typeSum(a.potionTypes, sumCfg.off) : n0(a.potions);
+const sumFn = fn => accounts.reduce((s, a) => s + fn(a), 0);          // the diamonds are this picture, not a character
+
+function fmt(n) {
+  n = Number(n) || 0;
+  const a = Math.abs(n);
+  if (a < 10000) return Math.round(n).toLocaleString(I18N.locale());
+  const units = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+  for (let i = 0; i < units.length; i++) {
+    if (a >= units[i][0]) {
+      const x = n / units[i][0];
+      let s = Math.abs(x) >= 100 ? x.toFixed(0) : (Math.abs(x) >= 10 ? x.toFixed(1) : x.toFixed(2));
+      if (s.indexOf('.') >= 0) s = s.replace(/\.?0+$/, '');
+      return I18N.dec(s) + units[i][1];
+    }
+  }
+  return String(n);
+}
+const sgn = n => (n < 0 ? '-' : '+') + fmt(Math.abs(n));
+const signCls = n => (n < 0 ? 'neg' : 'pos');
+const sum = key => accounts.reduce((s, a) => s + n0(a[key]), 0);
+const liveAccounts = () => accounts.filter(a => a.live);
+const accName = a => esc(a.name);
+
+const RARITY = {   // the game's words -> colour
+  fraca: '#8d9ab8', weak: '#8d9ab8', comum: '#6ee7a0', common: '#6ee7a0', incomum: '#6fe0d2', uncommon: '#6fe0d2',
+  rara: '#c79bff', rare: '#c79bff', '\u00e9pica': '#f2b45c', epica: '#f2b45c', epic: '#f2b45c',
+  'lend\u00e1ria': '#e3c06b', lendaria: '#e3c06b', legendary: '#e3c06b', 'm\u00edtica': '#ff8ac0', mitica: '#ff8ac0', mythic: '#ff8ac0',
+  'anci\u00e3': '#ff8a8a', ancia: '#ff8a8a', ancient: '#ff8a8a', divina: '#ffffff', divine: '#ffffff'
+};
+const rarityParts = r => { const p = String(r || '').split(' \u00d7'); return { word: p[0] || '', mult: p[1] ? '\u00d7' + p[1] : '' }; };
+// The quality is shown as its multiplier and the IV only ("×1.16  121/192"), in the colour of the tier. Set this to true to show the tier word again (Incomum, Rara...).
+const SHOW_TIER_WORD = false;
+const rarityColor = w => (window.HG_TIER && window.HG_TIER(w)) || RARITY[String(w).toLowerCase()] || '#e9edf6';
+const ivColor = iv => window.HG_IV ? window.HG_IV(iv) : (iv > 180 ? '#95101b' : iv >= 168 ? '#ffa500' : iv >= 144 ? '#8a00c4' : iv >= 113 ? '#0f52ba' : iv >= 90 ? '#88e788' : '#d3d3d3');
+
+// the round emblem with the ring in the colour of the hunt's type (the panel number inside), like the game's hunt cards
+function emblem(a) { return '<span class="emb"><b>' + (a.idx + 1) + '</b></span>'; }
+const pin = '<svg width="11" height="11" viewBox="0 0 24 24" fill="#ff6b6b"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>';
+const star = '<span class="gold">\u2726</span>';
+
+// =====================================================================================
+//  Left: the Summary panel
+// =====================================================================================
+function drawTabs() {
+  const tabs = ['<button class="tab' + (selected === 'sum' ? ' on' : '') + '" data-tab="sum" title="All accounts together">\u03a3</button>'];
+  accounts.forEach((a, i) => tabs.push('<button class="tab' + (selected === i ? ' on' : '') + '" data-tab="' + i + '"><span class="dot" style="background:' + COLORS[i % COLORS.length] + '"></span>' + accName(a) + '</button>'));
+  const html = tabs.join('');
+  const el = document.getElementById('tabs');
+  if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; }
+}
+
+// the balls of one account in its card, one number for each kind that is checked in the settings (the ones it has), always in the same order so that the cards can be compared:
+// "4,636 Ultra \u00b7 626 Luxury". When the reader does not send the kinds, the total as before.
+function cardBalls(a) {
+  if (!(a.ballTypes && typeof a.ballTypes === 'object')) return '<span>' + fmt(n0(a.balls)) + ' ' + t('balls') + '</span>';
+  const allow = ballKinds(), rank = id => { const i = BALL_OPTIONS.indexOf(id); return i < 0 ? 99 : i; };
+  const ids = Object.keys(a.ballTypes).filter(id => allow.has(id) && !sumCfg.off[id] && n0(a.ballTypes[id]) > 0).sort((x, y) => (rank(x) - rank(y)) || x.localeCompare(y));
+  if (!ids.length) return '<span class="dim">0 ' + t('balls') + '</span>';
+  return ids.map(id => '<span class="bk" data-kind="' + esc(id) + '" title="' + esc(supplyName(id)) + ': ' + fullNum(n0(a.ballTypes[id])) + '"><b>' + fmt(n0(a.ballTypes[id])) + '</b> ' + esc(supplyName(id).replace(/ Ball$/, '')) + '</span>').join('');
+}
+function sideAll() {
+  const live = liveAccounts();
+  // the cards of the accounts: the name with its money and diamonds, what it earns, and what it has
+  const cards = accounts.map((a, i) => {
+    const c = COLORS[i % COLORS.length];
+    return '<div class="acard" data-tab="' + i + '"><div class="top"><span class="dot" style="background:' + c + '"></span>' + accName(a) +
+      '<span class="money">$' + fmt(n0(a.money)) + '</span><span class="dia">' + gemImg + fmt(n0(a.diamonds)) + '</span></div>' +
+      '<div class="ln"><span class="' + signCls(n0(a.goldH)) + '">' + sgn(n0(a.goldH)) + '/h</span><span class="blue">' + fmt(n0(a.xpH)) + ' xp</span>' +
+      '<span>' + fmt(n0(a.killsH)) + ' k/h</span><span>' + fmt(n0(a.captures)) + ' ' + t('cap') + '</span></div>' +
+      '<div class="ln balls" title="' + t('Balls: the kinds that are checked in the settings (the gear)') + '">' + cardBalls(a) + '</div>' +
+      '<div class="ln dim"><span>' + star + ' ' + fmt(n0(a.shinyCaptured)) + ' ' + t('cap') + (n0(a.shinyThrown) > 0 ? ' \u00b7 ' + t('{n} thrown', { n: fmt(n0(a.shinyThrown)) }) : '') + '</span><span>' + fmt(potionsOf(a)) + ' ' + t('potions') + '</span></div></div>';
+  }).join('');
+  return '<div class="strip"><div><div class="v ' + signCls(sum('goldH')) + '">' + sgn(sum('goldH')) + '</div><div class="l">' + t('GOLD / H') + '</div></div>' +
+      '<div><div class="v blue">' + fmt(sum('xpH')) + '</div><div class="l">' + t('XP / H') + '</div></div>' +
+      '<div><div class="v">' + fmt(sum('killsH')) + '</div><div class="l">' + t('KILLS / H') + '</div></div></div>' +
+    '<div class="sec sess" style="--c:var(--blue)"><div class="sec-h">' + t('Session') + '<span class="chip">' + live.length + ' / ' + accounts.length + ' ' + t('live') + '</span></div>' +
+      '<div class="grid4"><div class="stat"><div class="v">' + fmt(sum('defeated')) + '</div><div class="l">' + t('Defeated') + '</div></div>' +
+      '<div class="stat"><div class="v">' + fmt(sum('captures')) + '</div><div class="l">' + t('Captures') + '</div></div>' +
+      '<div class="stat"><div class="v pink">' + fmt(sum('shinyCaptured')) + '</div><div class="l">' + t('Shiny capt.') + '</div></div>' +
+      '<div class="stat" title="' + t('Balls thrown at shiny Pok\u00e9mon since this window opened, counted from each throw. The Pok\u00e9dex has the total of all time of each species.') + '"><div class="v gold">' + (accounts.some(a => a.shinyThrown !== undefined) ? fmt(sum('shinyThrown')) : '\u2014') + '</div><div class="l">' + t('Balls at shinies') + '</div></div></div></div>' +
+    '<div class="duo"><div class="col"><div class="sec-h">' + t('Supplies') + '</div>' +
+      '<div class="kv"><span class="v">' + fmt(sumFn(ballsOf)) + '</span><span class="l">' + t('Balls') + '</span></div>' +
+      '<div class="kv"><span class="v">' + fmt(sumFn(potionsOf)) + '</span><span class="l">' + t('Potions') + '</span></div></div>' +
+    '<div class="col"><div class="sec-h">' + t('Assets') + '</div>' +
+      '<div class="kv"><span class="v gold">$' + fmt(sum('money')) + '</span><span class="l">' + t('$ total') + '</span></div>' +
+      '<div class="kv"><span class="v gemc">' + fmt(sum('diamonds')) + '</span><span class="l">' + gemImg + t('total') + '</span></div></div></div>' +
+    '<div class="sec" style="--c:var(--red)"><div class="sec-h">' + t('Per account') + '</div>' + cards + '</div>';
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+//  The team, like the game's own "EQUIPE" panel: the icon of each Pok\u00e9mon, its name, level, HP bar and XP bar; the active one is outlined in gold.
+//  The list comes from the reader (teamList): the game sends the whole roster at login and every change after that.
+// ---------------------------------------------------------------------------------------------------------------
+const TEAM_MAX = 6;
+// the icon: the pixel sprites of the Pok\u00e9mon (Black / White set, the same pixel style as the game), by national dex number; the shiny one for a shiny
+const spriteUrl = m => 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/' + (m.shiny ? 'shiny/' : '') + m.speciesId + '.png';
+function memberName(m) {
+  if (m.name && String(m.name).charAt(0) !== '#') return String(m.name);
+  const sp = window.HUNT_DATA && window.HUNT_DATA.species && window.HUNT_DATA.species[m.speciesId];       // the reader did not know the name: use the list of the hunt data
+  return sp ? sp.n : (m.name || '#' + m.speciesId);
+}
+// The XP bar. The game's level curve (its wiki, "Curva de n\u00edveis", the Tibia curve; no maximum level):
+//   the TOTAL exp needed to reach level L is  50/3 x (L^3 - 6 L^2 + 17 L - 12)      (0 at level 1, 100 at 2, 200 at 3, 400 at 4 ...)
+//   so one level costs the difference between two totals:  50 x (L^2 - 3 L + 4)      (100 at level 1, 702,200 at level 120)
+// The game's own bar takes the Pok\u00e9mon's xp as that TOTAL, finds how far into the level it is, and shows into / cost.
+const xpTotal = L => Math.round(50 * (L - 1) * (L * L - 5 * L + 12) / 3);          // (L-1)(L^2-5L+12) = L^3-6L^2+17L-12, and it is always divisible by 3
+const xpCost = L => 50 * (L * L - 3 * L + 4);
+const fullNum = v => Number(v).toLocaleString(I18N.locale(), { maximumFractionDigits: 0 });
+function xpProgress(m) {
+  const L = Math.floor(Number(m.level)), x = (m.xp === null || m.xp === undefined || m.xp === '') ? NaN : Number(m.xp);      // a missing xp is not a zero
+  if (!(L >= 1) || !isFinite(x) || x < 0) return null;
+  const lo = xpTotal(L), cost = xpCost(L);
+  let into, kind;
+  if (x >= lo && x < lo + cost) { into = x - lo; kind = 'total'; }                    // the xp is the total (what the game sends, as far as can be seen)
+  else if (x < cost) { into = x; kind = 'inside'; }                                    // or it is already the xp inside this level (the two ranges never overlap)
+  else if (x >= lo + cost && x < xpTotal(L + 2)) { into = cost; kind = 'full'; }       // the level is about to change: the bar is full
+  else return null;                                                                    // fits none of them: no bar, rather than a wrong one
+  return { pct: Math.max(0, Math.min(100, into / cost * 100)), into: into, cost: cost, kind: kind };
+}
+// for the Diagnostics window: how did this member's xp read? total | inside | full | neither | none
+function xpReading(m) {
+  if (m.xp === null || m.xp === undefined || m.xp === '' || !isFinite(Number(m.xp)) || !(Math.floor(Number(m.level)) >= 1)) return 'none';
+  const r = xpProgress(m);
+  return r ? r.kind : 'neither';
+}
+// The trainer's own EXP, under the name in the summary: the game's curve is the same one (its wiki: "EXP total para chegar ao n\u00edvel L"). The reader passes the
+// trainer's xp as trainerXp; if it fits neither reading (total, or inside the level) there is no bar rather than a wrong one.
+function trainerBar(a) {
+  const x = xpProgress({ level: a.level, xp: a.trainerXp });
+  if (!x) return '';
+  return '<div class="pb xp slim" title="' + t('Trainer EXP {a} / {b}', { a: fullNum(x.into), b: fullNum(x.cost) }) + '"><i style="width:' + x.pct.toFixed(1) + '%"></i><span>' + t('EXP {p}%', { p: Math.floor(x.pct) }) + '</span></div>';
+}
+function teamBox(a) {
+  const list = (a.teamList || []).slice().sort((x, y) => Number(x.slot) - Number(y.slot)).slice(0, TEAM_MAX);       // by slot, whatever order they arrive in
+  const head = '<div class="sec" style="--c:var(--green)"><div class="sec-h">Team' + (list.length ? '<span class="chip">' + list.length + '/' + TEAM_MAX + '</span>' : '') + '</div>';
+  const hpBar = (hp, max) => { const p = max ? Math.max(0, Math.min(100, hp / max * 100)) : 0; return '<div class="pb hp' + (p > 50 ? '' : p > 25 ? ' mid' : ' low') + '"><i style="width:' + p.toFixed(0) + '%"></i><span>' + fmt(n0(hp)) + '/' + fmt(n0(max)) + '</span></div>'; };
+  if (!list.length) {                                                       // the roster has not arrived yet: the leader alone, as before
+    const tl = a.team || {};
+    return head + (tl.name ? '<div class="tm act lead"><div class="tmb"><div class="tmt"><span class="tmn">' + esc(tl.name) + '</span><span class="tml">Lvl. ' + esc(tl.level) + '</span></div>' + hpBar(tl.hp, tl.hpMax) + '</div></div>'
+      : '<div class="dim">' + t('Waiting for the team\u2026') + '</div>') + '</div>';
+  }
+  // the one that hunts gets the card (HP, XP, level); when the game has not said which one it is, the first of the team has it, without the gold edge
+  const act = list.find(m => String(m.id) === String(a.teamActiveId)) || null, lead = act || list[0];
+  const tip = m => { const xp = xpProgress(m); return esc(memberName(m)) + ' \u00b7 ' + t('Lv {n}', { n: esc(m.level) }) + ' \u00b7 HP ' + fmt(n0(m.hp)) + '/' + fmt(n0(m.maxHp)) + (xp ? ' \u00b7 ' + t('EXP {a} / {b}', { a: fullNum(xp.into), b: fullNum(xp.cost) }) : ' \u00b7 ' + t('xp {n}', { n: fullNum(n0(m.xp)) })) + (m.shiny ? ' \u00b7 ' + t('shiny') : '') + (act && m === act ? ' \u00b7 ' + t('active') : ''); };
+  const sprite = (m, cls) => '<span class="spr' + (cls || '') + '"' + (cls ? ' title="' + tip(m) + '"' : '') + '><img src="' + esc(spriteUrl(m)) + '" alt="" onerror="this.parentNode.classList.add(\'nospr\')"><b class="ini">' + esc(memberName(m).charAt(0)) + '</b></span>';
+  const xp = xpProgress(lead), name = memberName(lead);
+  const card = '<div class="tm lead' + (act ? ' act' : ' noact') + (lead.shiny ? ' shiny' : '') + '" title="' + tip(lead) + '">' + sprite(lead) +
+    '<div class="tmb"><div class="tmt"><span class="tmn">' + (lead.shiny ? '<span class="shy">\u2726</span>' : '') + esc(name) + '</span><span class="tml">Lvl. ' + esc(lead.level) + '</span></div>' +
+    hpBar(lead.hp, lead.maxHp) + (xp ? '<div class="pb xp"><i style="width:' + xp.pct.toFixed(1) + '%"></i><span>' + t('EXP {p}%', { p: Math.floor(xp.pct) }) + '</span></div>' : '') + '</div></div>';
+  const others = list.filter(m => m !== lead);
+  return head + card + (others.length ? '<div class="tmrow">' + others.map(m => sprite(m, ' sm' + (m.shiny ? ' shiny' : ''))).join('') + '</div>' : '') + '</div>';
+}
+
+function sideAccount(a) {
+  const c = COLORS[a.idx % COLORS.length];
+  const tl = a.team || {};
+  const hpPct = tl.hpMax ? Math.max(0, Math.min(100, tl.hp / tl.hpMax * 100)) : 0;
+  const hpCol = hpPct > 50 ? 'var(--green)' : hpPct > 25 ? 'var(--orange)' : 'var(--red)';
+  const profit = n0(a.profit);
+  // the drops: the expensive ones first (the price of ONE item), and never cut off by the limit of the list
+  const unitOf = d => (d.qty > 0 && typeof d.value === 'number') ? d.value / d.qty : null;
+  const dl = (a.drops || []).slice().sort((x, y) => ((unitOf(y) >= DROP_HOT) - (unitOf(x) >= DROP_HOT)) || (unitOf(x) >= DROP_HOT ? (unitOf(y) - unitOf(x)) : 0) || ((y.value || 0) - (x.value || 0)) || ((y.qty || 0) - (x.qty || 0)));        // the expensive ones by the price of one, the others by what they are worth together
+  const hotN = dl.filter(d => unitOf(d) >= DROP_HOT).length;
+  const drops = dl.slice(0, Math.max(12, hotN)).map(d => {
+    const u = unitOf(d), tier = u >= DROP_TOP ? ' hot top' : u >= DROP_HOT ? ' hot' : '';
+    return '<div class="row' + tier + '"' + (u !== null ? ' title="' + t('${n} each', { n: fmt(Math.round(u)) }) + '"' : '') + '><span class="nm">' + (u >= DROP_TOP ? star + ' ' : '') + esc(d.name) + ' <span class="q">\u00d7' + fmt(d.qty) + '</span></span><span class="gold">' + (d.value === null || d.value === undefined ? '' : '$' + fmt(d.value)) + '</span></div>';
+  }).join('');
+
+  let cmp = '';
+  const pick = cmpPick(a);
+  if (pick) {
+    const row = (label, pv, cv, isGold) => {
+      const same = Math.abs(cv - pv) <= Math.max(1, Math.abs(pv) * 0.005);
+      const up = cv > pv;
+      return '<tr><td>' + label + '</td><td class="dim">' + (isGold ? sgn(pv) : fmt(pv)) + '</td><td>' + (isGold ? sgn(cv) : fmt(cv)) +
+        (same ? ' <span class="dim">=</span>' : ' <span class="' + (up ? 'pos' : 'neg') + '">' + (up ? '\u25b2' : '\u25bc') + '</span>') + '</td></tr>';
+    };
+    const v = pick.v, isPrev = pick.kind === 'prev';
+    cmp = '<div class="sec" style="--c:var(--purple)"><div class="sec-h">' + (isPrev ? t('Comparison (previous hunt)') : t('Comparison (best hunts)')) + '</div>' +
+      '<button type="button" class="cmp-dd' + (cmpOpen === a.idx ? ' on' : '') + (!isPrev && v.minutes < HUNT_GOOD ? ' thin' : '') + '" id="cmpBtn" aria-haspopup="listbox" aria-expanded="' + (cmpOpen === a.idx) + '" aria-describedby="cmpTip" aria-label="' + t('Compare with') + '">' +
+        '<span class="nm">' + (isPrev ? '' : '<span class="rk">#' + pick.rank + '</span> ') + esc(v.hunt || v.name) + ' &middot; ' + (isPrev ? t('{n} min', { n: fmt(v.minutes) }) : huntTime(v.minutes)) + (!isPrev && v.minutes < HUNT_GOOD ? ' <span class="lo">\u25cb</span>' : '') + '</span>' +
+        '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>' +
+      '<table class="cmp"><thead><tr><th></th><th>' + (isPrev ? t('PREVIOUS') : t('AVERAGE')) + '</th><th>' + t('CURRENT') + '</th></tr></thead><tbody>' +
+      row(t('Gold/h'), v.goldH, n0(a.goldH), true) + row(t('XP/h'), v.xpH, n0(a.xpH)) + row(t('Kills/h'), v.killsH, n0(a.killsH)) + '</tbody></table></div>';
+  }
+
+  const ac = (window.HG_ACCOUNT || [])[a.idx % 4] || { a: '#1a2548', b: '#28396e', base: '#e3c06b' };      // the band is the colour of the ACCOUNT, as its dot everywhere
+  return '<div class="prof" style="--h1:' + ac.a + ';--h2:' + ac.b + ';--hedge:' + ac.base + '">' + emblem(a) +
+      '<div class="ptxt"><div class="nm">' + accName(a) + (a.vip ? '<span class="vip">' + t('VIP') + '</span>' : '') + '</div>' +
+      '<div class="loc">' + esc(a.hunt || '\u2014') + '</div>' + trainerBar(a) + '</div>' + (a.level ? '<span class="lvl">Lvl. ' + esc(a.level) + '</span>' : '') + '</div>' +
+    '<div class="wealthbar"><span class="gold">$' + fmt(n0(a.money)) + '</span><span class="dia">' + gemImg + fmt(n0(a.diamonds)) + '</span>' +
+      (a.partySize > 1 ? '<span class="partychip">' + t('Party of {n}', { n: a.partySize }) + (a.partyNames && a.partyNames.length ? ' (' + esc(a.partyNames.join(', ')) + ')' : '') + '</span>' : '') + '</div>' +
+    '<div class="strip"><div><div class="v ' + signCls(n0(a.goldH)) + '">' + sgn(n0(a.goldH)) + '</div><div class="l">' + t('GOLD / H') + '</div></div>' +
+      '<div><div class="v blue">' + fmt(n0(a.xpH)) + '</div><div class="l">' + t('XP / H') + '</div></div>' +
+      '<div><div class="v">' + fmt(n0(a.killsH)) + '</div><div class="l">' + t('KILLS / H') + '</div></div></div>' +
+    teamBox(a) +
+    '<div class="sec" style="--c:var(--blue)"><div class="sec-h">' + t('Session') + '<span class="chip">' + esc(a.sessionTime || '0m') + '</span></div>' +
+      '<div class="grid2"><div class="stat"><div class="v">' + fmt(n0(a.defeated)) + '</div><div class="l">' + t('Defeated') + '</div></div>' +
+      '<div class="stat"><div class="v blue">' + fmt(n0(a.xpGained)) + '</div><div class="l">' + t('XP gained') + '</div></div>' +
+      '<div class="stat"><div class="v">' + fmt(n0(a.captures)) + '</div><div class="l">' + t('Captures') + '</div></div>' +
+      '<div class="stat"><div class="v pink">' + fmt(n0(a.shinyCaptured)) + '</div><div class="l">' + t('Shiny captured') + '</div></div></div>' +
+      '<div style="margin-top:10px">' +
+      '<div class="row" title="' + t('Balls thrown at shiny Pok\u00e9mon since this window opened, counted from each throw.') + '"><span class="k">' + star + ' ' + t('Balls at shinies') + '</span><span class="v gold">' + (a.shinyThrown === undefined ? '\u2014' : fmt(a.shinyThrown)) + '</span></div>' +
+      (a.dexOpened > 0 ? '<div class="row" title="' + t('All time, added up from the species whose Capturas tab you opened in the Pok\u00e9dex (the game only sends it when you open a species).') + '"><span class="k">' + star + ' ' + t('In the Pok\u00e9dex') + ' <span class="dim" style="font-size:11px">(' + t('{n} species opened', { n: fmt(a.dexOpened) }) + ')</span></span><span class="v gold">' + fmt(n0(a.dexShinyBalls)) + '</span></div>' : '') +
+      '<div class="row"><span class="k">' + t('Best catch') + ' <span class="dim" style="font-size:11px">(' + bestModeName() + ')</span></span><span class="v">' + bestHtml(a) + '</span></div></div></div>' +        // the same as in the table of the accounts: the name, the tier and the IV in their colours, the time
+    '<div class="sec" style="--c:var(--gold)"><div class="sec-h">' + t('Session gold') + '</div>' +
+      '<div class="row"><span class="k">' + t('Loot (sell)') + '</span><span class="v pos">+' + fmt(n0(a.lootSell)) + '</span></div>' +
+      '<div class="row"><span class="k">' + t('Captures (sell)') + '</span><span class="v pos">+' + fmt(n0(a.captureSell)) + '</span></div>' +
+      '<div class="row"><span class="k">' + t('Supplies used') + ' <span class="dim" style="font-size:11px">(' + t('{b} balls \u00b7 {h} heals', { b: fmt(n0(a.ballsUsed)), h: fmt(n0(a.healsUsed)) }) + ')</span></span><span class="v orange">-' + fmt(n0(a.suppliesCost)) + '</span></div>' +
+      '<div class="balance ' + (profit >= 0 ? 'up' : 'down') + '"><span>' + t('Session balance') + '</span><span>' + sgn(profit) + '</span></div></div>' +
+    cmp +
+    '<div class="sec drops" style="--c:var(--orange)"><div class="sec-h" title="' + t('Items worth {n} or more each are highlighted', { n: '$' + fmt(DROP_HOT) }) + '">' + t('Session drops') + '</div>' + (drops || '<div class="dim">' + t('No drops yet') + '</div>') + '</div>';
+}
+
+let DROP_HOT = sumCfg.hot, DROP_TOP = sumCfg.hot * 10;          // the price of ONE item at the NPC shop: highlighted, and highlighted more (the choice of the Summary, 10,000 at first)
+// the all-accounts Summary has to show every account without scrolling: when it does not fit it gets tighter, in two steps
+function fitSide() {
+  const body = document.getElementById('sideBody'), cl = document.body.classList;
+  cl.remove('tight', 'tighter', 'tightest');
+  if (!(selected === 'sum' || !accounts[selected])) return;
+  if (body.scrollHeight <= body.clientHeight + 1) return;
+  cl.add('tight');
+  if (body.scrollHeight > body.clientHeight + 1) cl.add('tighter');
+  if (body.scrollHeight > body.clientHeight + 1) cl.add('tightest');
+}
+function drawSide() {
+  const body = document.getElementById('sideBody'), hadFocus = document.activeElement && document.activeElement.id === 'cmpBtn';
+  const one = !(selected === 'sum' || !accounts[selected]);
+  document.body.classList.toggle('oneacc', one);                   // the Summary of one account is a little more compact (see the CSS)
+  body.innerHTML = one ? sideAccount(accounts[selected]) : sideAll();
+  fitSide();
+  if (hadFocus) { const b = document.getElementById('cmpBtn'); if (b) b.focus({ preventScroll: true }); }
+  const tip = document.getElementById('cmpTip'), th = cmpTipHtml(); if (tip.dataset.html !== th) { tip.dataset.html = th; tip.innerHTML = th; }
+  document.getElementById('cmpMenu').setAttribute('aria-label', t('Compare with'));
+  placeCmpMenu();
+  if (cmpTipShown()) showCmpTip();
+  if (sumOpen) { const box = document.getElementById('sumSettings'); if (box && !box.contains(document.activeElement)) drawSumSettings(); }
+}
+window.addEventListener('resize', () => { try { fitSide(); placeCmpMenu(); if (cmpTipShown()) showCmpTip(); } catch (e) {} });
+document.getElementById('sideBody').addEventListener('scroll', () => { placeCmpMenu(); hideCmpTip(); });
+
+// =====================================================================================
+//  Right: KPI cards, the account table, latest captures
+// =====================================================================================
+function drawKpis() {
+  const active = accounts.filter(a => a.status === 'Hunting').length;
+  const seen = accounts.filter(a => a.live).length;
+  const k = [
+    [sgn(sum('goldH')), signCls(sum('goldH')), t('Net gold/h')],
+    [fmt(sum('xpH')), 'blue', t('Total XP/h')],
+    [fmt(sum('killsH')), '', t('Kills/h')],
+    [fmt(sum('captures')), '', t('Captures (session)')],
+    [fmt(sum('shinyCaptured')), 'pink', t('Shiny captured')],
+    [active + ' / ' + (seen || accounts.length), 'pos', t('Active accounts')]
+  ];
+  document.getElementById('kpis').innerHTML = k.map(x => '<div class="kpi"><div class="v ' + x[1] + '">' + x[0] + '</div><div class="l">' + x[2] + '</div></div>').join('');
+  document.getElementById('liveNote').textContent = seen ? '' : t('Waiting for the game panels to send data\u2026');
+}
+
+// "Alakazam 121/192 Incomum x1.16": the IV number takes the colour of its IV step, the tier word and its multiplier the colour of the tier
+function catchParts(c) {
+  const r = rarityParts(c.rarity);
+  const text = r.mult ? ((SHOW_TIER_WORD && r.word ? r.word + ' ' : '') + r.mult) : r.word;      // no multiplier: the word is all there is
+  const tier = text ? '<span class="tw" style="color:' + rarityColor(r.word) + '">' + esc(text) + '</span>' : '';
+  const iv = (c.iv !== undefined && c.iv !== null) ? '<span style="color:' + ivColor(c.iv) + '">' + esc(c.iv) + '/' + esc(c.max || 192) + '</span>' : '';
+  return { tier: tier, iv: iv };
+}
+const bestModeName = () => ({ iv: t('IV'), quality: t('Quality'), score: t('IV \u00d7 Quality') }[bestMode] || '');          // the words of the selector of the table
+function bestHtml(a) {
+  const pick = { iv: a.bestIV, quality: a.bestQ, score: a.bestS }[bestMode] || a.bestIV;
+  if (!pick || !pick.name) return esc(a.bestCatch || '\u2014');
+  const p = catchParts(pick);
+  return (pick.shiny ? star + ' ' : '') + esc(pick.name) + ' ' + p.tier + ' ' + p.iv;
+}
+function lastHtml(a) {
+  const c = a.lastCaught;
+  if (!c || !c.name) return esc(a.lastCatch || '\u2014');
+  const p = catchParts(c);
+  return (c.shiny ? star + ' ' : '') + esc(c.name) + ' ' + p.tier + (p.iv ? ' \u00b7 ' + p.iv : '') + ' <span class="dim">' + esc(c.time) + ' (' + t('{n}m ago', { n: minutesAgo(c.time) }) + ')</span>';
+}
+
+const COLS = [
+  { key: 'name', label: tt('ACCOUNT'), val: a => a.name, html: a => '<span class="dot" style="background:' + COLORS[a.idx % COLORS.length] + '"></span> ' + accName(a) },
+  { key: 'pokemon', label: tt('POK\u00c9MON'), val: a => a.pokemon || '', html: a => esc(a.pokemon || '\u2014') },
+  { key: 'hunt', label: tt('HUNT'), val: a => a.hunt || '', html: a => esc(a.hunt || '\u2014') },
+  { key: 'minutes', label: tt('TIME'), val: a => n0(a.minutes), html: a => esc(a.sessionTime || '0m') },
+  { key: 'goldH', label: tt('GOLD/H'), val: a => n0(a.goldH), html: a => '<span class="' + signCls(n0(a.goldH)) + '">' + sgn(n0(a.goldH)) + '</span>', sumv: t => '<span class="' + signCls(t) + '">' + sgn(t) + '</span>' },
+  { key: 'xpH', label: tt('XP/H'), val: a => n0(a.xpH), html: a => '<span class="xp">' + fmt(n0(a.xpH)) + '</span>', sumv: t => '<span class="xp">' + fmt(t) + '</span>' },
+  { key: 'killsH', label: tt('KILLS/H'), val: a => n0(a.killsH), html: a => fmt(n0(a.killsH)), sumv: t => fmt(t) },
+  { key: 'captures', label: tt('CAPTURES'), val: a => n0(a.captures), html: a => fmt(n0(a.captures)), sumv: t => fmt(t) },
+  { key: 'shinyCaptured', label: '\u2726', val: a => n0(a.shinyCaptured), html: a => '<span class="' + (n0(a.shinyCaptured) ? 'pink' : 'dim') + '">' + fmt(n0(a.shinyCaptured)) + '</span>', sumv: t => fmt(t) },
+  { key: 'bestCatch', label: tt('BEST CATCH'), val: a => a.bestCatch || '', html: a => bestHtml(a) },
+  { key: 'lastCatch', label: tt('LAST CATCH'), val: a => a.lastCatch || '', html: a => lastHtml(a) },
+  { key: 'status', label: tt('STATUS'), val: a => a.status || '', html: a => {
+      const s = a.status || 'Waiting';
+      const cls = { Hunting: 'b-hunt', Stopped: 'b-stop', Connected: 'b-conn' }[s] || 'b-wait';
+      return '<span class="badge ' + cls + '">' + esc(t(s)) + '</span>'; } }          // the four words are the ones live.js writes
+];
+
+function drawTable() {
+  const col = COLS.find(c => c.key === sortState.key) || COLS[0];
+  const rows = accounts.slice().sort((x, y) => {
+    const a = col.val(x), b = col.val(y);
+    return (typeof a === 'number' ? a - b : String(a).localeCompare(String(b))) * sortState.dir;
+  });
+  const arrow = c => c.key === sortState.key ? (sortState.dir > 0 ? ' \u25b2' : ' \u25bc') : '';
+  const head = COLS.map(c => '<th class="sortable" data-sort="' + c.key + '">' + t(c.label) + arrow(c) + '</th>').join('');
+  const body = rows.map(a => '<tr data-tab="' + a.idx + '"' + (selected === a.idx ? ' class="sel"' : '') + '>' + COLS.map(c => '<td>' + c.html(a) + '</td>').join('') + '</tr>').join('');
+  const total = '<tr class="total">' + COLS.map(c => '<td>' + (c.key === 'name' ? t('Total ({n})', { n: accounts.length }) : (c.sumv ? c.sumv(sum(c.key)) : '')) + '</td>').join('') + '</tr>';
+  document.getElementById('tableWrap').innerHTML = '<table><thead><tr>' + head + '</tr></thead><tbody>' + body + total + '</tbody></table>';
+}
+
+// every capture is kept in a log while this page is open (live.js only keeps the current hunt's)
+let capSeq = 0;
+function logCapture(accIdx, ev) {
+  captureLog.unshift({ id: ++capSeq, acc: accIdx, name: ev.name, iv: ev.iv, max: ev.max || 192, quality: ev.quality, rarity: ev.rarity, shiny: !!ev.shiny, ts: Date.now() });
+  if (captureLog.length > 300) captureLog.pop();
+}
+window.addEventListener('message', e => {
+  const m = e.data;
+  if (!m || m.type !== 'live' || !m.data) return;
+  const a = accounts[m.account - 1];
+  if (!a) return;
+  a._seenAt = Date.now();
+  if (m.data.catchEvent && m.data.catchSeq !== undefined && m.data.catchSeq !== a._catchSeq) {
+    a._catchSeq = m.data.catchSeq;
+    logCapture(a.idx, m.data.catchEvent);
+    if (!m.replay) todayCatch(a, m.data.catchEvent);          // a capture the window sends again (this page was loaded again) is not new
+  }
+});
+
+// =====================================================================================
+//  Today (lang-47): what was worth seeing between 00:00 and 23:59, kept on this computer ("4h.today") so that it survives closing the app; a new day starts empty.
+//  Only what happens while the app runs can be seen. Each thing is kept once (a key per thing), so a page loaded again does not repeat it.
+//  A shiny capture · a great catch (IV 170 or more, or a Legendary or better roll) · a drop worth at least the Summary's "highlight" price each ·
+//  an egg that hatched · a Pokémon of the team that evolved · a hunt the trainer level opened.
+// =====================================================================================
+const TODAY_KEY = '4h.today', TODAY_MAX = 400, GREAT_IV = 170, GREAT_Q = 1.75;
+const dayOf = ms => { const d = new Date(ms); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const today = (() => {
+  let o = null; try { o = JSON.parse(localStorage.getItem(TODAY_KEY)); } catch (e) {}
+  const ok = o && typeof o === 'object' && o.date === dayOf(Date.now()) && Array.isArray(o.items) && Array.isArray(o.keys);
+  const items = ok ? o.items.filter(x => x && typeof x === 'object' && typeof x.t === 'number' && typeof x.kind === 'string' && x.p && typeof x.p === 'object').slice(0, TODAY_MAX) : [];
+  return { date: dayOf(Date.now()), items: items, keys: ok ? o.keys.filter(k => typeof k === 'string').slice(-2000) : [], base: {} };      // base: what was seen first, per account (not kept: a restart starts again from what it sees)
+})();
+function todaySave() { try { localStorage.setItem(TODAY_KEY, JSON.stringify({ v: 1, date: today.date, items: today.items, keys: today.keys })); } catch (e) {} }
+function todayDay() { const d = dayOf(Date.now()); if (d !== today.date) { today.date = d; today.items = []; today.keys = []; todaySave(); } }      // midnight: a new, empty day
+// kept as facts (p), written in the chosen language when drawn
+function todayAdd(a, kind, p, key) {
+  todayDay();
+  if (today.keys.indexOf(key) >= 0) return false;
+  today.keys.push(key); if (today.keys.length > 2000) today.keys.splice(0, today.keys.length - 2000);
+  const pp = {}; Object.keys(p).forEach(k => { pp[k] = typeof p[k] === 'number' ? p[k] : String(p[k]).slice(0, 60); });
+  today.items.unshift({ t: Date.now(), acc: a.idx, name: String(a.name || '').slice(0, 40), kind: kind, p: pp });
+  if (today.items.length > TODAY_MAX) today.items.length = TODAY_MAX;
+  todaySave();
+  return true;
+}
+const isGreatRoll = ev => (typeof ev.quality === 'number' && ev.quality >= GREAT_Q) || /lend|legend|divin|m[ií]t|myth/i.test(String(ev.rarity || ''));
+function todayCatch(a, ev) {
+  if (!ev || !ev.name) return;
+  const iv = typeof ev.iv === 'number' ? ev.iv : null, great = (iv !== null && iv >= GREAT_IV) || isGreatRoll(ev);
+  if (!ev.shiny && !great) return;
+  todayAdd(a, ev.shiny ? 'shiny' : 'catch', { name: ev.name, iv: iv === null ? '' : iv, max: ev.max || 192, rarity: ev.rarity || '' },
+    'c:' + a.idx + ':' + ev.name + ':' + iv + ':' + ev.quality + ':' + (ev.time || '') + ':' + (ev.shiny ? 1 : 0));
+}
+// what changed since the last look: new expensive drops, evolutions, a level that opens hunts, eggs that hatched
+function todayScan() {
+  todayDay();
+  accounts.forEach(a => {
+    const b = today.base[a.idx] || (today.base[a.idx] = {});
+    // drops: the session's totals; what grows on an item worth the highlight price or more is new (a new session starts again from nothing)
+    const sid = a.startedAt !== undefined ? String(a.startedAt) : null;
+    if (Array.isArray(a.drops) && sid !== null) {
+      const q = {}; a.drops.forEach(d => { if (d && d.name && d.qty > 0) q[d.name] = d; });
+      if (b.dropSid === sid && b.drops) {
+        Object.keys(q).forEach(n => {
+          const d = q[n], unit = typeof d.value === 'number' ? d.value / d.qty : null, more = d.qty - (b.drops[n] || 0);
+          if (more > 0 && unit !== null && unit >= DROP_HOT) todayAdd(a, 'drop', { item: n, n: more, each: unit }, 'd:' + a.idx + ':' + sid + ':' + n + ':' + d.qty);
+        });
+      }
+      b.dropSid = sid; b.drops = {}; Object.keys(q).forEach(n => { b.drops[n] = q[n].qty; });          // (the first look, and a new session, are the start: what they hold is not announced)
+    }
+    // the team: a member (same id) whose species changed evolved
+    if (Array.isArray(a.teamList)) {
+      const now = {}; a.teamList.forEach(m => { if (m && m.id !== undefined) now[String(m.id)] = m; });
+      if (b.team) Object.keys(now).forEach(id => { const o = b.team[id], m = now[id]; if (o && o.sp !== m.speciesId && m.speciesId !== undefined) todayAdd(a, 'evo', { from: o.name, to: memberName(m) }, 'v:' + a.idx + ':' + id + ':' + m.speciesId); });
+      b.team = {}; Object.keys(now).forEach(id => { b.team[id] = { sp: now[id].speciesId, name: memberName(now[id]) }; });
+    }
+    // the trainer level: the hunts it opened
+    if (typeof a.level === 'number') {
+      if (typeof b.level === 'number' && a.level > b.level && window.HUNT_DATA && Array.isArray(HUNT_DATA.hunts))
+        HUNT_DATA.hunts.filter(h => h.unlock > b.level && h.unlock <= a.level).slice(0, 6).forEach(h => todayAdd(a, 'hunt', { hunt: h.name, n: h.unlock }, 'h:' + a.idx + ':' + h.id));
+      b.level = a.level;
+    }
+    // the eggs: one seen in the incubator, gone (or said hatched) once its time was up, hatched
+    if (Array.isArray(a.eggs)) {
+      const now = {}; a.eggs.forEach(e => { if (e && e.id !== undefined && e.id !== null) now[String(e.id)] = e; });
+      if (b.eggs) Object.keys(b.eggs).forEach(id => {
+        const o = b.eggs[id], e = now[id], hatchedNow = e ? (typeof e.status === 'string' && /hatch/i.test(e.status)) : true;
+        if (hatchedNow && !o.hatched && (o.end === null || o.end <= Date.now() + 60000)) todayAdd(a, 'egg', { name: o.name || '', shiny: o.shiny ? 1 : 0 }, 'e:' + a.idx + ':' + id);
+      });
+      b.eggs = {}; Object.keys(now).forEach(id => { const e = now[id], st = eggState(e); b.eggs[id] = { name: e.speciesName || e.species || '', shiny: e.shiny === true, end: st.left === null ? null : Date.now() + st.left, hatched: typeof e.status === 'string' && /hatch/i.test(e.status) }; });
+    }
+  });
+}
+function todayText(x) {
+  const p = x.p || {}, e = v => esc(String(v === undefined ? '' : v));
+  if (x.kind === 'shiny' || x.kind === 'catch') { const what = e(p.name) + (p.iv !== '' && p.iv !== undefined ? ' \u00b7 IV ' + e(p.iv) + '/' + e(p.max) : '') + (p.rarity ? ' \u00b7 ' + e(p.rarity) : ''); return x.kind === 'shiny' ? t('Shiny captured: {what}', { what: what }) : t('Great catch: {what}', { what: what }); }
+  if (x.kind === 'drop') return t('Valuable drop: {item} \u00d7{n} \u00b7 {each} each', { item: e(p.item), n: e(p.n), each: '$' + fmt(Number(p.each) || 0) });
+  if (x.kind === 'evo') return t('Evolved: {from} \u2192 {to}', { from: e(p.from), to: e(p.to) });
+  if (x.kind === 'hunt') return t('New hunt unlocked: {hunt} (level {n})', { hunt: e(p.hunt), n: e(p.n) });
+  if (x.kind === 'egg') return t('Egg hatched: {name}', { name: (p.shiny ? '\u2726 ' : '') + (p.name ? e(p.name) : t('an egg')) });
+  return '';
+}
+const TODAY_ICON = { shiny: '\u2726', catch: '\u2605', drop: '$', egg: '\u25cf', evo: '\u21e7', hunt: '\u2691' };
+function drawToday() {
+  todayDay();
+  const list = document.getElementById('todayList'), cnt = document.getElementById('todayCount');
+  cnt.textContent = today.items.length ? String(today.items.length) : '';
+  cnt.classList.toggle('hidden', !today.items.length);
+  const html = today.items.length ? today.items.map(x => {
+    const d = new Date(x.t), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const a = accounts[x.acc], who = a ? accName(a) : esc(x.name);
+    const tx = todayText(x);
+    return '<div class="ev ' + esc(x.kind) + '"><span class="when">' + hm + '</span><span class="mk">' + (TODAY_ICON[x.kind] || '\u2022') + '</span><span class="tx" title="' + esc(tx.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&')) + '"><span class="dot" style="background:' + COLORS[x.acc % COLORS.length] + '"></span> <span class="who">' + who + ':</span> ' + tx + '</span></div>';
+  }).join('') : '<div class="empty">' + t('Nothing yet today. Shinies, great catches (IV {iv} or more, or Legendary or better), valuable drops (worth {v} or more each), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.', { iv: GREAT_IV, v: '$' + fmt(DROP_HOT) }) + '</div>';
+  if (list.dataset.html !== html) { list.dataset.html = html; list.innerHTML = html; }
+}
+
+const CAP_PITCH = 40;           // one row of the list: 36 px high + 4 px between rows (the CSS has the same numbers)
+function drawCaptures() {
+  const accSel = document.getElementById('capAcc');
+  const key = accounts.map(a => a.name).join('|');
+  if (accSel.dataset.key !== key) {
+    accSel.dataset.key = key;
+    accSel.innerHTML = '<option value="all">' + t('all accounts') + '</option>' + accounts.map(a => '<option value="' + a.idx + '">' + accName(a) + '</option>').join('');
+    accSel.value = String(capFilter.acc);
+  }
+  const rarSel = document.getElementById('capRar');
+  const words = {};
+  captureLog.forEach(x => { const w = rarityParts(x.rarity).word; if (w) words[w] = true; });
+  const rkey = Object.keys(words).sort().join('|');
+  if (rarSel.dataset.key !== rkey) {
+    rarSel.dataset.key = rkey;
+    rarSel.innerHTML = '<option value="all">' + t('all rarities') + '</option>' + Object.keys(words).sort().map(w => '<option value="' + esc(w) + '">' + esc(w) + '</option>').join('');
+    rarSel.value = words[capFilter.rar] ? capFilter.rar : 'all';
+  }
+  let list = captureLog.filter(x => {
+    if (capFilter.acc !== 'all' && x.acc !== Number(capFilter.acc)) return false;
+    if (capFilter.text && x.name.toLowerCase().indexOf(capFilter.text) < 0) return false;
+    if (capFilter.rar !== 'all' && rarityParts(x.rarity).word !== capFilter.rar) return false;
+    if (capFilter.iv && x.iv < capFilter.iv) return false;
+    if (capFilter.q && x.quality < capFilter.q) return false;
+    if (capFilter.shiny && !x.shiny) return false;
+    return true;
+  });
+  // the order: latest first (as the game sends them), or the best first by IV, by quality (the ×), or by both multiplied; the same score: the newest first
+  const qOf = x => { const v = typeof x.quality === 'number' && isFinite(x.quality) ? x.quality : parseFloat(rarityParts(x.rarity).mult.slice(1)); return isFinite(v) ? v : 0; };
+  const ivOf = x => (typeof x.iv === 'number' && isFinite(x.iv) ? x.iv : 0);
+  const score = { iv: ivOf, q: qOf, ivq: x => ivOf(x) * qOf(x) }[capFilter.sort];
+  if (score) list.sort((a, b) => (score(b) - score(a)) || (b.id - a.id));
+  list.splice(80);
+  const el = document.getElementById('capList');
+  const sig = JSON.stringify(capFilter);
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">' + (captureLog.length ? t('No capture matches these filters.') : t('Captures appear here as they happen, from all accounts. The list starts when this window opens.')) + '</div>';
+    el.dataset.html = ''; el.dataset.first = ''; el.dataset.sig = sig;
+    return;
+  }
+  const keyOf = x => String(x.id);
+  const html = list.map(x => {
+    const r = rarityParts(x.rarity);
+    const t = new Date(x.ts);
+    const hhmm = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+    const c = rarityColor(r.word);
+    return '<div class="cap' + ((x.shiny || x.iv >= 170) ? ' rare' : '') + '"><span class="dot" style="background:' + COLORS[x.acc % COLORS.length] + '"></span>' +
+      '<span class="nm">' + (x.shiny ? star + ' ' : '') + '<b>' + esc(x.name) + '</b>' + (SHOW_TIER_WORD && r.word ? ' <span class="tw" style="color:' + c + '">' + esc(r.word) + '</span>' : '') +
+      ' <span class="dim">\u00b7 ' + esc(accounts[x.acc] ? accounts[x.acc].name : '') + '</span></span>' +
+      '<span class="mult tw" style="color:' + c + '">' + esc(r.mult) + '</span><span class="iv" style="color:' + ivColor(x.iv) + '">' + x.iv + '/' + x.max + '</span><span class="ctime">' + hhmm + '</span></div>';
+  }).join('');
+  if (el.dataset.html === html && el.dataset.sig === sig) return;                 // nothing new: leave the list alone, so scrolling is never interrupted
+  // rows that arrived on top while you were looking further down: move the view by the same number of rows, so you keep seeing the same ones
+  const sameFilters = el.dataset.sig === sig;
+  let shift = 0;
+  if (sameFilters && capFilter.sort === 'new' && el.scrollTop > 0 && el.dataset.first) { shift = list.findIndex(x => keyOf(x) === el.dataset.first); if (shift < 0) shift = 0; }
+  el.innerHTML = html;
+  el.dataset.html = html; el.dataset.first = keyOf(list[0]); el.dataset.sig = sig;
+  if (!sameFilters) el.scrollTop = 0; else if (shift > 0) el.scrollTop += shift * CAP_PITCH;
+}
+
+// =====================================================================================
+//  Incubators (the game's "breeding" message: { slots, eggs: [...] })
+//  What one egg looks like was not known when this was written, so each egg is read for the usual names (progress / target,
+//  a hatch time) and, when nothing is recognised, its raw fields are shown so the real format can be seen.
+// =====================================================================================
+function dur(ms) {
+  const m = Math.max(1, Math.round(ms / 60000));
+  if (m >= 1440) return Math.floor(m / 1440) + 'd ' + Math.floor((m % 1440) / 60) + 'h';
+  if (m >= 60) return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+  return m + 'm';
+}
+
+function eggModel(e) {
+  const num = function () { for (let i = 0; i < arguments.length; i++) { const v = e[arguments[i]]; if (typeof v === 'number' && isFinite(v)) return v; } return null; };
+  const m = { name: typeof e.speciesName === 'string' ? e.speciesName : '', pct: null, text: '', known: false };
+  const cur = num('progress', 'kills', 'killsDone', 'current', 'done', 'count', 'hatchProgress');
+  const tgt = num('target', 'goal', 'required', 'total', 'max', 'killsNeeded', 'killsRequired', 'hatchKills', 'need');
+  if (cur !== null && tgt) {
+    m.pct = Math.max(0, Math.min(100, cur / tgt * 100));
+    m.text = fmt(cur) + ' / ' + fmt(tgt) + ' \u00b7 ' + Math.round(m.pct) + '%';
+    m.known = true;
+  } else if (cur !== null && e.progress !== undefined && cur >= 0 && cur <= 1) {
+    m.pct = cur * 100; m.text = Math.round(m.pct) + '%'; m.known = true;
+  }
+  const at = num('hatchAt', 'readyAt', 'endsAt', 'finishAt', 'hatchesAt', 'finishesAt', 'completeAt', 'doneAt');
+  if (at !== null) {
+    const ms = at > 1e12 ? at : at * 1000;
+    const left = ms - Date.now();
+    const start = num('startedAt', 'startAt', 'createdAt', 'beganAt');
+    if (m.pct === null && start !== null) { const s = start > 1e12 ? start : start * 1000; if (ms > s) m.pct = Math.max(0, Math.min(100, (Date.now() - s) / (ms - s) * 100)); }
+    if (left <= 0) m.pct = 100;                                  // time is up: a full bar
+    m.text += (m.text ? ' \u00b7 ' : '') + (left <= 0 ? t('ready') : t('ready in {t}', { t: dur(left) }));
+    m.known = true;
+  }
+  return m;
+}
+
+// an egg: where it is (0-100), the time LEFT (it counts down: 6h ... 0h), and whether it is still in the incubator
+const EGG_GONE = /hatch|claim|collect|done|open/i;
+function eggState(e) {
+  const num = k => (typeof e[k] === 'number' && isFinite(e[k]) ? e[k] : null);
+  const ms = v => (v === null ? null : v > 1e12 ? v : v * 1000);
+  const gone = typeof e.status === 'string' && EGG_GONE.test(e.status) && !/ready/i.test(e.status);
+  const end = ms(num('readyAt')) || ms(num('hatchAt')) || ms(num('endsAt')), start = ms(num('startedAt')) || ms(num('startAt'));
+  const now = Date.now();
+  if (end !== null) {
+    const left = Math.max(0, end - now), pct = start !== null && end > start ? Math.max(0, Math.min(100, (now - start) / (end - start) * 100)) : (left > 0 ? null : 100);
+    return { gone: gone, left: left, pct: left <= 0 ? 100 : pct };
+  }
+  const m = eggModel(e);                                            // an older shape (progress / target): the % only
+  return { gone: gone, left: null, pct: m.pct };
+}
+// the colour of the tip of the ring: a deep green at the start, a bright one when it is ready
+const eggTip = pct => { const k = Math.max(0, Math.min(1, (pct || 0) / 100)); const mix = (a, b) => Math.round(a + (b - a) * k); return 'rgb(' + mix(52, 150) + ',' + mix(168, 245) + ',' + mix(92, 170) + ')'; };
+function drawEggs() {
+  const card = document.getElementById('eggCard');
+  // only the eggs that are in an incubator; an account without one is not shown, and neither is the card when no account has one
+  const cols = accounts.map(a => ({ a: a, eggs: (Array.isArray(a.eggs) ? a.eggs : []).map(e => Object.assign({ e: e }, eggState(e))).filter(x => !x.gone) })).filter(c => c.eggs.length);
+  card.classList.toggle('hidden', !cols.length);
+  if (!cols.length) { document.getElementById('eggGrid').innerHTML = ''; return; }
+  document.getElementById('eggGrid').innerHTML = cols.map(c => {
+    const a = c.a;
+    const rings = c.eggs.map((x, i) => {
+      const e = x.e, name = (typeof e.speciesName === 'string' && e.speciesName) || (typeof e.species === 'string' && e.species) || t('Egg {n}', { n: i + 1 });
+      const pct = x.pct === null ? 0 : x.pct, ready = x.left !== null ? x.left <= 0 : pct >= 100;
+      const time = x.left === null ? '' : ready ? t('ready') : dur(x.left);
+      const tip = [(e.shiny ? '\u2726 ' : '') + name, x.pct === null ? '' : Math.floor(pct) + '%', x.left === null ? '' : ready ? t('ready') : t('ready in {t}', { t: dur(x.left) })].filter(Boolean).join(' \u00b7 ');
+      return '<div class="ring' + (ready ? ' ready' : '') + '" title="' + esc(tip) + '" role="img" aria-label="' + esc(tip) + '"><div class="dial"><div class="arc" style="--p:' + pct.toFixed(1) + ';--tip:' + eggTip(pct) + '"></div>' +
+        '<div class="in"><b>' + (x.pct === null ? '?' : Math.floor(pct) + '%') + '</b>' + (time ? '<span>' + esc(time) + '</span>' : '') + '</div></div>' +
+        '<div class="nm">' + (e.shiny ? star + ' ' : '') + esc(name) + '</div></div>';
+    }).join('');
+    return '<div class="eggcol"><div class="top"><span class="dot" style="background:' + COLORS[a.idx % COLORS.length] + '"></span>' + accName(a) +
+      '<span class="cnt">' + c.eggs.length + (a.breedSlots ? ' / ' + a.breedSlots : '') + '</span></div><div class="rings">' + rings + '</div></div>';
+  }).join('');
+}
+
+// =====================================================================================
+//  Drawing everything, and the clicks
+// =====================================================================================
+function renderAll() {
+  accounts.forEach(huntLogRecord); huntLogSave(false);
+  try { todayScan(); } catch (e) { diagNote('today: ' + (e && e.message)); }     // the sessions that run are kept (saved at most every 20 s)
+  refreshDerived();
+  drawTabs();
+  drawLock();
+  drawSide();
+  drawKpis();
+  drawTable();
+  drawEggs();
+  drawCaptures();
+  drawToday();
+}
+
+document.addEventListener('click', e => {
+  const tab = e.target.closest && e.target.closest('[data-tab]');
+  if (tab) { selected = tab.getAttribute('data-tab') === 'sum' ? 'sum' : Number(tab.getAttribute('data-tab')); if (sumCfg.locked) { sumCfg.tab = selected; saveSumCfg(); } renderAll(); return; }       // (it only changes this page: the game screens are never touched from here)
+  const sortTh = e.target.closest && e.target.closest('[data-sort]');
+  if (sortTh) {
+    const k = sortTh.getAttribute('data-sort');
+    if (sortState.key === k) sortState.dir = -sortState.dir; else { sortState.key = k; sortState.dir = (k === 'name' || k === 'pokemon' || k === 'hunt') ? 1 : -1; }
+    drawTable(); return;
+  }
+  const vt = e.target.closest && e.target.closest('[data-view]');
+  if (vt) {
+    const v = vt.getAttribute('data-view');
+    document.querySelectorAll('#topTabs .vt').forEach(b => b.classList.toggle('on', b === vt));
+    ['overview'].forEach(x => document.getElementById('view-' + x).classList.toggle('hidden', x !== v));
+  }
+});
+// ---------------------------------------------------------------------------------------------------------------
+// the settings of the Summary (the gear): the kinds of balls and potions that are added up, the type of best catch, the price from which a drop is highlighted
+// ---------------------------------------------------------------------------------------------------------------
+const SUPPLY_NAMES = { 'poke-ball': 'Pok\u00e9 Ball' };
+const supplyName = id => SUPPLY_NAMES[id] || String(id).split('-').filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+function supplyKinds(which) {            // the options of the game plus any other kind the accounts have (so that a kind that is not counted can always be checked again), with the amounts of what the Summary is showing
+  const isBall = which === 'ballTypes', allow = isBall ? ballKinds() : null, base = isBall ? BALL_OPTIONS : POTION_OPTIONS;
+  const inView = (selected === 'sum' || !accounts[selected]) ? accounts : [accounts[selected]];
+  const kinds = {};
+  base.forEach(id => { kinds[id] = 0; });
+  accounts.forEach(a => { const ty = a[which]; if (ty && typeof ty === 'object') Object.keys(ty).forEach(id => { if (!allow || allow.has(id)) kinds[id] = kinds[id] || 0; }); });
+  inView.forEach(a => { const ty = a[which]; if (ty && typeof ty === 'object') Object.keys(ty).forEach(id => { if (kinds[id] !== undefined) kinds[id] += n0(ty[id]); }); });
+  const rank = id => { const i = base.indexOf(id); return i < 0 ? 99 : i; };
+  return Object.keys(kinds).map(id => ({ id: id, n: kinds[id] })).sort((x, y) => (y.n - x.n) || (rank(x.id) - rank(y.id)) || supplyName(x.id).localeCompare(supplyName(y.id)));
+}
+const supplyRows = list => list.map(k => '<label class="ss-row' + (sumCfg.off[k.id] ? ' off' : '') + (k.n === 0 ? ' zero' : '') + '"><input type="checkbox" class="ss-cb" data-kind="' + esc(k.id) + '"' + (sumCfg.off[k.id] ? '' : ' checked') + '><span class="nm">' + esc(supplyName(k.id)) + '</span><span class="n">' + fullNum(k.n) + '</span></label>').join('');
+function drawSumSettings() {
+  const box = document.getElementById('sumSettings');
+  const balls = supplyKinds('ballTypes'), potions = supplyKinds('potionTypes');
+  const one = !(selected === 'sum' || !accounts[selected]);
+  const knows = accounts.some(a => a.ballTypes || a.potionTypes);
+  const unknown = knows ? '' : '<div class="ss-empty">' + t('The kinds are not known yet. They come with the inventory of the game; if this stays empty, run install-diagnostics.js and restart the app.') + '</div>';
+  const modeOpts = [['iv', t('IV')], ['quality', t('Quality')], ['score', t('IV \u00d7 Quality')]].map(o => '<option value="' + o[0] + '"' + (bestMode === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('');
+  box.innerHTML =
+    '<div class="ss-scope">' + (one ? t('Counts of {name}', { name: esc(accName(accounts[selected])) }) : t('Counts of all accounts')) + '</div>' +
+    unknown +
+    '<div class="ss-h">' + t('Pok\u00e9 Balls') + '</div>' + supplyRows(balls) +
+    '<div class="ss-h">' + t('Heal') + '</div>' + supplyRows(potions) +
+    '<div class="ss-h">' + t('Best catch') + '</div><div class="ss-line"><select id="ssBest">' + modeOpts + '</select></div>' +
+    '<div class="ss-h">' + t('Drops') + '</div><div class="ss-line"><span>' + t('Highlight drops worth') + '</span></div><div class="ss-line"><span>$</span><input type="number" id="ssHot" min="100" step="1000" value="' + sumCfg.hot + '"><span>' + t('or more each') + '</span></div>' +
+    '<div class="ss-note">' + t('Only the Summary uses these choices. The supplies alert follows your auto-catch ball.') + '</div>';
+}
+function setSumOpen(v) {
+  sumOpen = !!v;
+  document.getElementById('sumSettings').classList.toggle('hidden', !sumOpen);
+  document.getElementById('btnSumSettings').classList.toggle('on', sumOpen);
+  if (sumOpen) drawSumSettings();
+}
+function setBestMode(v, save) {                          // the selector of the table and the one of the panel are the same choice
+  bestMode = v;
+  const sel = document.getElementById('bestMode'); if (sel && sel.querySelector('option[value="' + v + '"]')) sel.value = v;
+  if (save) { sumCfg.best = v; saveSumCfg(); }
+  renderAll();
+}
+document.getElementById('btnSumSettings').onclick = e => { e.stopPropagation(); setSumOpen(!sumOpen); };
+// the lock: when it is on the Summary keeps showing what it shows, and does not follow the screen that is expanded in the window. Choosing another tab here is still free (the lock then holds that one).
+const LOCK_SHUT = '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', LOCK_OPEN = '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.6-1.7"/>';
+function drawLock() {
+  const b = document.getElementById('btnSumLock'), on = sumCfg.locked === true;
+  b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  const what = (selected === 'sum' || !accounts[selected]) ? t('all accounts') : accName(accounts[selected]);
+  b.title = on ? t('Locked on {what}: the Summary does not follow the expanded screen. Press to unlock', { what: what }) : t('Lock the Summary on what it shows now, so it does not follow the expanded screen');
+  const svg = b.querySelector('svg'), d = on ? LOCK_SHUT : LOCK_OPEN;
+  if (svg.dataset.d !== d) { svg.dataset.d = d; svg.innerHTML = d; }
+}
+document.getElementById('btnSumLock').onclick = e => { e.stopPropagation(); sumCfg.locked = !sumCfg.locked; sumCfg.tab = selected; saveSumCfg(); drawLock(); };
+document.addEventListener('click', e => { if (sumOpen && !document.getElementById('sumSettings').contains(e.target) && !document.getElementById('btnSumSettings').contains(e.target)) setSumOpen(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && sumOpen) { setSumOpen(false); document.getElementById('btnSumSettings').focus(); } });
+document.getElementById('sumSettings').addEventListener('change', e => {
+  const el = e.target;
+  if (el.classList.contains('ss-cb')) {
+    const id = el.getAttribute('data-kind');
+    if (el.checked) delete sumCfg.off[id]; else sumCfg.off[id] = true;
+    const row = el.closest('.ss-row'); if (row) row.classList.toggle('off', !el.checked);
+    saveSumCfg(); renderAll();
+  } else if (el.id === 'ssBest') setBestMode(el.value, true);
+  else if (el.id === 'ssHot') {
+    const v = Math.round(Number(el.value));
+    if (isFinite(v) && v >= 100 && v <= 1e9) { sumCfg.hot = v; DROP_HOT = v; DROP_TOP = v * 10; saveSumCfg(); renderAll(); } else el.value = sumCfg.hot;
+  }
+});
+document.getElementById('bestMode').onchange = e => setBestMode(e.target.value, true);
+setTimeout(() => { if (sumCfg.best !== bestMode) setBestMode(sumCfg.best, false); }, 0);          // (after live.js has added its third option)
+document.getElementById('capAcc').onchange = e => { capFilter.acc = e.target.value; drawCaptures(); };
+document.getElementById('capSearch').oninput = e => { capFilter.text = e.target.value.trim().toLowerCase(); drawCaptures(); };
+document.getElementById('capRar').onchange = e => { capFilter.rar = e.target.value; drawCaptures(); };
+document.getElementById('capIv').oninput = e => { capFilter.iv = Number(e.target.value) || 0; drawCaptures(); };
+document.getElementById('capQ').oninput = e => { capFilter.q = Number(e.target.value) || 0; drawCaptures(); };
+document.getElementById('capSort').value = capFilter.sort;
+document.getElementById('capSort').onchange = e => { capFilter.sort = e.target.value; try { localStorage.setItem('4h.capSort', capFilter.sort); } catch (x) {} drawCaptures(); };
+document.getElementById('capShiny').onclick = e => { capFilter.shiny = !capFilter.shiny; e.currentTarget.classList.toggle('on', capFilter.shiny); drawCaptures(); };
+setInterval(renderAll, 15000);           // keeps "x min ago" fresh even when nothing arrives
+
+// What the Diagnostics window asks this page: what do you see? Counts, true / false and names of things. No gold, no items, nothing typed by anyone.
+function diagData() {
+  const D = window.HUNT_DATA || null;
+  const known = {};
+  if (D && D.hunts) D.hunts.forEach(h => { known[h.id] = true; });
+  return {
+    v: 1,
+    hunt: { hunts: D && D.hunts ? D.hunts.length : 0, species: D && D.species ? Object.keys(D.species).length : 0 },
+    view: { selected: selected === 'sum' ? 'sum' : Number(selected) + 1, locked: sumCfg.locked === true },
+    huntLog: { accounts: [1, 2, 3, 4].map(n => { const box = huntLog.acc[n] || {}; return { n: n, sessions: Object.keys(box).length, hunts: new Set(Object.keys(box).map(k => box[k].h)).size }; }), rank: sumCfg.rank, saveError: huntLog.error },
+    accounts: accounts.map(a => {
+      const list = (a.teamList || []).slice().sort((x, y) => Number(x.slot) - Number(y.slot)).slice(0, TEAM_MAX);
+      const xp = { total: 0, inside: 0, full: 0, neither: 0, none: 0 };
+      const team = list.map(m => { const r = xpReading(m); xp[r]++; return { level: m.level, reading: r === 'neither' ? 'neither (xp ' + m.xp + ')' : r }; });
+      return { n: a.idx + 1, name: a.name, nameKnown: a.name !== 'Conta ' + (a.idx + 1), level: a.level || 0, huntId: a.huntId || '', huntKnown: !!known[a.huntId],
+        active: a.active !== false, defeated: a.defeated || 0, killsH: Math.round(a.killsH || 0), captures: a.captures || 0, lead: !!a.lead, partySize: a.partySize || 1,
+        teamN: list.length, teamActive: !!(a.teamActiveId && list.some(m => String(m.id) === String(a.teamActiveId))), xp: xp, team: team,
+        trainerXp: xpReading({ level: a.level, xp: a.trainerXp }), capturesSeen: a.catchesSeen || 0,
+        kinds: (a.ballTypes && typeof a.ballTypes === 'object') ? { balls: Object.keys(a.ballTypes).length, potions: Object.keys(a.potionTypes || {}).length } : null,
+        shiny: a.shinyThrown === undefined ? null : { thrown: n0(a.shinyThrown), caught: n0(a.shinyCaught), throws: n0(a.throws), matched: n0(a.throwsMatched), dexBalls: n0(a.dexShinyBalls), dexSpecies: n0(a.dexShinySpecies), dexOpened: n0(a.dexOpened) },
+        combat: a.combat && typeof a.combat === 'object' ? { hits: a.combat.hits, kills: a.combat.kills, counterKills: a.combat.counterKills, messageKills: a.combat.messageKills, gapMs: a.combat.gapMs, gapN: a.combat.gapN, spawnMs: a.combat.spawnMs, spawnN: a.combat.spawnN } : null,
+        bestIV: !!a.bestIV, lastCaught: !!a.lastCaught, ageSec: a._seenAt ? Math.round((Date.now() - a._seenAt) / 1000) : null };
+    }),
+    errors: diagErrors.map(x => ({ ageSec: Math.round((Date.now() - x.t) / 1000), msg: x.msg }))
+  };
+}
+
+// the top bar of the app (index.html) tells this page what to show
+window.addEventListener('message', e => {
+  const m = e.data;
+  if (!m || typeof m.type !== 'string') return;
+  if (m.type === 'lang') {                            // the window changed the language: this page says everything again
+    I18N.save(m.lang); I18N.setLang(m.lang);
+  } else if (m.type === 'focus') {                    // the window expanded the screen of an account: the Summary shows that account too, unless it is locked
+    if (e.source === window.parent && Number.isInteger(m.account) && m.account >= 1 && m.account <= 4 && !sumCfg.locked) { selected = m.account - 1; renderAll(); }
+  } else if (m.type === 'layout') {                          // Panel = the summary on the left, Simple = the main area
+    document.body.classList.toggle('no-summary', m.summary === false);
+    document.body.classList.toggle('no-main', m.main === false);
+    // Settings › Game panels: only the accounts in use are shown anywhere here (their data is not received either)
+    const np = Math.floor(Number(m.panels));
+    if (np >= 1 && np < accounts.length) {
+      accounts.splice(np);
+      if (typeof selected === 'number' && selected >= np) selected = 'sum';
+      if (typeof sumCfg.tab === 'number' && sumCfg.tab >= np) { sumCfg.tab = 'sum'; saveSumCfg(); }
+      renderAll();
+    }
+  } else if (m.type === 'diag-request') {             // the Diagnostics window wants to know what this page sees
+    try { e.source.postMessage({ type: 'diag-reply', id: m.id, data: diagData() }, '*'); } catch (err) { diagNote('diag reply: ' + err.message); }
+  }
+});
+</script>
+<script src="live.js"></script>
+<script>I18N.onChange(() => { I18N.dom(document.body); renderAll(); });
+renderAll();
+if (I18N.getLang() !== 'en') I18N.dom(document.body);</script>
+</body>
+</html>

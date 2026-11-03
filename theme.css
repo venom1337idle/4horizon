@@ -1,0 +1,103 @@
+/* theme.css: the look of 4horizon, shared by index.html (top bar, game panels) and dashboard.html.
+   It follows the game's own interface: deep navy surfaces, darker nested cards, bar-like rows, gold accents,
+   Cinzel capitals for titles and a glossy cream-gold button. Change a colour here and it changes everywhere. */
+
+/* The same two fonts the game uses. If they cannot be loaded (no internet), Georgia and Segoe UI are used instead. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* surfaces (sampled from the game's own cards) */
+  --bg: #080d18;            /* behind everything */
+  --bg2: #0c1220;           /* darker cards nested inside a card, and rows */
+  --panel: #111a2e;         /* the navy body of a card */
+  --panel2: #172041;
+  --tile-a: #172041;        /* tiles go from this ... */
+  --tile-b: #0f162d;        /* ... to this, top to bottom */
+  --line: #222e52;
+  --line2: #2f3d6b;
+
+  /* text */
+  --text: #e9edf6;
+  --title: #ffffff;
+  --dim: #8d9ab8;           /* small labels */
+  --dim2: #6c7aa0;
+
+  /* values: the same colours the game uses for XP, loot, costs, coins */
+  --green: #6ee7a0;
+  --blue: #9db4ff;
+  --red: #ff8a8a;
+  --orange: #f2b45c;
+  --gold: #e3c06b;
+  --purple: #c79bff;
+  --pink: #ff8ac0;
+  --teal: #6fe0d2;
+
+  /* rare things (the purple row for a rare drop) */
+  --purple-edge: #b478ff;
+  --purple-tint: #232444;
+
+  /* the game's colour ladder (measured on its own screens): used for the stat bars, the IV badges and the tier words (Comum, Incomum, Rara...) */
+  --t-gray: #d3d3d3;
+  --t-green: #88e788;
+  --t-blue: #0f52ba;
+  --t-purple: #8a00c4;
+  --t-orange: #ffa500;
+  --t-red: #95101b;          /* Mítica */
+  --t-pale: #ffffc5;
+
+  /* the gold button */
+  --gold-a: #f0d080;
+  --gold-b: #d9ad4a;
+  --gold-c: #bb8d31;
+  --gold-hi: #f9eac4;
+  --on-gold: #1c1405;
+
+  /* fonts and shapes */
+  --serif: "Cinzel", "Cinzel Decorative", Georgia, "Times New Roman", serif;
+  --sans: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --r: 14px;
+  --r-sm: 10px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 var(--sans); }
+::selection { background: rgba(227, 192, 107, .35); }
+
+/* thin navy scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #28366a; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #3a4c8c; background-clip: content-box; }
+
+/* ---------- shared pieces ---------- */
+
+/* a tile: the rounded navy gradient boxes of the Hunt Analyzer */
+.tile { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r); }
+
+/* a small section label in Cinzel with a fading gold line under it, like "DROPS" on the game's card */
+.lab { font-family: var(--serif); font-weight: 700; font-size: 11.5px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase;
+       padding-bottom: 6px; margin-bottom: 10px; border-bottom: 1px solid transparent;
+       border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
+
+/* form fields */
+select, input[type=text], input[type=number], input[type=password] {
+  background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 9px; font: inherit; font-size: 12px; }
+select:focus, input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(227, 192, 107, .15); }
+::placeholder { color: var(--dim2); }
+
+/* buttons */
+.btn { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 11px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn:hover { border-color: var(--line2); color: #fff; }
+.btn.on { color: var(--gold); border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(227, 192, 107, .18), 0 0 12px rgba(227, 192, 107, .1); }
+/* the glossy cream-gold button ("Caçar" in the game) */
+.btn-gold, .cta { background: linear-gradient(180deg, var(--gold-a) 0%, var(--gold-b) 55%, var(--gold-c) 100%); color: var(--on-gold); border: 1px solid rgba(249, 234, 196, .65);
+  border-radius: var(--r-sm); font-weight: 700; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 2px 12px rgba(227, 192, 107, .22); }
+.btn-gold:hover, .cta:hover { filter: brightness(1.07); }
+.btn-gold:active, .cta:active { filter: brightness(.95); transform: translateY(1px); }
+
+/* the round emblem with a bright ring, and the "Nv. 20" pill: as in the header of the game's hunt cards */
+.emb { width: 34px; height: 34px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+       background: radial-gradient(circle at 50% 30%, #0e1a14, #000); border: 2px solid var(--hedge, var(--gold));
+       box-shadow: 0 0 0 2px rgba(0, 0, 0, .35), inset 0 0 10px rgba(0, 0, 0, .6); font-family: var(--serif); font-weight: 700; font-size: 15px; color: var(--hedge, var(--gold)); }
+.emb b { font-weight: 700; }
+.lvl { background: rgba(0, 0, 0, .4); color: #fff; font-weight: 700; font-size: 12px; padding: 3px 11px; border-radius: 999px; flex: none; white-space: nowrap; }

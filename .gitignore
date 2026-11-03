@@ -1,0 +1,33 @@
+# dependencies and build output
+node_modules/
+dist/
+out/
+
+# personal files: they live in the user-data folder since lang-50, but never commit them if one turns up here
+history.json
+notify-settings.json
+tidy-settings.json
+ws-schema.json
+accounts.json
+economy-log.json
+species.json
+
+# the game's own code, used by tools/ to build the data files: never part of this repository
+game-data.mjs
+tools/game-data.mjs
+
+# packages, backups and leftovers of the old install-by-patch way
+*.zip
+*.bak-*
+_old/
+install-*.js
+
+# tests and editors
+test-results/
+test/**/out/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

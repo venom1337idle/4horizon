@@ -1,0 +1,53 @@
+# pt/notify.py: the Portuguese texts of this part of the app
+EXACT = {
+  # lang-41: battle pass, daily missions, eggs (missions.js)
+  'easy': 'fácil', 'medium': 'média', 'hard': 'difícil',
+  'challenge of the week': 'desafio da semana', 'mission of the day': 'missão do dia',
+  '{who}: battle pass mission completed': '{who}: missão do passe concluída',
+  'Done: {what} ({n}/{n}){pp}. Claim it in the Passe window.': 'Pronto: {what} ({n}/{n}){pp}. Resgate na janela do Passe.',
+  '{who}: daily mission completed': '{who}: missão diária concluída',
+  # lang-42: one notification per goal of a daily mission
+  '{who}: daily mission goal done': '{who}: objetivo da missão diária concluído',
+  'Done: {goals}.': 'Concluído: {goals}.',
+  'The {tier} mission is complete: claim it in the Missões window.': 'A missão {tier} está completa: resgate na janela de Missões.',
+  'The {tier} mission: {d} of {all} goals done.': 'Missão {tier}: {d} de {all} objetivos concluídos.',
+  'a goal': 'um objetivo',
+  '{who}: an egg is ready to hatch': '{who}: um ovo está pronto para chocar',
+  '{name} is ready in the incubator.': '{name} está pronto na incubadora.',
+  'An egg is ready in the incubator.': 'Um ovo está pronto na incubadora.',
+  'Running low on balls': 'Bolas acabando',
+  'Running low on potions': 'Poções acabando',
+  'none left': 'nenhuma sobrando',
+  '{n} left, about {time} at the current pace': 'restam {n}, cerca de {time} no ritmo atual',
+  '{who} reached level {n}': '{who} chegou ao nível {n}',
+  'New hunt: {list}': 'Nova hunt: {list}',
+  'New hunts: {list}': 'Novas hunts: {list}',
+  'and {n} more': 'e mais {n}',
+  'Shiny captured!': 'Shiny capturado!',
+  'Great catch': 'Ótima captura',
+  'Rare drop: {item}': 'Drop raro: {item}',
+  '{who} got {n} × {item} (worth ${value} each)': '{who} conseguiu {n} × {item} (vale ${value} cada)',
+  'Stopped hunting': 'Parou de caçar',
+  '{who} is no longer hunting.': '{who} não está mais caçando.',
+  'No data from the game': 'Sem dados do jogo',
+  '{who}: nothing received for {span}. The panel may be disconnected or logged out.': '{who}: nada recebido há {span}. O painel pode estar desconectado ou sem login.',
+  'No kills': 'Sem kills',
+  '{who}: no kills for {span} while hunting.': '{who}: sem kills há {span} enquanto caçava.',
+  'Notifications are working': 'As notificações estão funcionando',
+  '4horizon will alert you here, even when the window is hidden.': 'O 4horizon vai avisar você aqui, mesmo com a janela escondida.',
+  '4horizon is running': 'O 4horizon está rodando',
+  'Notifications are on. Right-click the tray icon to turn them off.': 'As notificações estão ligadas. Clique com o botão direito no ícone da bandeja para desligá-las.',
+  'Restart now': 'Reiniciar agora',
+  'Not now': 'Agora não',
+  '4horizon was updated': 'O 4horizon foi atualizado',
+  'Some files changed after 4horizon started:': 'Alguns arquivos mudaram depois que o 4horizon iniciou:',
+  'This window is still running the OLD version. Restart it now?': 'Esta janela ainda está rodando a versão ANTIGA. Reiniciar agora?',
+}
+PREFIX = {
+}
+INDIRECT = {
+  'Show / Hide': 'Mostrar / Ocultar',
+  'Send test notification': 'Enviar notificação de teste',
+  'Open notification settings': 'Abrir configurações de notificações',
+  'Quit': 'Sair',
+}

@@ -1,0 +1,29 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+// Lets index.html receive the numbers that main.js sends, and nothing else
+contextBridge.exposeInMainWorld('bridge', {
+  diagGet: () => ipcRenderer.invoke('diag:get'),
+  langGet: () => ipcRenderer.invoke('lang:get'),
+  langSet: (l) => ipcRenderer.invoke('lang:set', l),
+  notifyGet: () => ipcRenderer.invoke('notify:get'),
+  notifySet: (p) => ipcRenderer.invoke('notify:set', p),
+  notifyTest: () => ipcRenderer.invoke('notify:test'),
+  startupGet: () => ipcRenderer.invoke('startup:get'),
+  startupSet: (p) => ipcRenderer.invoke('startup:set', p),
+  analyzerToggle: () => ipcRenderer.invoke('analyzer:toggle'),
+  navGo: (what, n) => ipcRenderer.invoke('nav:go', what, n),
+  navHunt: (n, hunt) => ipcRenderer.invoke('nav:hunt', n, hunt),
+  economySet: (on) => ipcRenderer.invoke('economy:set', on),
+  navFavs: (n) => ipcRenderer.invoke('nav:favs', n),
+  navFavGo: (n, item) => ipcRenderer.invoke('nav:favgo', n, item),
+  diagProbe: () => ipcRenderer.invoke('diag:probe-login'),
+  diagCopy: (text) => ipcRenderer.invoke('diag:copy', text),
+  diagSave: (text) => ipcRenderer.invoke('diag:save', text),
+  accountsGet: () => ipcRenderer.invoke('accounts:get'),
+  accountsSave: (payload) => ipcRenderer.invoke('accounts:save', payload),
+  accountsClearCache: (n) => ipcRenderer.invoke('accounts:clear-cache', n),
+  accountsLogin: (which) => ipcRenderer.invoke('accounts:login', which),
+  getHistory: () => ipcRenderer.invoke('history:get'),
+  exportCsv: (text, name) => ipcRenderer.invoke('history:export', text, name),
+  onStats: (callback) => ipcRenderer.on('stats', (event, account, data) => callback(account, data))
+});

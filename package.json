@@ -1,0 +1,83 @@
+{
+  "name": "4horizon",
+  "version": "1.0.0",
+  "description": "Play up to four Poke Horizon Idle accounts side by side, with a live Summary, notifications and an Overview of your day.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/run-all.js",
+    "dist": "electron-builder --win",
+    "pack": "electron-builder --win --dir"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/venom1337idle/4horizon.git"
+  },
+  "homepage": "https://github.com/venom1337idle/4horizon",
+  "bugs": {
+    "url": "https://github.com/venom1337idle/4horizon/issues"
+  },
+  "keywords": [
+    "electron",
+    "pokehorizonidle",
+    "idle-game",
+    "multi-account",
+    "desktop"
+  ],
+  "author": "venom1337idle",
+  "license": "MIT",
+  "private": true,
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^25.1.8",
+    "playwright": "^1.48.0"
+  },
+  "build": {
+    "appId": "com.venom1337idle.4horizon",
+    "productName": "4horizon",
+    "copyright": "Copyright © 2026 venom1337idle",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!test/**",
+      "!tools/**",
+      "!dist/**",
+      "!.github/**",
+      "!*.md",
+      "!*.txt",
+      "!*.zip",
+      "!**/*.bak-*",
+      "!game-data.mjs"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "4horizon",
+      "artifactName": "4horizon-Setup-${version}.exe",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "venom1337idle",
+      "repo": "4horizon",
+      "releaseType": "draft"
+    }
+  }
+}
