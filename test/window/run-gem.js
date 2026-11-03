@@ -13,6 +13,9 @@ part = (al > 4) & (al < 250); op = al > 250; facets = op & (lum > 110)
 avg = a[facets][:, :3].mean(0)
 print(json.dumps({'size': im.size, 'mode': im.mode, 'corners': [float(al[0, 0]), float(al[0, -1]), float(al[-1, 0]), float(al[-1, -1])], 'transparent': float((al < 4).mean()), 'edgeN': int(part.sum()), 'edgeMed': float(np.median(lum[part])), 'edge99': float(np.quantile(lum[part], .99)), 'avg': [round(float(v)) for v in avg]}))
 `], { encoding: 'utf8' });
+if (py.status !== 0 && /No module named ['"]?PIL/.test(py.stderr || '')) {          // (the picture is read with Pillow, Python's picture library)
+  console.log('  FAIL  Pillow, the Python picture library this test needs, is missing: run "pip install pillow"'); console.log('\n0 passed, 1 failed'); process.exit(1);
+}
 const F = JSON.parse(py.stdout || '{}');
 ok('the picture is a PNG with transparency, 114 x 96, the corners are see-through', F.mode === 'RGBA' && F.size && F.size[0] === 114 && F.size[1] === 96 && F.corners.every(v => v === 0) && F.transparent > 0.2, F);
 ok('no grey fringe: the soft edge pixels are the dark navy of the outline (median brightness below 90, 99% below 150), the background grey (213) is gone', F.edgeN > 200 && F.edgeMed < 90 && F.edge99 < 150, [F.edgeN, F.edgeMed, F.edge99]);

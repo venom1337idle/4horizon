@@ -6,17 +6,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install (without downloading Electron itself)
         run: npm install
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - name: Pillow (two tests read the app's pictures with it)
+        run: pip install pillow
       - name: Chromium for the window tests
         run: npx playwright install --with-deps chromium
       - name: Tests
