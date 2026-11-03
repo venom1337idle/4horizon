@@ -21,10 +21,22 @@ let pageTimeoutMs = 6000;
 function analyzerInPage(mode) {
   const norm = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   const plain = s => norm(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');       // lower case, no accents
+  // lang-59: really on screen. Since the game's update of 2026-11-03 a closed Hunt Analyzer stays in the page, its box faded or slid out of view:
+  // the element itself looks shown, so every box around it is checked too, and that it is on the screen
   const visible = el => {
+    if (visible.any) return !!el;                                                          // (lang-60: the Análise button left out of a narrow toolbar, hidden: it is still pressed)
     if (!el || !el.getClientRects || !el.getClientRects().length) return false;
     const cs = getComputedStyle(el);
-    return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+    if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0') return false;
+    try { if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true })) return false; } catch (e) {}
+    for (let a = el.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      if (s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) === 0) return false;
+    }
+    if (el.closest && el.closest('[aria-hidden="true"], [inert]')) return false;
+    if (visible.loose) return true;                                                        // (the Análise button: scrolled out of the narrow toolbar is fine, see below)
+    const r = el.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
   };
   const classOf = el => (typeof el.className === 'string' ? el.className : (el.className && el.className.baseVal) || '');
   function findText(test, limit) {                                                         // the visible elements that directly contain a short text accepted by `test`
@@ -79,23 +91,49 @@ function analyzerInPage(mode) {
   async function waitFor(cond, ms) { const t0 = Date.now(); for (;;) { if (cond()) return true; if (Date.now() - t0 >= ms) return false; await sleep(80); } }
   const signedOut = () => Array.prototype.some.call(document.querySelectorAll('input[type="password"]'), visible);
 
+  // the Análise icon of the game's toolbar (it opens AND closes the analyzer): visible, scrolled out of view, or hidden in a narrow toolbar (lang-59/60)
+  const NAMES = ['analise', 'analysis', 'analyzer', 'analytics', 'hunt analysis'];
+  const topLimit = Math.max(220, innerHeight * 0.3);
+  function findAnalise() {
+    let list, hidden = false;
+    visible.loose = true;
+    try { list = findText(s => NAMES.indexOf(s) >= 0).filter(el => el.getBoundingClientRect().top < topLimit); } finally { visible.loose = false; }
+    if (!list.length) {
+      visible.any = true;
+      try { list = findText(s => NAMES.indexOf(s) >= 0).filter(el => el.getBoundingClientRect().top < topLimit && !el.closest('script,style,template,noscript')); } finally { visible.any = false; }
+      hidden = list.length > 0;
+    }
+    list.sort((a, b) => { const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return (ra.top - rb.top) || (ra.left - rb.left); });
+    return { el: list[0] || null, hidden: hidden };
+  }
+  // what an element is, for the report (no text from the game beyond a short label)
+  const describe = (el, box) => {
+    if (!el) return 'nothing';
+    const r = el.getBoundingClientRect(), b = box ? box.getBoundingClientRect() : null;
+    const label = (el.getAttribute && (el.getAttribute('aria-label') || el.getAttribute('title'))) || plain(el.textContent).slice(0, 12);
+    return el.tagName.toLowerCase() + (label ? ' "' + String(label).slice(0, 12) + '"' : '') + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + (b ? ' at ' + Math.round(b.right - r.right) + ' px from the right, ' + Math.round(r.top - b.top) + ' px from the top of the analyzer' : '');
+  };
+
   if (mode === 'state') return Promise.resolve({ open: isOpen(), signedOut: signedOut() });
 
   if (mode === 'close') {
     const t = titles();
     if (!t.length) return Promise.resolve({ ok: true, skipped: true });
     const dlg = dialogAround(t[0]);
-    if (!dlg) return Promise.resolve({ ok: false, reason: 'no close button' });
-    press(dlg.button);
-    return waitFor(() => !isOpen(), 1500).then(gone => gone ? { ok: true } : { ok: false, reason: 'did not close' });
+    return (async () => {
+      // lang-62: the Análise icon of the toolbar first (since the game's update of 2026-11-03 it is what closes the analyzer, at once);
+      // the corner button only when that icon is not there or did not close it
+      const a = findAnalise();
+      if (a.el) { press(clickableOf(a.el)); if (await waitFor(() => !isOpen(), 1500)) return { ok: true, via: 'toolbar' }; }
+      if (dlg && isOpen()) { press(dlg.button); if (await waitFor(() => !isOpen(), 1500)) return { ok: true }; }
+      if (!isOpen()) return { ok: true };
+      return { ok: false, reason: dlg ? 'did not close' : 'no close button', pressed: dlg ? describe(clickableOf(dlg.button), dlg.box) : 'nothing', toolbar: a.el ? (a.hidden ? 'hidden' : 'yes') : 'not found' };
+    })();
   }
 
   // ---- open ----
   if (isOpen()) return Promise.resolve({ ok: true, skipped: true });
-  const NAMES = ['analise', 'analysis', 'analyzer', 'analytics', 'hunt analysis'];
-  const topLimit = Math.max(220, innerHeight * 0.3);
-  const spots = findText(s => NAMES.indexOf(s) >= 0).filter(el => el.getBoundingClientRect().top < topLimit)
-    .sort((a, b) => { const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return (ra.top - rb.top) || (ra.left - rb.left); });
+  const found = findAnalise(), spots = found.el ? [found.el] : [], hiddenButton = found.hidden;
   if (!spots.length) {
     // for the report: the short words at the top of the page (the menu of the game)
     const seen = [];
@@ -112,9 +150,9 @@ function analyzerInPage(mode) {
   return (async () => {
     for (let i = 0; i < chain.length; i++) {
       press(chain[i]);
-      if (await waitFor(isOpen, i === 0 ? 1500 : 700)) return { ok: true };
+      if (await waitFor(isOpen, i === 0 ? 1500 : 700)) return hiddenButton ? { ok: true, hiddenButton: true } : { ok: true };
     }
-    return { ok: false, reason: 'did not open' };
+    return { ok: false, reason: hiddenButton ? 'did not open (its button is hidden)' : 'did not open' };
   })();
 }
 
@@ -139,6 +177,10 @@ async function toggle() {
       if (r.skipped) out.skipped = true;
       if (r.reason) out.reason = String(r.reason).slice(0, 60);
       if (Array.isArray(r.labels)) out.labels = r.labels.map(x => String(x).slice(0, 18)).slice(0, 16);
+      if (r.pressed) out.pressed = String(r.pressed).slice(0, 120);                       // lang-61: what was pressed as the close button
+      if (r.toolbar) out.toolbar = String(r.toolbar).slice(0, 12);
+      if (r.via) out.via = String(r.via).slice(0, 12);
+      if (r.hiddenButton) out.hiddenButton = true;
       return out;
     } catch (e) { return { n: s.n, ok: false, reason: 'page did not answer' }; }
   }));
@@ -149,7 +191,7 @@ async function toggle() {
 // for the report of the Diagnostics: what the last press did (words of the menu only when something was not found)
 function lastInfo() {
   if (!last) return null;
-  return { ageSec: Math.round((Date.now() - last.at) / 1000), action: last.action, results: last.results.map(r => ({ n: r.n, ok: !!r.ok, skipped: !!r.skipped, reason: r.reason || '', labels: r.labels || [] })) };
+  return { ageSec: Math.round((Date.now() - last.at) / 1000), action: last.action, results: last.results.map(r => ({ n: r.n, ok: !!r.ok, skipped: !!r.skipped, reason: r.reason || '', labels: r.labels || [], pressed: r.pressed || '', toolbar: r.toolbar || '', via: r.via || '', hiddenButton: !!r.hiddenButton })) };
 }
 
 function init() {

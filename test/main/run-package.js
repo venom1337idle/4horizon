@@ -16,6 +16,7 @@ ok('the app keeps its name "4horizon" (productName and name): the installed app 
 ok('installed for the user only (no administrator), the folder can be chosen, Start menu and desktop shortcuts, the data is kept when it is uninstalled', b.nsis.oneClick === false && b.nsis.perMachine === false && b.nsis.allowToChangeInstallationDirectory === true && b.nsis.createDesktopShortcut && b.nsis.createStartMenuShortcut && b.nsis.deleteAppDataOnUninstall === false, b.nsis);
 ok('scripts: npm run dist builds it, npm run pack makes the folder only', pkg.scripts.dist === 'electron-builder --win' && pkg.scripts.pack === 'electron-builder --win --dir');
 ok('lang-58: before each build ("predist", run by npm by itself) the old installers in dist/ are removed, so it only holds the latest', pkg.scripts.predist === 'node tools/clean-dist.js');
+ok('lang-62: after a build ("postdist") a last line says it is done and where the installer is', pkg.scripts.postdist === 'node tools/dist-done.js');
 ok('electron-builder and Electron are development packages (Electron is built into the installer, it is not a dependency of the app)', pkg.devDependencies && pkg.devDependencies['electron-builder'] && pkg.devDependencies.electron && !pkg.dependencies);
 ok('releases go to GitHub as a DRAFT (checked by hand before they are published)', b.publish && b.publish.provider === 'github' && b.publish.owner === 'venom1337idle' && b.publish.repo === '4horizon' && b.publish.releaseType === 'draft', b.publish);
 

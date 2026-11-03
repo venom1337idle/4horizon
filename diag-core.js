@@ -367,7 +367,7 @@
       else {
         const nv = main.nav, word = { center: 'Centro', market: 'Market', bag: 'Mochila', hunts: 'Hunts', lasthunt: 'Back to last hunt' + (nv.hunt ? ' (' + nv.hunt + ')' : '') }[nv.what] || String(nv.what);
         P('  last press ' + ago(nv.ageSec) + ': ' + word + ' on ' + lab(nv.n) + ': ' + (nv.ok ? 'done' : 'NOT DONE (' + (nv.reason || '?') + ')') + (nv.ok && nv.already ? ' (it was the hunt in progress)' : '') + (!nv.ok && nv.labels && nv.labels.length ? ' \u00b7 buttons of its page: ' + nv.labels.join(', ') : ''));
-        if (nv.probe) P('      what was looked at: search box ' + nv.probe.input + ', panel ' + nv.probe.box + ', searched "' + nv.probe.term + '"');
+        if (nv.probe) P('      what was looked at: search box ' + nv.probe.input + ', panel ' + nv.probe.box + ', searched "' + nv.probe.term + '"' + (typeof nv.probe.all === 'number' ? ' · texts that are exactly the Pokémon: ' + nv.probe.all + ' in the page, ' + nv.probe.vis + ' visible, ' + nv.probe.inBox + ' in the panel, ' + nv.probe.below + ' below the search box' + (typeof nv.probe.contains === 'number' ? ', ' + nv.probe.contains + ' that contain it' : '') + (nv.probe.cacar ? ' · Caçar button: ' + nv.probe.cacar : '') + ' · region tabs found: ' + (nv.probe.regions || 'none') : ''));
       }
       P();
     }
@@ -405,7 +405,7 @@
       else {
         const an = main.analyzer;
         P('  last press ' + ago(an.ageSec) + ': ' + (an.action === 'open' ? 'opened' : an.action === 'close' ? 'closed' : 'no game panel was ready'));
-        (an.results || []).forEach(r => P('      ' + lab(r.n) + ': ' + (r.ok ? (r.skipped ? 'nothing to do' : 'done') : 'NOT DONE (' + (r.reason || '?') + ')') + (r.labels && r.labels.length ? ' \u00b7 words at the top of its page: ' + r.labels.join(', ') : '')));
+        (an.results || []).forEach(r => P('      ' + lab(r.n) + ': ' + (r.ok ? (r.skipped ? 'nothing to do' : 'done' + (r.via === 'toolbar' ? ' (closed with the Análise icon of the toolbar)' : '') + (r.hiddenButton ? ' (its Análise icon is hidden in the narrow toolbar)' : '')) : 'NOT DONE (' + (r.reason || '?') + ')') + (r.labels && r.labels.length ? ' \u00b7 words at the top of its page: ' + r.labels.join(', ') : '') + (r.pressed ? ' \u00b7 pressed as the close button: ' + r.pressed : '') + (r.toolbar ? ' \u00b7 Análise icon: ' + r.toolbar : '')));
       }
       P();
     }

@@ -95,7 +95,8 @@ const TORCHIC = { id: 'grass-100', name: 'Cratera dos Torchic' };
   p = await open(ctx, { startOpen: true, preselect: 'steel-300' }); put(3, p); r = await A.goHunt(3, { id: 'x-9', name: 'Castelo dos Mewtwo' });
   ok('a hunt that has no card (the Pokémon is not in the list): "hunt not found", nothing selected or started, search emptied', r.ok === false && r.reason === 'hunt not found' && !(await log(p)).some(x => x.startsWith('select:') || x.startsWith('hunt:')) && (await q(p)) === '', [r, await log(p)]);
   p = await open(ctx, { startOpen: true, preselect: 'steel-300', noSearch: true }); put(3, p); r = await A.goHunt(3, TORCHIC);
-  ok('no search box in the panel: "search box not found", with the buttons of the page for the report, and nothing pressed', r.ok === false && r.reason === 'search box not found' && r.labels.indexOf('todos') >= 0 && !(await log(p)).some(x => x.startsWith('select:') || x.startsWith('hunt:')), [r, await log(p)]);
+  // (lang-63: the Hunts panel is recognised by its search box; one without it is not taken for the panel, so it is not found either)
+  ok('no search box in the panel: not done ("hunts panel did not open" / "search box not found"), with the buttons of the page for the report, and no card or Caçar pressed', r.ok === false && /hunts panel did not open|search box not found/.test(r.reason) && r.labels.indexOf('todos') >= 0 && !(await log(p)).some(x => x.startsWith('select:') || x.startsWith('hunt:')), [r, await log(p)]);
   p = await open(ctx, { menu: ['Pokédex', 'Breed'] }); put(3, p); r = await A.goHunt(3, TORCHIC);
   ok('no Hunts button in the menu: "hunts button not found"', r.ok === false && r.reason === 'hunts button not found' && r.labels.length > 0, r);
   p = await open(ctx, { login: true, menu: ['Entrar'] }); put(3, p); r = await A.goHunt(3, TORCHIC);

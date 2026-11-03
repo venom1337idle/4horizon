@@ -20,7 +20,7 @@ let marketWaitMs = 5000;                 // how long the "Ir ao Market" button i
 // ---------------------------------------------------------------------------------------------------------------
 function navInPage(what, waitMs) {
   const norm = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
-  const plain = s => norm(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const plain = s => norm(String(s == null ? '' : s).replace(/[\u00ad\u200b\u200c\u200d\u2060\ufeff]/g, '')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');          // (lang-62: soft hyphens and zero-width breaks that split long names are left out)
   const visible = el => {
     if (!el || !el.getClientRects || !el.getClientRects().length) return false;
     const cs = getComputedStyle(el);
@@ -105,7 +105,7 @@ function navInPage(what, waitMs) {
 // ---------------------------------------------------------------------------------------------------------------
 function huntInPage(arg, waitMs) {
   const norm = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
-  const plain = s => norm(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const plain = s => norm(String(s == null ? '' : s).replace(/[\u00ad\u200b\u200c\u200d\u2060\ufeff]/g, '')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');          // (lang-62: soft hyphens and zero-width breaks that split long names are left out)
   const visible = el => {
     if (!el || !el.getClientRects || !el.getClientRects().length) return false;
     const cs = getComputedStyle(el);
@@ -148,15 +148,44 @@ function huntInPage(arg, waitMs) {
   const want = plain(A.name || '');
   const speciesShown = (Array.isArray(A.species) ? A.species : []).map(norm).filter(Boolean);
   const speciesPlain = speciesShown.map(plain);
+  const lvl = typeof A.level === 'number' && isFinite(A.level) ? A.level : null;
+  const escRe = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const BTN_START = ['cacar', 'hunt', 'start hunt', 'start hunting', 'go hunting'], BTN_HERE = ['cacando', 'hunting', 'hunting here'];
   const huntsButton = () => findNodes(s => s === 'hunts' || s === 'hunt').filter(x => x.el.getBoundingClientRect().top < topLimit)
     .sort((a, b) => { const ra = a.el.getBoundingClientRect(), rb = b.el.getBoundingClientRect(); return (ra.top - rb.top) || (ra.left - rb.left); })[0] || null;
-  const huntButton = () => findNodes(s => BTN_START.concat(BTN_HERE).indexOf(s) >= 0).filter(x => x.el.getBoundingClientRect().top >= topLimit)
-    .sort((a, b) => b.el.getBoundingClientRect().top - a.el.getBoundingClientRect().top)[0] || null;      // the one lowest on the page: the button of the details
+  // lang-63: only a Caçar / Caçando INSIDE the Hunts panel (the panel around its search box) is its button: a word like it elsewhere on the page
+  // (the map, the chat, another window) made the search throw away the right card (Exeggcute)
+  const huntButton = () => {
+    const si = searchInput(), pb = si ? boxOf(si) : null;
+    if (!pb) return null;                                                                // no Hunts panel (no search box): no button of it either
+    return findNodes(s => BTN_START.concat(BTN_HERE).indexOf(s) >= 0).filter(x => x.el.getBoundingClientRect().top >= topLimit && pb.contains(x.el))
+      .sort((a, b) => b.el.getBoundingClientRect().top - a.el.getBoundingClientRect().top)[0] || null;      // the one lowest in the panel: the button of the details
+  };
+  // (for the report: a Caçar-like word outside the panel)
+  const huntButtonOutside = () => { const si = searchInput(), pb = si ? boxOf(si) : null; return !!pb && findNodes(s => BTN_START.concat(BTN_HERE).indexOf(s) >= 0).some(x => x.el.getBoundingClientRect().top >= topLimit && !pb.contains(x.el)); };
   const searchInput = () => Array.prototype.filter.call(document.querySelectorAll('input'), i => visible(i) && /^(text|search|)$/.test(i.type || '') && /buscar|search|procurar|pesquisar/.test(plain((i.placeholder || '') + ' ' + (i.getAttribute('aria-label') || ''))))[0] || null;
   // the details of the hunt: the highest box around the button that is not much narrower than the box around it (so that it is the column of the details, not the whole panel)
   const paneOf = el => { let pane = el; for (let i = 0; i < 12 && pane.parentElement && pane.parentElement !== document.body; i++) { const pw = pane.getBoundingClientRect().width; if (pw >= 200 && pane.parentElement.getBoundingClientRect().width > pw * 1.35) break; pane = pane.parentElement; } return pane; };
   const detailsShow = () => { const b = huntButton(); if (!b) return null; return plain(paneOf(b.el).textContent).slice(0, 320).indexOf(want) >= 0 ? b : null; };
+  // lang-59: a hunt the game renamed (its name in 4horizon's data is the old one): its details still show its Pokémon, and its level when known
+  const detailsShowSpecies = () => {
+    const b = huntButton(); if (!b || !speciesPlain.length) return null;
+    const pe = paneOf(b.el), t = plain(pe.innerText || pe.textContent).slice(0, 400);          // (innerText: the words as shown, with the line breaks between them)
+    const hasSp = speciesPlain.some(x => new RegExp('(^|[^a-z0-9])' + escRe(x) + '([^a-z0-9]|$)').test(t));
+    return hasSp && (lvl === null || new RegExp('nv\\.? ?' + lvl + '([^0-9]|$)').test(t)) ? b : null;
+  };
+  // lang-59: the regions of the Hunts panel (Kanto, Johto, Hoenn, Sinnoh...): the search only looks inside the region shown
+  const regionTabs = () => {                                                              // (they are near the top of the panel: looked for inside the panel around the search box)
+    const i = searchInput(), box = i ? boxOf(i) : null;
+    const RX = /^(kanto|johto|hoenn?|sinnoh|unova|kalos|alola|galar|paldea)( ?(lv|nv)\.? ?\d+)?$/;
+    const out = findNodes(x => RX.test(x), 16).filter(x => (box ? box.contains(x.el) : x.el.getBoundingClientRect().top >= 60) && x.el !== i);
+    // (lang-60: the tabs may be pictures, their name only in alt / title / aria-label)
+    Array.prototype.forEach.call(document.querySelectorAll('[alt],[title],[aria-label]'), el => {
+      const v = plain(el.getAttribute('alt') || el.getAttribute('title') || el.getAttribute('aria-label') || '').replace(/^[^a-z0-9]+/, '');
+      if (RX.test(v) && visible(el) && (box ? box.contains(el) : true) && !out.some(o => o.el === el || o.el.contains(el) || el.contains(o.el))) out.push({ el: el, s: v });
+    });
+    return out;
+  };
   const setValue = (el, v) => { el.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); };
   const boxOf = el => { let b = el; for (let i = 0; i < 12 && b.parentElement; i++) { b = b.parentElement; const r = b.getBoundingClientRect(); if (r.width >= 700 && r.height >= 350) return b; } return null; };
 
@@ -181,32 +210,74 @@ function huntInPage(arg, waitMs) {
         // (without the Pokémon of the hunt: the words after the LAST "dos" / "de" of its name; "Mina de Ferro dos Aron" is Aron)
         if (!term) { const m = /^.*\s(?:dos|das|do|da|de)\s+([^\s].*)$/i.exec(norm(A.name)); term = m ? norm(m[1]) : ''; sp = term ? [plain(term)] : []; }
         if (!term) return { ok: false, reason: 'hunt not found', labels: buttonTexts() };
-        const box = boxOf(inp);
-        if (box) {                                                                           // what was chosen before (a tab, a type, a level) could hide the hunt: "Todos" everywhere in the panel
-          findNodes(s => s === 'todos os niveis' || s === 'todos' || s === 'all levels' || s === 'all', 12).filter(x => box.contains(x.el)).forEach(x => press(clickableOf(x.el)));
-          await sleep(250);
-        }
-        typed = inp; setValue(inp, term);
-        await sleep(700);
-        const ir = inp.getBoundingClientRect();
-        const cands = () => {
-          const b = huntButton(), pane = b ? paneOf(b.el) : null, pr = pane ? pane.getBoundingClientRect() : null;
-          return findNodes(s => sp.indexOf(s) >= 0, 60).filter(x => { const r = x.el.getBoundingClientRect(), cx = r.left + r.width / 2; return x.el !== inp && !(box && !box.contains(x.el)) && !(pane && pane.contains(x.el)) && r.top >= ir.bottom - 2 && !(pr && cx > pr.left); });
+        let sawCards = false, probe = null, bySpecies = false;
+        // in the region shown: "Todos" everywhere (a type, a level, a tab chosen before could hide the hunt), the Pokémon in the search box, its cards
+        const searchHere = async () => {
+          const inp2 = searchInput() || inp, box = boxOf(inp2);
+          if (box) {
+            findNodes(s => s === 'todos os niveis' || s === 'todos' || s === 'all levels' || s === 'all', 12).filter(x => box.contains(x.el)).forEach(x => press(clickableOf(x.el)));
+            await sleep(250);
+          }
+          typed = inp2; setValue(inp2, term);
+          await sleep(700);
+          const ir = inp2.getBoundingClientRect();
+          const cands = () => {
+            const b = huntButton(), pane = b ? paneOf(b.el) : null, pr = pane ? pane.getBoundingClientRect() : null;
+            const found = findNodes(s => sp.indexOf(s) >= 0, 60);
+            // lang-62: a name the page split into pieces ("Exeg" + "gcute" around a <wbr>): the deepest element whose whole text is the name
+            if (box) Array.prototype.forEach.call(box.querySelectorAll('*'), el => {
+              if (el.children.length === 0 || found.length > 60) return;
+              const t = plain(el.textContent).replace(/^[^a-z0-9]+/, '');
+              if (sp.indexOf(t) < 0 || Array.prototype.some.call(el.children, c => plain(c.textContent).replace(/^[^a-z0-9]+/, '') === t)) return;
+              if (visible(el) && !found.some(f => f.el === el || el.contains(f.el) || f.el.contains(el))) found.push({ el: el, s: t });
+            });
+            return found.filter(x => { const r = x.el.getBoundingClientRect(), cx = r.left + r.width / 2; return x.el !== inp2 && !(box && !box.contains(x.el)) && !(pane && pane.contains(x.el)) && r.top >= ir.bottom - 2 && !(pr && cx > pr.left); });
+          };
+          const list = cands();
+          if (!list.length) {
+            if (!probe) {
+              // lang-60: what the search saw, for the report (counts only): the texts that are exactly the Pokémon, visible, in the panel, below the search box
+              let all = 0, vis = 0, inBox = 0, below = 0;
+              const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let tn;
+              while ((tn = w.nextNode())) { const t = plain(tn.nodeValue || '').replace(/^[^a-z0-9]+/, ''); if (sp.indexOf(t) < 0 || !tn.parentElement || tn.parentElement === inp2) continue; all++; const pe = tn.parentElement; if (!visible(pe)) continue; vis++; if (box && !box.contains(pe)) continue; inBox++; if (pe.getBoundingClientRect().top >= ir.bottom - 2) below++; }
+              let contains = 0; if (box) Array.prototype.forEach.call(box.querySelectorAll('*'), el => { if (el.children.length === 0 && sp.some(x => plain(el.textContent).indexOf(x) >= 0)) contains++; });
+              const hb = huntButton();
+              probe = { caçar: hb ? 'in the panel' : (huntButtonOutside() ? 'only outside the panel' : 'none'), contains: contains, input: Math.round(ir.width) + 'x' + Math.round(ir.height), box: box ? Math.round(box.getBoundingClientRect().width) + 'x' + Math.round(box.getBoundingClientRect().height) : 'none', term: term, texts: buttonTexts().length, all: all, vis: vis, inBox: inBox, below: below, regions: regionTabs().map(x => x.s.split(' ')[0]).slice(0, 8).join(',') };
+            }
+            return null;
+          }
+          sawCards = true;
+          let fallback = -1;
+          for (let i = 0; i < Math.min(list.length, 4); i++) {                               // the same Pokémon can be in more than one hunt: the details tell which
+            const now = cands();                                                             // (the game may draw the list again after a press: the cards are looked for again each time)
+            if (i >= now.length) break;
+            press(now[i].el);
+            const r = await waitFor(() => detailsShow() || (fallback < 0 && detailsShowSpecies() ? 'species' : null), 1800);
+            if (r && r !== 'species') return r;                                              // its name: that is the hunt
+            if (r === 'species' && fallback < 0) { fallback = i; if (await waitFor(detailsShow, 300)) return detailsShow(); }
+          }
+          if (fallback >= 0) {                                                               // no card had its name, one had its Pokémon (and level): the hunt was renamed
+            const now = cands(); if (fallback < now.length) { press(now[fallback].el); const r = await waitFor(detailsShowSpecies, 1800); if (r) { bySpecies = true; return r; } }
+          }
+          return null;
         };
-        const list = cands();
-        if (!list.length) return { ok: false, reason: 'hunt not found', labels: buttonTexts(), probe: { input: Math.round(ir.width) + 'x' + Math.round(ir.height), box: box ? Math.round(box.getBoundingClientRect().width) + 'x' + Math.round(box.getBoundingClientRect().height) : 'none', term: term, texts: buttonTexts().length } };
-        for (let i = 0; i < Math.min(list.length, 4) && !shown; i++) {                       // the same Pokémon can be in more than one hunt: the details tell which
-          const now = cands();                                                               // (the game may draw the list again after a press: the cards are looked for again each time)
-          if (i >= now.length) break;
-          press(now[i].el);
-          shown = await waitFor(detailsShow, 1800);
+        shown = await searchHere();
+        if (!shown) {                                                                        // not in the region shown: the other regions, one by one
+          const done = [];
+          for (let k = 0; k < 8 && !shown; k++) {
+            const tabs = regionTabs().filter(x => done.indexOf(x.s.split(' ')[0]) < 0);
+            if (!tabs.length) break;
+            done.push(tabs[0].s.split(' ')[0]); press(clickableOf(tabs[0].el)); await sleep(450);
+            shown = await searchHere();
+          }
         }
-        if (!shown) return { ok: false, reason: 'hunt did not open', labels: buttonTexts() };   // the details do not show that hunt: Caçar is NOT pressed
+        if (!shown) return sawCards ? { ok: false, reason: 'hunt did not open', labels: buttonTexts() } : { ok: false, reason: 'hunt not found', labels: buttonTexts(), probe: probe };   // Caçar is NOT pressed
+        if (bySpecies) shown.bySpecies = true;
       }
       // 4) go
-      if (BTN_HERE.indexOf(shown.s) >= 0) return { ok: true, already: true };
+      if (BTN_HERE.indexOf(shown.s) >= 0) return { ok: true, already: true, bySpecies: !!shown.bySpecies };
       press(clickableOf(shown.el));
-      return { ok: true };
+      return { ok: true, bySpecies: !!shown.bySpecies };
     } finally {
       if (typed && typed.isConnected) { try { setValue(typed, ''); } catch (e) {} }          // the search box of the game is left empty
     }
@@ -252,7 +323,11 @@ function huntInfo(h) {
   const T = huntsTable();
   const found = T.hunts.find(x => h.id && x.id === h.id) || T.hunts.find(x => h.name && x.name === h.name);
   const names = found && Array.isArray(found.ids) ? found.ids.map(i => (T.species[i] && T.species[i].n) || '').filter(Boolean) : [];
-  return { name: (found && found.name) || h.name, level: found ? found.level : undefined, species: names.slice(0, 3) };
+  if (found) return { name: found.name || h.name, level: found.level, species: names.slice(0, 3) };
+  // lang-59: a hunt that is not in the data (the game added or renamed it after the data was made): its id is often the name of its Pokémon ("torchic")
+  const all = Object.keys(T.species).map(k => T.species[k] && T.species[k].n).filter(Boolean);
+  const sp = [h.id, h.name].map(x => String(x || '').trim().toLowerCase()).map(x => all.find(n => n.toLowerCase() === x)).find(Boolean);
+  return { name: h.name || h.id, level: undefined, species: sp ? [sp] : [] };
 }
 // go back to a hunt (what the window remembers as the last one of the panel n): { id, name }
 async function goHunt(n, hunt) {
@@ -265,23 +340,25 @@ async function goHunt(n, hunt) {
   if (!g) out = { ok: false, reason: 'no game screen' };
   else {
     try {
-      const r = (await withTimeout(g.executeJavaScript('(' + huntInPage.toString() + ')(' + JSON.stringify({ name: info.name, species: info.species }) + ',' + marketWaitMs + ')', true), pageTimeoutMs + 6000)) || {};
+      const r = (await withTimeout(g.executeJavaScript('(' + huntInPage.toString() + ')(' + JSON.stringify({ name: info.name, species: info.species, level: info.level }) + ',' + marketWaitMs + ')', true), pageTimeoutMs * 4 + 6000))          // (lang-59: the regions may be searched one by one: about 40 s at most) || {};
       out = { ok: !!r.ok };
       if (r.reason) out.reason = String(r.reason).slice(0, 60);
       if (r.already) out.already = true;
+      if (r.bySpecies) out.bySpecies = true;                                                // found by its Pokémon: the game renamed the hunt
       if (Array.isArray(r.labels)) out.labels = r.labels.map(x => String(x).slice(0, 24)).slice(0, 24);
-      if (r.probe && typeof r.probe === 'object') out.probe = { input: String(r.probe.input || '').slice(0, 14), box: String(r.probe.box || '').slice(0, 14), term: String(r.probe.term || '').slice(0, 30), texts: Number(r.probe.texts) || 0 };
+      if (r.probe && typeof r.probe === 'object') out.probe = { input: String(r.probe.input || '').slice(0, 14), box: String(r.probe.box || '').slice(0, 14), term: String(r.probe.term || '').slice(0, 30), texts: Number(r.probe.texts) || 0,
+        all: Number(r.probe.all) || 0, vis: Number(r.probe.vis) || 0, inBox: Number(r.probe.inBox) || 0, below: Number(r.probe.below) || 0, contains: Number(r.probe.contains) || 0, cacar: String(r.probe['caçar'] || '').slice(0, 30), regions: String(r.probe.regions || '').replace(/[^a-z,]/g, '').slice(0, 60) };
     } catch (e) { out = { ok: false, reason: 'page did not answer' }; }
   }
   out.n = n;
-  last = { at: Date.now(), what: 'lasthunt', n: n, ok: out.ok, reason: out.reason || '', labels: out.labels || [], probe: out.probe, already: !!out.already, hunt: info.name };
+  last = { at: Date.now(), what: 'lasthunt', n: n, ok: out.ok, reason: out.reason || '', labels: out.labels || [], probe: out.probe, already: !!out.already, bySpecies: !!out.bySpecies, hunt: info.name };
   return out;
 }
 
 // for the report of the Diagnostics
 function lastInfo() {
   if (!last) return null;
-  return { ageSec: Math.round((Date.now() - last.at) / 1000), what: last.what, n: last.n, ok: last.ok, reason: last.reason, labels: last.labels, probe: last.probe, already: last.already, hunt: last.hunt };
+  return { ageSec: Math.round((Date.now() - last.at) / 1000), what: last.what, n: last.n, ok: last.ok, reason: last.reason, labels: last.labels, probe: last.probe, already: last.already, bySpecies: last.bySpecies, hunt: last.hunt };
 }
 
 function init() {

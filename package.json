@@ -1,6 +1,6 @@
 {
   "name": "4horizon",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "4horizon",
   "main": "main.js",
   "scripts": {
@@ -8,6 +8,7 @@
     "test": "node test/run-all.js",
     "predist": "node tools/clean-dist.js",
     "dist": "electron-builder --win",
+    "postdist": "node tools/dist-done.js",
     "pack": "electron-builder --win --dir"
   },
   "repository": {

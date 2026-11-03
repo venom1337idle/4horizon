@@ -47,11 +47,12 @@ const isOpen = p => p.evaluate(() => !!document.getElementById('ha'));
   r = await A.toggle();
   ok('open everywhere: the button closes it on all', r.action === 'close' && r.results.every(x => x.ok && !x.skipped) && !(await Promise.all([2, 3, 4].map(n => isOpen(pg[n])))).some(Boolean), r);
   // ---- mixed: closes where it is open, leaves the rest alone, and everybody ends the same
+  const clicks2 = await pg[2].evaluate(() => window.__clicks);          // (lang-62: closing presses the Análise icon too: counted from here)
   await pg[3].evaluate(() => { document.querySelectorAll('.mi')[6].click(); }); await pg[3].waitForTimeout(80);
   r = await A.toggle();
   ok('open on one panel only: the button CLOSES it (the others have nothing to close), so all end closed', r.action === 'close' && r.results.find(x => x.n === 3).ok && r.results.filter(x => x.skipped).length === 2 && !(await Promise.all([2, 3, 4].map(n => isOpen(pg[n])))).some(Boolean), r);
   const clicksBefore = await pg[2].evaluate(() => window.__clicks);
-  ok('...and the panels that had it closed were not touched', clicksBefore === 1);
+  ok('...and the panels that had it closed were not touched', clicksBefore === clicks2, [clicks2, clicksBefore]);
 
   // ---- the words of the menu in other languages and spellings
   for (const [label, why] of [['Analysis', 'English'], ['Analyzer', 'English (analyzer)'], ['ANÁLISE', 'capitals and accent'], ['analise', 'no accent']]) {

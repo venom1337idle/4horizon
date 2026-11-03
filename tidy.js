@@ -47,10 +47,20 @@ function tidyInPage(cfg) {
 
   const norm = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   const plain = s => norm(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');       // lower case, no accents
+  // lang-59: really on screen. Since the game's update of 2026-11-03 a closed Hunt Analyzer stays in the page, its box faded or slid out of view:
+  // the element itself looks shown, so every box around it is checked too, and that it is on the screen
   const visible = el => {
     if (!el || !el.getClientRects || !el.getClientRects().length) return false;
     const cs = getComputedStyle(el);
-    return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+    if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0') return false;
+    try { if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true })) return false; } catch (e) {}
+    for (let a = el.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      if (s.display === 'none' || s.visibility === 'hidden' || Number(s.opacity) === 0) return false;
+    }
+    if (el.closest && el.closest('[aria-hidden="true"], [inert]')) return false;
+    const r = el.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
   };
   const classOf = el => (typeof el.className === 'string' ? el.className : (el.className && el.className.baseVal) || '');
   const describe = el => {                                                      // structure only: never the text of the page (it may hold chat messages)
@@ -154,11 +164,13 @@ function tidyInPage(cfg) {
     tries.analyzer = (tries.analyzer || 0) + 1;
     if (tries.analyzer > 4) { if (tries.analyzer === 5) say('the Hunt Analyzer would not close after 4 tries'); return; }
     const dlg = dialogAround(titles[0]);
-    if (!dlg) {
-      if (tries.analyzer === 1) {
-        say('found the Hunt Analyzer, but no close button in its top-right corner (looked at ' + describe(titles[0].parentElement || titles[0]) + ')');
-      }
-      return;
+    // lang-61/62: since the game's update of 2026-11-03 its corner button may not close it: from the 1st try the
+    // Análise icon of the game's toolbar is pressed, which switches the analyzer off (it may be hidden in a narrow toolbar: pressing still works)
+    if (!dlg || tries.analyzer === 1 || tries.analyzer >= 3) {          // (1st try: the Análise icon; 2nd: the corner button, in case the icon did not do it; then the icon again)
+      const lim = Math.max(220, innerHeight * 0.3), w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n, icon = null;
+      while ((n = w.nextNode())) { const t = String(n.nodeValue || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); if (t === 'analise' && n.parentElement && !n.parentElement.closest('script,style,template') && n.parentElement.getBoundingClientRect().top < lim) { icon = n.parentElement; break; } }
+      if (icon) { press(icon.closest('button,[role="button"],a,[onclick]') || icon); say('switched the Hunt Analyzer off with the Análise icon of the toolbar (try ' + tries.analyzer + ')'); return; }
+      if (!dlg) { if (tries.analyzer === 1) say('found the Hunt Analyzer, but no close button in its top-right corner (looked at ' + describe(titles[0].parentElement || titles[0]) + ')'); return; }
     }
     press(dlg.button);
     say('closed the Hunt Analyzer' + (tries.analyzer > 1 ? ' (try ' + tries.analyzer + ')' : ''));
