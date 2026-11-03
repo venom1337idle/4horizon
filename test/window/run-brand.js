@@ -15,9 +15,10 @@ lab, n = ndi.label(al < 4); border = set(np.unique(np.concatenate([lab[0], lab[-
 holes = [i for i in range(1, n + 1) if i not in border and (lab == i).sum() >= 6]
 print(json.dumps({'mode': im.mode, 'size': im.size, 'transparent': float((al < 4).mean()), 'corners': [float(al[0, 0]), float(al[0, -1]), float(al[-1, 0]), float(al[-1, -1])], 'edgeMax': float(lum[part].max()), 'edge995': float(np.quantile(lum[part], .995)), 'edgeN': int(part.sum()), 'holes': len(holes), 'opaque': float((al > 250).mean())}))
 `], { encoding: 'utf8' });
-if (py.status !== 0 && /No module named ['"]?PIL/.test(py.stderr || '')) {          // (the picture is read with Pillow, Python's picture library)
-  console.log('  FAIL  Pillow, the Python picture library this test needs, is missing: run "pip install pillow"'); console.log('\n0 passed, 1 failed'); process.exit(1);
+if (py.status !== 0 && /No module named ['"]?(PIL|numpy|scipy)/.test(py.stderr || '')) {          // (the picture is read with Python's Pillow, numpy and scipy)
+  console.log('  FAIL  a Python library this test needs is missing (' + (/No module named ['"]?([\w.]+)/.exec(py.stderr) || [])[1] + '): run "pip install pillow numpy scipy"'); console.log('\n0 passed, 1 failed'); process.exit(1);
 }
+if (py.status !== 0) { console.log('  FAIL  the picture could not be read: ' + String(py.stderr || '').trim().split('\n').pop()); console.log('\n0 passed, 1 failed'); process.exit(1); }
 const F = JSON.parse(py.stdout || '{}');
 ok('the file is a PNG with transparency, 388 x 120 (a 3x picture of a logo that is shown 40 px high)', F.mode === 'RGBA' && F.size && F.size[0] === 388 && F.size[1] === 120, F);
 ok('the background is gone: the four corners are fully transparent, and a good part of the picture is transparent', F.corners.every(v => v === 0) && F.transparent > 0.35 && F.opaque > 0.3, F);

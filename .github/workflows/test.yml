@@ -17,8 +17,8 @@ jobs:
         run: npm install
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-      - name: Pillow (two tests read the app's pictures with it)
-        run: pip install pillow
+      - name: Python libraries (two tests read the app's pictures with them)
+        run: pip install pillow numpy scipy
       - name: Chromium for the window tests
         run: npx playwright install --with-deps chromium
       - name: Tests

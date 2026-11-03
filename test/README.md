@@ -37,7 +37,7 @@ cd <that folder>
 python3 build.py write <the project folder>/i18n-pt.js
 ```
 
-Two window tests (`run-brand`, `run-gem`) check the app's pictures with Pillow, Python's picture library: `pip install pillow`.
+Two window tests (`run-brand`, `run-gem`) check the app's pictures with three Python libraries: `pip install pillow numpy scipy`.
 
 The text checks need Python 3:
 - **portuguese-dictionary**: every English text the app asks for has its Portuguese, and no Portuguese text is left that nobody asks for
