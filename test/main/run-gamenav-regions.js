@@ -150,6 +150,42 @@ document.getElementById('ana').addEventListener('click', () => { window.__an++; 
     L = await mp.evaluate(() => window.__log.slice());
     ok('wild "Exeggcute" names on the map and a "Caçando" word outside the panel: only the panel counts, the card is found and the hunt started', r.ok === true && L.includes('hunt:Selva Tropical dos Exeggcute'), [r, L]);
   }
+  // lang-65: the layout of the video of 2026-11-04: after the search a level header "NÍVEL 10 · libera no treinador Nv. 10 · 1 hunt" stands above
+  // the one card, and the details column is still empty (no Caçar). The lone word "hunt" was taken for the Caçar button and the card thrown away.
+  {
+    const vp = await open({ region: 'Kanto' });
+    await vp.evaluate(() => {
+      const r0 = render;
+      render = function () {
+        r0();
+        const l = document.getElementById('list'), n = l.querySelectorAll('.card').length;
+        if (n) l.insertAdjacentHTML('afterbegin', '<div class="hd" style="width:600px;padding:4px"><b>Nível 10</b> · libera no treinador Nv. 10 · <span>' + n + '</span> hunt' + (n > 1 ? 's' : '') + '</div>');
+      };
+      document.getElementById('cacar').style.display = 'none';                          // nothing chosen yet: no Caçar in the details
+      document.getElementById('list').addEventListener('click', () => { document.getElementById('cacar').style.display = ''; }, true);
+      render();
+    });
+    r = await A.goHunt(1, { id: 'grass-10', name: 'Selva Tropical dos Exeggcute' });
+    L = await vp.evaluate(() => window.__log.slice());
+    ok('the video\'s layout: a header "· 1 hunt" above the one card, nothing chosen yet: the card is pressed and the hunt started (it was "hunt not found")', r.ok === true && L.includes('select:grass-10') && L.includes('hunt:Selva Tropical dos Exeggcute'), [r, L]);
+  }
+  // lang-65: a "Fraco contra" drop-down set to Fogo hides the Torchic hunt (a fire hunt): it is put back to "Qualquer" before the search
+  {
+    const fp = await open({ region: 'Hoen' });
+    await fp.evaluate(() => {
+      const box = document.getElementById('hp');
+      box.insertAdjacentHTML('beforeend', '<div style="position:absolute;left:600px;top:140px"><span>Fraco contra:</span> <select id="weak"><option value="">Qualquer</option><option value="fogo">Fogo</option></select></div>');
+      const sel = document.getElementById('weak'); sel.value = 'fogo';
+      const r0 = render;
+      render = function () { const keep = H.slice(); if (sel.value === 'fogo') { for (let i = H.length - 1; i >= 0; i--) if (/torchic|numel/i.test(H[i][2])) H.splice(i, 1); } r0(); H.length = 0; keep.forEach(x => H.push(x)); };
+      sel.addEventListener('change', () => { window.__log.push('weak:' + (sel.value || 'qualquer')); render(); });
+      render();
+    });
+    A._setHuntData({ hunts: [{ id: 'fire-300', name: 'Cratera dos Torchic', level: 300, unlock: 300, ids: [1] }], species: { 1: { n: 'Torchic' } } });
+    r = await A.goHunt(1, { id: 'fire-300', name: 'Cratera dos Torchic' });
+    L = await fp.evaluate(() => window.__log.slice());
+    ok('"Fraco contra: Fogo" (a drop-down) hid the hunt: it is set back to "Qualquer", the hunt is found and started', r.ok === true && L.includes('weak:qualquer') && L.includes('hunt:Monte Chaminé dos Torchic'), [r, L]);
+  }
   // lang-60: region tabs that are pictures (their name only in alt), and what the report gets when a hunt is not found
   A._setHuntData({ hunts: [{ id: 'grass-10', name: 'Selva Tropical dos Exeggcute', level: 10, unlock: 10, ids: [1] }], species: { 1: { n: 'Exeggcute' } } });
   const pics = page({ region: 'Hoen' }).replace(/<div class="rg" data-r="(\w+)"([^>]*)><span>\w+<\/span>(?: <small>Lv\d+<\/small>)?<\/div>/g, '<div class="rg" data-r="$1"$2><img alt="$1" src="data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%2780%27 height=%2730%27/>" width="80" height="30"></div>');

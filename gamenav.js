@@ -150,7 +150,9 @@ function huntInPage(arg, waitMs) {
   const speciesPlain = speciesShown.map(plain);
   const lvl = typeof A.level === 'number' && isFinite(A.level) ? A.level : null;
   const escRe = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const BTN_START = ['cacar', 'hunt', 'start hunt', 'start hunting', 'go hunting'], BTN_HERE = ['cacando', 'hunting', 'hunting here'];
+  // lang-65: no bare "hunt" / "hunting" any more: the level headers of the panel end in "· 1 hunt", and that lone word was taken for the Caçar button
+  // (then every card of the list was thrown away: Back to last hunt failed on any hunt alone in its level group, like Exeggcute)
+  const BTN_START = ['cacar', 'start hunt', 'start hunting', 'go hunting'], BTN_HERE = ['cacando', 'hunting here'];
   const huntsButton = () => findNodes(s => s === 'hunts' || s === 'hunt').filter(x => x.el.getBoundingClientRect().top < topLimit)
     .sort((a, b) => { const ra = a.el.getBoundingClientRect(), rb = b.el.getBoundingClientRect(); return (ra.top - rb.top) || (ra.left - rb.left); })[0] || null;
   // lang-63: only a Caçar / Caçando INSIDE the Hunts panel (the panel around its search box) is its button: a word like it elsewhere on the page
@@ -158,10 +160,25 @@ function huntInPage(arg, waitMs) {
   const huntButton = () => {
     const si = searchInput(), pb = si ? boxOf(si) : null;
     if (!pb) return null;                                                                // no Hunts panel (no search box): no button of it either
-    return findNodes(s => BTN_START.concat(BTN_HERE).indexOf(s) >= 0).filter(x => x.el.getBoundingClientRect().top >= topLimit && pb.contains(x.el))
+    return findNodes(s => BTN_START.concat(BTN_HERE).indexOf(s) >= 0).filter(x => x.el.getBoundingClientRect().top >= topLimit && pb.contains(x.el) && buttonish(x.el))
       .sort((a, b) => b.el.getBoundingClientRect().top - a.el.getBoundingClientRect().top)[0] || null;      // the one lowest in the panel: the button of the details
   };
   // (for the report: a Caçar-like word outside the panel)
+  // (lang-65) something you can press: a button, a link, an element with a click handler, or one the mouse turns into a hand over
+  function buttonish(el) {
+    if (el.closest('button,[role="button"],a,[onclick]')) return true;
+    for (let e = el, i = 0; e && i < 4; e = e.parentElement, i++) { try { if (getComputedStyle(e).cursor === 'pointer') return true; } catch (x) {} }
+    return false;
+  }
+  // (lang-65) a press where a mouse would land: on what is drawn at the centre of the element, with the coordinates of that point
+  function pressAt(el) {
+    const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    let t = document.elementFromPoint(x, y); if (!t || !(el.contains(t) || t.contains(el))) t = el;
+    const o = { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y, button: 0, buttons: 1, pointerId: 1, pointerType: 'mouse', isPrimary: true };
+    [['pointerdown', 1], ['mousedown', 0], ['pointerup', 1], ['mouseup', 0], ['click', 0]].forEach(([type, pe]) => {
+      try { t.dispatchEvent(pe && typeof PointerEvent === 'function' ? new PointerEvent(type, o) : new MouseEvent(type, o)); } catch (e) {}
+    });
+  }
   const huntButtonOutside = () => { const si = searchInput(), pb = si ? boxOf(si) : null; return !!pb && findNodes(s => BTN_START.concat(BTN_HERE).indexOf(s) >= 0).some(x => x.el.getBoundingClientRect().top >= topLimit && !pb.contains(x.el)); };
   const searchInput = () => Array.prototype.filter.call(document.querySelectorAll('input'), i => visible(i) && /^(text|search|)$/.test(i.type || '') && /buscar|search|procurar|pesquisar/.test(plain((i.placeholder || '') + ' ' + (i.getAttribute('aria-label') || ''))))[0] || null;
   // the details of the hunt: the highest box around the button that is not much narrower than the box around it (so that it is the column of the details, not the whole panel)
@@ -218,6 +235,11 @@ function huntInPage(arg, waitMs) {
             findNodes(s => s === 'todos os niveis' || s === 'todos' || s === 'all levels' || s === 'all', 12).filter(x => box.contains(x.el)).forEach(x => press(clickableOf(x.el)));
             await sleep(250);
           }
+          // lang-65: a drop-down filter of the panel ("Fraco contra: Fogo") could hide the hunt: back to its neutral choice ("Qualquer")
+          if (box) Array.prototype.forEach.call(box.querySelectorAll('select'), sel => {
+            const opts = Array.prototype.slice.call(sel.options || []), neutral = opts.find(o => /^(qualquer|todos|todas|nenhum|any|all|none)$/.test(plain(o.textContent)));
+            if (neutral && sel.value !== neutral.value) { sel.value = neutral.value; ['input', 'change'].forEach(t => sel.dispatchEvent(new Event(t, { bubbles: true }))); }
+          });
           typed = inp2; setValue(inp2, term);
           await sleep(700);
           const ir = inp2.getBoundingClientRect();
@@ -242,7 +264,8 @@ function huntInPage(arg, waitMs) {
               while ((tn = w.nextNode())) { const t = plain(tn.nodeValue || '').replace(/^[^a-z0-9]+/, ''); if (sp.indexOf(t) < 0 || !tn.parentElement || tn.parentElement === inp2) continue; all++; const pe = tn.parentElement; if (!visible(pe)) continue; vis++; if (box && !box.contains(pe)) continue; inBox++; if (pe.getBoundingClientRect().top >= ir.bottom - 2) below++; }
               let contains = 0; if (box) Array.prototype.forEach.call(box.querySelectorAll('*'), el => { if (el.children.length === 0 && sp.some(x => plain(el.textContent).indexOf(x) >= 0)) contains++; });
               const hb = huntButton();
-              probe = { caçar: hb ? 'in the panel' : (huntButtonOutside() ? 'only outside the panel' : 'none'), contains: contains, input: Math.round(ir.width) + 'x' + Math.round(ir.height), box: box ? Math.round(box.getBoundingClientRect().width) + 'x' + Math.round(box.getBoundingClientRect().height) : 'none', term: term, texts: buttonTexts().length, all: all, vis: vis, inBox: inBox, below: below, regions: regionTabs().map(x => x.s.split(' ')[0]).slice(0, 8).join(',') };
+              let weak = ''; findNodes(t => /^fraco contra:?$/.test(t), 4).forEach(x => { const c = x.el.parentElement; if (c && box && box.contains(c)) weak = plain(c.textContent).replace(/^fraco contra:?\s*/, '').slice(0, 20); });
+              probe = { weak: weak, caçar: hb ? 'in the panel' : (huntButtonOutside() ? 'only outside the panel' : 'none'), contains: contains, input: Math.round(ir.width) + 'x' + Math.round(ir.height), box: box ? Math.round(box.getBoundingClientRect().width) + 'x' + Math.round(box.getBoundingClientRect().height) : 'none', term: term, texts: buttonTexts().length, all: all, vis: vis, inBox: inBox, below: below, regions: regionTabs().map(x => x.s.split(' ')[0]).slice(0, 8).join(',') };
             }
             return null;
           }
@@ -267,7 +290,7 @@ function huntInPage(arg, waitMs) {
           for (let k = 0; k < 8 && !shown; k++) {
             const tabs = regionTabs().filter(x => done.indexOf(x.s.split(' ')[0]) < 0);
             if (!tabs.length) break;
-            done.push(tabs[0].s.split(' ')[0]); press(clickableOf(tabs[0].el)); await sleep(450);
+            done.push(tabs[0].s.split(' ')[0]); pressAt(clickableOf(tabs[0].el)); await sleep(450);
             shown = await searchHere();
           }
         }
@@ -347,7 +370,7 @@ async function goHunt(n, hunt) {
       if (r.bySpecies) out.bySpecies = true;                                                // found by its Pokémon: the game renamed the hunt
       if (Array.isArray(r.labels)) out.labels = r.labels.map(x => String(x).slice(0, 24)).slice(0, 24);
       if (r.probe && typeof r.probe === 'object') out.probe = { input: String(r.probe.input || '').slice(0, 14), box: String(r.probe.box || '').slice(0, 14), term: String(r.probe.term || '').slice(0, 30), texts: Number(r.probe.texts) || 0,
-        all: Number(r.probe.all) || 0, vis: Number(r.probe.vis) || 0, inBox: Number(r.probe.inBox) || 0, below: Number(r.probe.below) || 0, contains: Number(r.probe.contains) || 0, cacar: String(r.probe['caçar'] || '').slice(0, 30), regions: String(r.probe.regions || '').replace(/[^a-z,]/g, '').slice(0, 60) };
+        all: Number(r.probe.all) || 0, vis: Number(r.probe.vis) || 0, inBox: Number(r.probe.inBox) || 0, below: Number(r.probe.below) || 0, contains: Number(r.probe.contains) || 0, cacar: String(r.probe['caçar'] || '').slice(0, 30), weak: String(r.probe.weak || '').replace(/[^a-z0-9 ]/g, '').slice(0, 20), regions: String(r.probe.regions || '').replace(/[^a-z,]/g, '').slice(0, 60) };
     } catch (e) { out = { ok: false, reason: 'page did not answer' }; }
   }
   out.n = n;
