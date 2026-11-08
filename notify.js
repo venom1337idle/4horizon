@@ -365,6 +365,9 @@ app.whenReady().then(() => {
 
 // for missions.js: an event it saw (each one comes once, so no cooldown; its key keeps two different ones apart), and the name of an account as the alerts write it
 function event(account, kind, title, body, key) { return show(account, kind, title, body, { noCooldown: true, key: key || kind }); }
+// 1.0.7: a warning of the app itself (perf.js: a lot of CPU for several minutes). It has no box of its own under "Tell me when": it follows the main switch
+// (Windows notifications) and quiet hours, and the module that sends it decides how often (perf.js: at most once an hour).
+function alert(kind, title, body) { return show(0, kind, title, body, { always: true, noCooldown: true, key: kind }); }
 function label(account) { return labelOf(account, S(account)); }
 
-module.exports = { event, label, handle, isEnabled, setEnabled, test, openSettings, getConfig: publicConfig, setConfig, _clean: cleanChange, isQuietNow, isGoodCatch, _watch: watch, _state: st, _show: show };
+module.exports = { event, label, alert, handle, isEnabled, setEnabled, test, openSettings, getConfig: publicConfig, setConfig, _clean: cleanChange, isQuietNow, isGoodCatch, _watch: watch, _state: st, _show: show };

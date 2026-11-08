@@ -99,19 +99,7 @@ function init() {
   if (!electron || !electron.ipcMain) return;
   electron.ipcMain.handle('startup:get', e => (fromOurWindow(e) ? startupState() : null));
   electron.ipcMain.handle('startup:set', (e, p) => (fromOurWindow(e) ? setStartup(p) : null));
-  // GPU acceleration: the setting is read directly by main.js before the app is ready, so changing it requires a restart.
-  electron.ipcMain.handle('gpu:get', e => {
-    if (!fromOurWindow(e)) return null;
-    const s = read();
-    return { disableGpu: s.disableGpu === true };
-  });
-  electron.ipcMain.handle('gpu:set', (e, disable) => {
-    if (!fromOurWindow(e)) return null;
-    const s = read();
-    s.disableGpu = disable === true;
-    const ok = write(s);
-    return { disableGpu: s.disableGpu, saved: ok, needsRestart: true };
-  });
+  // (1.0.7: the two questions about GPU acceleration, gpu:get and gpu:set, are answered by gpu.js, started by diag.js right after this)
   electron.ipcMain.handle('lang:get', e => (fromOurWindow(e) ? i18n.getLang() : null));
   electron.ipcMain.handle('lang:set', (e, l) => {
     if (!fromOurWindow(e)) return null;

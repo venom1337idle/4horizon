@@ -69,8 +69,12 @@ async function sample() {
       const k = who[m.pid] || (m.type === 'Browser' ? 'main' : m.type === 'GPU' ? 'gpu' : 'other');
       const c = m.cpu && fin(m.cpu.percentCPUUsage) ? m.cpu.percentCPUUsage : 0, mb = m.memory && fin(m.memory.workingSetSize) ? m.memory.workingSetSize / 1024 : 0;
       s.cpu[k] = r1((s.cpu[k] || 0) + c); s.mem[k] = Math.round((s.mem[k] || 0) + mb);
+      // 1.0.7: also the private memory (Windows only: the memory of that process alone; the working set above counts the memory the processes share in each of them)
+      if (m.memory && fin(m.memory.privateBytes)) { s.memp = s.memp || {}; s.memp[k] = Math.round((s.memp[k] || 0) + m.memory.privateBytes / 1024); }
     });
   } catch (e) {}
+  // 1.0.7: the CPU of the whole PC (all programs), and the number of logical processors, for perf.js (Electron's figures above are already shares of the whole PC)
+  try { const pc = require('./perf').pcSample(); if (fin(pc.sys)) s.sys = pc.sys; if (fin(pc.cores)) s.cores = pc.cores; } catch (e) {}
   // each game page: its timer and whether it counts as hidden
   await Promise.all([1, 2, 3, 4].map(async n => {
     const g = guests[n];
@@ -94,6 +98,7 @@ async function sample() {
   log.samples.push(s);
   prune();
   if (now() - lastSave >= SAVE_EVERY_MS) save();
+  try { require('./perf').onSample(s); } catch (e) {}          // 1.0.7: the warning when 4horizon uses a lot of CPU for several minutes
   return s;
 }
 function prune() {

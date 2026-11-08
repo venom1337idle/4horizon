@@ -5,7 +5,7 @@ from keys import keys_in
 from static_html import static_texts
 HERE = os.path.dirname(os.path.abspath(__file__))
 SOURCES = {   # the files whose t('...') calls are the dynamic texts, and the static-text files made by static_keys.js
-  'dynamic': ['index.html', 'dashboard.html', 'history-ui.js', 'diag-core.js', 'notify.js', 'diag.js', 'missions.js', 'live.js'],
+  'dynamic': ['index.html', 'dashboard.html', 'history-ui.js', 'diag-core.js', 'notify.js', 'diag.js', 'missions.js', 'live.js', 'perf.js'],
   'static': ['index.html', 'dashboard.html']}      # the text written in the markup of these pages
 def load_areas():
     areas = []

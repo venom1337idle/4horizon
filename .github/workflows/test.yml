@@ -1,10 +1,17 @@
-# Runs every test on each push and pull request (Ubuntu: the tests need no real Electron, only Node, Playwright's Chromium and Python 3)
+# Runs every test on each push and pull request, on Ubuntu AND on Windows (1.0.7: the users are on Windows, and some problems only show there:
+# backslashes in paths, the Windows text encoding, "python" instead of "python3"). The tests need no real Electron, only Node, Playwright's Chromium and Python 3.
 name: tests
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false                 # one system failing does not stop the other: both results are seen
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 40
+    env:
+      PYTHONUTF8: '1'                  # Python reads and writes UTF-8 on Windows too (as on Linux)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

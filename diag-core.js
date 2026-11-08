@@ -28,6 +28,51 @@
   const bytes = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? (n / 1024).toFixed(1) + ' KB' : n + ' B';
   const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
   const RANK = { fail: 3, warn: 2, unknown: 1, ok: 0 };
+
+  // 1.0.7: one line about the graphics cards (from gpu.js): "Graphics: acceleration ON · NVIDIA GeForce RTX 5070 Laptop GPU, driver 32.0.15.6214, IN USE · ..."
+  const GPU_FEATURES = ['gpu_compositing', 'rasterization', 'webgl'];
+  function gpuLine(g) {
+    const parts = ['Graphics: acceleration ' + (g.disabledAtStart ? 'OFF (Settings \u203a Disable GPU acceleration)' : 'ON')];
+    if (g.restartNeeded) parts.push('CHANGED IN SETTINGS: restart 4horizon to apply it');
+    const devs = Array.isArray(g.devices) ? g.devices : null;
+    if (devs && devs.length) devs.slice(0, 4).forEach(d => parts.push(String(d.name || ((d.vendor || '?') + ' ' + (d.deviceId || ''))).slice(0, 80) + (d.name && d.vendor && String(d.name).indexOf(String(d.vendor).split(' ')[0]) < 0 ? ' (' + d.vendor + ')' : '') + (d.driver ? ', driver ' + String(d.driver).slice(0, 40) : '') + (d.active ? ', IN USE' : '')));
+    else parts.push('cards: ' + (g.error ? 'not known (' + String(g.error).slice(0, 80) + ')' : g.asked ? 'none reported' : 'not read yet'));
+    const f = g.features && typeof g.features === 'object' ? g.features : null;
+    if (f) { const fs = GPU_FEATURES.filter(k => typeof f[k] === 'string').map(k => k.replace('gpu_', '') + ' ' + f[k]); if (fs.length) parts.push(fs.join(', ')); }
+    return parts.join(' \u00b7 ');
+  }
+
+  // 1.0.7: the section CPU AND MEMORY (from perf.js): CPU is 4horizon's share of the whole PC, as in Windows' Task Manager
+  function perfSection(Q) {
+    const L = [], fn = v => typeof v === 'number' && isFinite(v);
+    const pct = v => (fn(v) ? Math.round(v) : '?') + '%';
+    const mb = v => (fn(v) ? (v >= 1024 ? (Math.round(v / 102.4) / 10) + ' GB' : Math.round(v) + ' MB') : '?');
+    const dur = m => { m = Math.round(fn(m) ? m : 0); return m < 60 ? m + ' min' : Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm'; };
+    const agoMin = m => ago(fn(m) ? m * 60 : null);
+    const who = k => ({ main: 'main process', win: 'window', gpu: 'graphics', other: 'other' })[k] || (/^p\d$/.test(k || '') ? 'panel ' + String(k).slice(1) : '?');
+    Q = Q && typeof Q === 'object' ? Q : {};
+    const H = Q.history && typeof Q.history === 'object' ? Q.history : {}, th = Q.thresholds || {};
+    L.push('CPU AND MEMORY (one sample a minute, last 24 hours; CPU = the share of the whole PC used by 4horizon, as in Task Manager; ' + (fn(H.cores) ? H.cores : '?') + ' logical processors)');
+    if (Q.error) L.push('  could not be worked out: ' + String(Q.error).slice(0, 120));
+    else if (!H.samples || !H.now) L.push('  nothing measured yet (the first sample is taken 2 minutes after the start)');
+    else {
+      const N = H.now, A = H.avg || {}, K = H.peak || {};
+      // memory: the private memory when there is one (each process's own, like Task Manager); otherwise the working sets, which count shared memory in each process
+      const memNow = fn(N.priv) ? mb(N.priv) + ' private (' + mb(N.mem) + ' with shared memory counted in each process)' : mb(N.mem) + ' (shared memory counted in each process: Task Manager shows less)';
+      const memAvg = fn(A.priv) ? mb(A.priv) + ' private' : mb(A.mem) + ' with shared memory';
+      L.push('  Now (the sample of ' + ago(fn(N.ageSec) ? N.ageSec : null) + (fn(N.ageSec) && N.ageSec > 150 ? ', OLDER THAN USUAL: the app was started again or the PC slept; the next one comes 2 minutes after a start' : '') + '): 4horizon ' + pct(N.pc) + (fn(N.sys) ? ' (whole PC ' + pct(N.sys) + ')' : '') + ' \u00b7 memory ' + memNow + (Array.isArray(N.by) && N.by.length ? ' \u00b7 ' + N.by.map(x => who(x.k) + ' ' + pct(x.pc)).join(', ') : ''));
+      L.push('  Last ' + dur(H.spanMin) + ' (' + H.samples + ' samples): average ' + pct(A.pc) + (fn(A.sys) ? ' (whole PC ' + pct(A.sys) + ')' : '') + ' \u00b7 highest ' + pct(K.pc) + ' ' + agoMin(K.ageMin) + (K.top ? ', mostly ' + who(K.top) : '') +
+        ' \u00b7 memory ' + (H.memory ? mb(H.memory.from) + ' in the first hour \u2192 ' + mb(H.memory.to) + ' in the last hour (' + (H.memory.kind === 'private' ? 'private' : 'with shared memory') + ')' : 'average ' + memAvg));
+      const eps = Array.isArray(H.high) ? H.high : [];
+      L.push('  High CPU (' + (th.highPc || H.highPc || 50) + '% or more for ' + (th.highMin || H.highMin || 5) + ' minutes or more): ' + (H.highCount ? H.highCount + (H.highCount === 1 ? ' time' : ' times') + (H.highCount > eps.length ? ' (the last ' + eps.length + ')' : '') + ': ' +
+        eps.map(e => agoMin(e.startAgoMin) + ' for ' + dur(e.min) + ', average ' + pct(e.avgPc) + ', highest ' + pct(e.peakPc) + (e.top ? ', mostly ' + who(e.top) : '')).join('; ') : 'none'));
+      const al = Array.isArray(Q.alerts) ? Q.alerts : [];
+      L.push('  Warnings: ' + (al.length ? al.map(a => agoMin(a.ageMin) + ' (' + pct(a.pc) + ' for ' + a.min + ' min' + (a.top ? ', mostly ' + who(a.top) : '') + '; ' + (a.shown ? 'shown' : 'NOT shown: notifications off, quiet hours, or not supported') + ')').join('; ') : 'none'));
+      if (Array.isArray(H.timeline)) L.push('  Last 2 hours, 10-minute averages, newest first: ' + H.timeline.map(v => (fn(v) ? Math.round(v) : '-')).join(' \u00b7 ') + ' (%)');
+    }
+    L.push('');
+    return L;
+  }
   const worst = list => list.reduce((w, s) => RANK[s] > RANK[w] ? s : w, 'ok');
 
   // The self-checks are built twice when the language is not English: once in the language of the person (what the window shows) and once in English (the report, which is
@@ -304,6 +349,7 @@
         ' \u00b7 locale ' + (m.locale || '?') + ' \u00b7 running ' + Math.round(m.uptimeSec / 60) + ' min \u00b7 memory ' + (m.rssMB || '?') + ' MB' + (m.packaged ? ' \u00b7 packaged' : ''));
     } else P('Main-process part of diagnostics: NOT INSTALLED');
     P('Build: app ' + ((main && main.meta && main.meta.build) || 'unknown (old)') + ' \u00b7 window ' + ((ui && ui.build) || 'unknown (old)') + (main && main.staleFiles && main.staleFiles.length ? ' \u00b7 FILES CHANGED AFTER THE APP STARTED (still running the old version): ' + main.staleFiles.join(', ') : ''));
+    if (main && main.gpu && typeof main.gpu === 'object') P(gpuLine(main.gpu));          // 1.0.7: the graphics cards, the one in use, acceleration on or off
     P('Character names: ' + (hide ? 'hidden' : 'shown'));
     P('Included: names of message types and fields, counts, true/false settings, errors; for an incubating egg only the KINDS of its values (number of digits, true / false, short labels). Not included: passwords, e-mails, gold, items or any other value from the game.');
     P();
@@ -464,6 +510,7 @@
       if (M.messages && M.messages.battlePass > 0 && M.messages.battlePass <= (M.accounts || []).length) P('  (the game has sent the battle pass only once per account so far: if it only does so at the login, a mission is noticed at the next login)');
       P();
     }
+    if (main && main.perf !== undefined) perfSection(main.perf).forEach(l => P(l));          // 1.0.7: CPU AND MEMORY
     if (main && main.economy !== undefined) {
       P('ECONOMY MODE (turned on and off by hand; once a minute the app notes CPU and memory of its processes, the pace of each account, and how late a 1-second timer runs in each game page; last 24 hours)');
       const E = main.economy || {}, fn = v => typeof v === 'number' && isFinite(v);
@@ -563,5 +610,5 @@
     return { checks: checks, manual: manual, report: report, summary: worst(checks.map(c => c.status)) };
   }
 
-  return { analyse: analyse, _ago: ago };
+  return { analyse: analyse, _ago: ago, _gpuLine: gpuLine, _perfSection: perfSection };
 });

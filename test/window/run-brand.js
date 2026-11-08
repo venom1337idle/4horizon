@@ -4,7 +4,8 @@ const { spawnSync } = require('child_process');
 const { open } = require('./scen');
 let pass = 0, fail = 0; const ok = (l, c, x) => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (c ? '' : '   ' + JSON.stringify(x))); c ? pass++ : fail++; };
 // ---- the picture file
-const py = spawnSync('python3', ['-c', `
+const PY = ['python3', 'python'].find(p => { try { return spawnSync(p, ['--version']).status === 0; } catch (e) { return false; } }) || 'python3';      // (1.0.7: Windows has only "python")
+const py = spawnSync(PY, ['-c', `
 import json
 from PIL import Image
 import numpy as np

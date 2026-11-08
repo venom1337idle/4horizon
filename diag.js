@@ -251,7 +251,7 @@ async function probe(n, wc, opts) {
 // Closing the window only hides the app in the tray, so an update copied over the old files does nothing until the app is quit from the tray and started
 // again. These are the files whose version matters. Their fingerprints are taken when the app starts, and compared later.
 const WATCHED = ['main.js', 'preload.js', 'ws-reader.js', 'accounts.js', 'diag.js', 'diag-core.js', 'team.js', 'tidy.js', 'notify.js', 'history.js', 'schema.js', 'live.js',
-                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js', 'updates.js', 'selftest.js', 'backup.js'];
+                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js', 'updates.js', 'selftest.js', 'backup.js', 'gpu.js', 'perf.js'];
 const fingerprint = name => { try { const full = path.join(APP_DIR, name); if (!fs.existsSync(full)) return null; return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 16); } catch (e) { return null; } };
 let startPrints = null;
 function takePrints() { startPrints = {}; WATCHED.forEach(n => { startPrints[n] = fingerprint(n); }); }
@@ -313,6 +313,8 @@ const FEATURES = [
   ['datadir.js', 'your own files kept in the user-data folder', 'function file'],
   ['vault.js', 'password encryption (new and old Electron)', 'decryptStringAsync'],
   ['updates.js', 'checks GitHub for a newer release (the Update button)', 'releases/latest'],
+  ['gpu.js', 'GPU acceleration setting and graphics card report', 'getGPUInfo'],
+  ['perf.js', 'CPU and memory history, and the high-CPU warning', 'onSample'],
   ['selftest.js', 'Check the game (Diagnostics): what 4horizon relies on in the game page', 'selfTestInPage'],
   ['backup.js', 'settings backup (save to a file, load from a file)', 'settings:import'],
   ['preload.js', 'settings backup bridge', 'settingsImport'],
@@ -488,6 +490,8 @@ function collect() {
   try { out.datadir = require('./datadir').info(); } catch (e) { out.datadir = undefined; }          // where your own files are (the folder without your user name), and what was moved
   try { out.selftest = require('./selftest').info(); } catch (e) { out.selftest = undefined; }          // the last "Check the game"
   try { out.updates = require('./updates').info(); } catch (e) { out.updates = undefined; }          // this version, the latest release, when it was checked
+  try { out.gpu = require('./gpu').info(); } catch (e) { out.gpu = undefined; }          // 1.0.7: the graphics cards (maker, name, driver), the one in use, acceleration on or off
+  try { out.perf = require('./perf').info(); } catch (e) { out.perf = undefined; }        // 1.0.7: CPU and memory over the last 24 hours (now, average, highest, stretches of high CPU, warnings)
   try { out.lockdown = require('./lockdown').info(); } catch (e) { out.lockdown = undefined; }          // what the panels asked for and were refused (permission names and counts)
   try { out.missions = require('./missions').info(); } catch (e) { out.missions = undefined; }          // battle pass, daily missions and eggs: how often the game sent them, what is watched (counts only)
   try { out.economy = require('./economy').info(); } catch (e) { out.economy = undefined; }          // economy mode: is it on, and what the samples of the last 24 hours say
@@ -507,6 +511,7 @@ function init() {
   try { takePrints(); } catch (e) {}
   try { require('./lockdown').init(); } catch (e) { error('lockdown', e); }          // first: the game panels get no permission and no other settings than the safe ones
   try { require('./settings').init(); } catch (e) { error('settings', e); }          // the language, and the answers to the window about it
+  try { require('./gpu').init(); } catch (e) { error('gpu', e); }                    // 1.0.7: Settings › Disable GPU acceleration (gpu:get / gpu:set), and the graphics cards for the report
   try { require('./external').init(); } catch (e) { error('external', e); }
   try { require('./donate-guard').init(); } catch (e) { error('donate-guard', e); }      // the buttons that make a donation (+ Doar, the Diamantes tab, the pay button) cannot be pressed, and a note with a link takes the place of + Doar          // links that a game page opens in a new window go to the default browser
   try { require('./analyzer').init(); } catch (e) { error('analyzer', e); }          // the Analyzer button of the top bar

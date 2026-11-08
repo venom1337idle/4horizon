@@ -42,6 +42,14 @@ EXACT = {
   '4horizon was updated': 'O 4horizon foi atualizado',
   'Some files changed after 4horizon started:': 'Alguns arquivos mudaram depois que o 4horizon iniciou:',
   'This window is still running the OLD version. Restart it now?': 'Esta janela ainda está rodando a versão ANTIGA. Reiniciar agora?',
+  # 1.0.7: the warning when 4horizon uses a lot of CPU for several minutes (perf.js)
+  '4horizon is using a lot of CPU': 'O 4horizon está usando muito processador',
+  'About {p}% of your processor for {m} minutes, mostly {who}. Economy mode (the leaf button) can lower it; Diagnostics has the details.': 'Cerca de {p}% do seu processador por {m} minutos, principalmente {who}. O modo economia (o botão da folha) pode baixar isso; o Diagnóstico tem os detalhes.',
+  'game panel {n}': 'o painel do jogo {n}',
+  'the graphics process': 'o processo gráfico',
+  'the window': 'a janela',
+  '4horizon itself': 'o próprio 4horizon',
+  'other parts of 4horizon': 'outras partes do 4horizon',
 }
 PREFIX = {
 }

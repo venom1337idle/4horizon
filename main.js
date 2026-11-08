@@ -1,18 +1,10 @@
 const { app, BrowserWindow, Tray, Menu, session } = require('electron');
 app.setAppUserModelId('4horizon');      // its own identity for Windows: its own taskbar button and icon, and "4horizon" on the notifications
 
-// GPU acceleration: must be disabled BEFORE app is ready. The setting is read directly from the file because
-// settings.js is not initialized yet. Users with visual glitches (artifacts on hover/screenshot) can turn this off.
-const fs = require('fs');
+// GPU acceleration (Settings › Disable GPU acceleration): must be switched off BEFORE the app is ready, so gpu.js reads settings.json itself
+// (settings.js is not started yet). Users with visual glitches (artifacts on hover/screenshot) can turn it off. It never throws.
+try { require('./gpu').applyAtStart(app); } catch (e) { /* the graphics card simply stays on */ }
 const path = require('path');
-try {
-  const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-  const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-  if (settings && settings.disableGpu === true) {
-    app.disableHardwareAcceleration();
-    console.log('GPU acceleration disabled by user setting');
-  }
-} catch (e) { /* no settings file yet, or it doesn't have the setting: GPU stays on */ }
 
 const diag = require('./diag');
 const i18n = require('./i18n');
