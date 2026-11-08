@@ -33,7 +33,7 @@ def drop_block(text, block):
     for i in range(len(ls) - n + 1):
         if ls[i:i + n] == block: return '\n'.join(ls[:i] + ls[i + n:])
     return text
-g = json.load(open(sys.argv[1])); n = json.load(open(sys.argv[2]))
+g = json.load(open(sys.argv[1], encoding='utf-8')); n = json.load(open(sys.argv[2], encoding='utf-8'))
 import re
 EXPECTED = [(re.compile(r'(combat|lang|calib|plan)-[0-9]+'), 'BUILD'), (re.compile('\u25c6 ?'), ''), (re.compile(r'\d+ fine \u00b7 \d+ to look at \u00b7 \d+ failed \u00b7 \d+ cannot tell yet'), 'COUNTS OF THE CHECKS')]       # the number of checks grows with the package       # the build of the app changes with every package
 LANG_OPTS = {'English', 'Portugu\u00eas (Brasil)'}                          # the language select of Settings is new

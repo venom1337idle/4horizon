@@ -202,7 +202,8 @@ function hook(wc) {
   hooked.add(wc); live.add(wc);
   try { wc.on('dom-ready', () => inject(wc)); } catch (e) {}
   try { wc.on('did-finish-load', () => inject(wc)); } catch (e) {}
-  try { wc.on('console-message', (a, b, c) => onConsole(wc, a, c)); } catch (e) {}
+  // (lang-67) one parameter: Electron warns about a listener that takes the old separate arguments; an older Electron still gives them in arguments[2]
+  try { wc.on('console-message', function (ev) { onConsole(wc, ev, arguments[2]); }); } catch (e) {}
   try { wc.on('destroyed', () => live.delete(wc)); } catch (e) {}
   try { if (typeof wc.isLoading === 'function' && !wc.isLoading() && typeof wc.getURL === 'function' && wc.getURL()) inject(wc); } catch (e) {}       // a panel that was already loaded
 }

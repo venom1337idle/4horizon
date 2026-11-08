@@ -1,5 +1,27 @@
 # pt/window.py: the Portuguese texts of this part of the app
 EXACT = {
+  # lang-67: settings backup
+  'Settings backup': 'Cópia das configurações',
+  'Save your settings to a file, or load them from one (on a new PC, after a fresh install). Saved logins and passwords are never in it, nor your history.': 'Salve as suas configurações num arquivo, ou carregue de um (num PC novo, depois de reinstalar). Os logins salvos e as senhas nunca vão nele, nem o seu histórico.',
+  'Save to a file': 'Salvar num arquivo',
+  'Load from a file': 'Carregar de um arquivo',
+  'Settings saved to {file}': 'Configurações salvas em {file}',
+  'The settings could not be saved': 'Não foi possível salvar as configurações',
+  'Not loaded: {why}': 'Não carregado: {why}',
+  'not a 4horizon settings file': 'não é um arquivo de configurações do 4horizon',
+  'made by a newer 4horizon': 'feito por um 4horizon mais novo',
+  'the file is too big': 'o arquivo é grande demais',
+  'the file could not be read': 'não foi possível ler o arquivo',
+  'Settings loaded: the window is loading again…': 'Configurações carregadas: a janela está recarregando…',
+  # lang-67: Check the game
+  'Check the game': 'Verificar o jogo',
+  'Look in every game page for what 4horizon relies on (the toolbar icons, and the Hunts panel if one is open), without pressing anything. Useful after a game update. It is added to the report.': 'Procura em cada página do jogo o que o 4horizon usa (os ícones da barra e o painel de Hunts, se estiver aberto), sem apertar nada. Útil depois de uma atualização do jogo. Vai para o relatório.',
+  'This needs a newer 4horizon': 'Isto precisa de um 4horizon mais novo',
+  'Looking at the game pages…': 'Olhando as páginas do jogo…',
+  'No game panel to look at': 'Nenhum painel do jogo para olhar',
+  '(Open the Hunts panel on one account first to have it checked too.)': '(Abra o painel de Hunts em uma conta antes, para ele ser verificado também.)',
+  '{n} things 4horizon needs were not found. See the Report tab (GAME CHECK)': '{n} coisas que o 4horizon usa não foram encontradas. Veja a aba Relatório (GAME CHECK)',
+  'Everything 4horizon needs was found on {n} panels': 'Tudo o que o 4horizon usa foi encontrado em {n} painéis',
   # lang-58: Accounts in Settings; the version and the Update button
   'The saved logins of the game panels, used by Log in all (the passwords are encrypted).': 'Os logins salvos dos painéis do jogo, usados por Entrar em todas (as senhas são criptografadas).',
   'Open accounts': 'Abrir contas',
@@ -19,6 +41,10 @@ EXACT = {
   'An egg is ready to hatch': 'Um ovo está pronto para chocar',
   'Minimize to tray': 'Minimizar para a bandeja',
   'Minimizing the window hides 4horizon in the tray, as closing it does. Click the tray icon to bring it back.': 'Minimizar a janela esconde o 4horizon na bandeja, como fechá-la já faz. Clique no ícone da bandeja para trazê-lo de volta.',
+  'Disable GPU acceleration': 'Desativar aceleração de GPU',
+  'Turn this on if you see visual glitches when hovering or taking screenshots. Requires restarting 4horizon.': 'Ative isso se você vir falhas visuais ao passar o mouse ou tirar screenshots. Requer reiniciar o 4horizon.',
+  'Disable hardware acceleration': 'Desativar aceleração de hardware',
+  'Saved. Restart 4horizon for the change to take effect.': 'Salvo. Reinicie o 4horizon para a mudança ter efeito.',
   'Hide in the tray when minimized': 'Esconder na bandeja ao minimizar',
   'Could not save the setting': 'Não foi possível salvar a configuração',
   'Back to last hunt': 'Voltar para a última hunt',

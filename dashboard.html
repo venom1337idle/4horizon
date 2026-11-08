@@ -1374,6 +1374,14 @@ window.addEventListener('message', e => {
     const g = m.goodCatch, d = m.rareDrop, num = v => (typeof v === 'number' && isFinite(v) ? v : null);
     todayRule = (g && num(g.minIV) !== null && num(g.minQuality) !== null) ? { goodCatch: { minIV: g.minIV, minQuality: g.minQuality, mode: g.mode === 'and' ? 'and' : 'or' }, rareDrop: { minValue: d && num(d.minValue) !== null ? d.minValue : DROP_HOT } } : null;
     try { drawToday(); } catch (err) {}
+  } else if (m.type === 'settings-get') {                  // lang-67: settings backup: the Summary's own settings and the sort of the captures
+    let sum = null, cap = null; try { sum = JSON.parse(localStorage.getItem(SUMKEY)); } catch (err) {} try { cap = localStorage.getItem('4h.capSort'); } catch (err) {}
+    try { e.source.postMessage({ type: 'settings-data', id: m.id, summary: { sum: sum && typeof sum === 'object' ? sum : null, capSort: typeof cap === 'string' ? cap.slice(0, 20) : null } }, '*'); } catch (err) {}
+  } else if (m.type === 'settings-set') {                  // (they are checked again by the Summary when it loads)
+    const sv = m.summary || {};
+    try { if (sv.sum && typeof sv.sum === 'object' && !Array.isArray(sv.sum)) localStorage.setItem(SUMKEY, JSON.stringify(sv.sum).slice(0, 20000)); } catch (err) {}
+    try { if (typeof sv.capSort === 'string' && /^[a-z]{1,12}$/.test(sv.capSort)) localStorage.setItem('4h.capSort', sv.capSort); } catch (err) {}
+    try { e.source.postMessage({ type: 'settings-set-done', id: m.id }, '*'); } catch (err) {}
   } else if (m.type === 'diag-request') {             // the Diagnostics window wants to know what this page sees
     try { e.source.postMessage({ type: 'diag-reply', id: m.id, data: diagData() }, '*'); } catch (err) { diagNote('diag reply: ' + err.message); }
   }

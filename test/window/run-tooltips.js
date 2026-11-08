@@ -10,7 +10,8 @@ const rowOf = (p, sel) => p.locator('#settingsModal .srow', { has: p.locator(sel
 const infoOf = (p, sel) => rowOf(p, sel).locator('.info').first();
 const descOf = (p, sel) => p.evaluate(s => document.querySelector(s).closest('.srow').querySelector(':scope > div > .sd').textContent.trim(), sel);
 const moveTo = async (p, box, dx, dy) => { await p.mouse.move(box.x + box.width / 2 + (dx || 0), box.y + box.height / 2 + (dy || 0)); await p.mouse.move(box.x + box.width / 2 + (dx || 0) + 1, box.y + box.height / 2 + (dy || 0) + 1); };
-const hoverInfo = async (p, sel) => { const b = await infoOf(p, sel).boundingBox(); await moveTo(p, b); return b; };
+const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeeded(); const b = await infoOf(p, sel).boundingBox();          // (lang-67: the list is longer: scrolled to it, as a person would)
+   await moveTo(p, b); return b; };
 (async () => {
   const b = await chromium.launch();
   let p = await open(b, { extraInit: STUB, w: 1500, h: 1000 });
@@ -18,9 +19,9 @@ const hoverInfo = async (p, sel) => { const b = await infoOf(p, sel).boundingBox
   await p.mouse.move(5, 5); await p.waitForTimeout(100);
   ok('nothing is shown when Settings opens', !(await tipState(p)).shown);
   const vis = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .sd')).filter(e => e.offsetParent !== null).length);
-  ok('the descriptions are not written under the settings (none of the 16 is visible)', vis === 0 && (await p.locator('#settingsModal .sd').count()) === 16, vis);
+  ok('the descriptions are not written under the settings (none of the 18 is visible)', vis === 0 && (await p.locator('#settingsModal .sd').count()) === 18, vis);
   const infos = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .info')).map(e => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), glyph: getComputedStyle(e, '::before').content, vis: !!e.offsetParent }; }));
-  ok('every setting that has a description has its own small "i": 16 of them (lang-41: Minimize to tray; lang-49: Game panels; lang-58: Accounts), all visible and 17 x 17 px', infos.length === 16 && infos.every(i => i.vis && i.w === 17 && i.h === 17 && i.glyph === '"i"'), infos.slice(0, 2));
+  ok('every setting that has a description has its own small "i": 18 of them (lang-41: Minimize to tray; lang-49: Game panels; lang-58: Accounts; lang-67: Settings backup; 1.0.6: Disable GPU acceleration), all visible and 17 x 17 px', infos.length === 18 && infos.every(i => i.vis && i.w === 17 && i.h === 17 && i.glyph === '"i"'), infos.slice(0, 2));
 
   // the bug: the tooltip must not show for anything else in the settings
   const tr = await p.locator('#settingsModal .srow', { has: p.locator('#langSel') }).first().boundingBox();

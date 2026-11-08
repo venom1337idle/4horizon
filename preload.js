@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('bridge', {
   notifyTest: () => ipcRenderer.invoke('notify:test'),
   startupGet: () => ipcRenderer.invoke('startup:get'),
   startupSet: (p) => ipcRenderer.invoke('startup:set', p),
+  gpuGet: () => ipcRenderer.invoke('gpu:get'),
+  gpuSet: (disable) => ipcRenderer.invoke('gpu:set', disable),
   analyzerToggle: () => ipcRenderer.invoke('analyzer:toggle'),
   navGo: (what, n) => ipcRenderer.invoke('nav:go', what, n),
   navHunt: (n, hunt) => ipcRenderer.invoke('nav:hunt', n, hunt),
@@ -19,6 +21,9 @@ contextBridge.exposeInMainWorld('bridge', {
   navFavs: (n) => ipcRenderer.invoke('nav:favs', n),
   navFavGo: (n, item) => ipcRenderer.invoke('nav:favgo', n, item),
   diagProbe: () => ipcRenderer.invoke('diag:probe-login'),
+  diagSelfTest: () => ipcRenderer.invoke('diag:selftest'),
+  settingsExport: (windowPart) => ipcRenderer.invoke('settings:export', windowPart),          // lang-67: settings backup
+  settingsImport: () => ipcRenderer.invoke('settings:import'),          // lang-67: "Check the game" (looks only)
   diagCopy: (text) => ipcRenderer.invoke('diag:copy', text),
   diagSave: (text) => ipcRenderer.invoke('diag:save', text),
   accountsGet: () => ipcRenderer.invoke('accounts:get'),

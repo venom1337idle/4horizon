@@ -34,6 +34,9 @@ O QUE ELE FAZ
 - Minimizar para a bandeja, iniciar com o PC, português e inglês.
 - Diagnóstico (Configurações > Diagnóstico): uma autoverificação e um relatório para enviar quando algo der
   errado.
+  O botão "Verificar o jogo" procura nas páginas do jogo tudo o que o 4horizon usa, sem apertar nada.
+- Cópia das configurações (Configurações): salve as configurações num arquivo e carregue num PC novo.
+  Os logins salvos, as senhas e o histórico nunca vão nele.
 
 
 INSTALAR

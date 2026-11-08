@@ -32,6 +32,8 @@ function workFolder(group) {
   for (const e of fs.readdirSync(ROOT, { withFileTypes: true })) if (e.isFile() && !SKIP_ROOT.has(e.name)) fs.copyFileSync(path.join(ROOT, e.name), path.join(dir, e.name));
   copyDir(path.join(__dirname, group), dir);                                           // the suites and their stand-ins (these win over the app's own data)
   fs.copyFileSync(path.join(__dirname, 'pw.js'), path.join(dir, 'pw.js'));
+  const tools = path.join(ROOT, 'tools');                                            // (lang-66: the build tools, for their own tests; never the game's module)
+  if (fs.existsSync(tools)) { fs.mkdirSync(path.join(dir, 'tools'), { recursive: true }); for (const f of fs.readdirSync(tools)) if (/\.mjs$/.test(f) && f !== 'game-data.mjs') fs.copyFileSync(path.join(tools, f), path.join(dir, 'tools', f)); }
   const stub = path.join(dir, 'stubs', 'electron');                                    // the fake Electron of the main-process tests
   if (fs.existsSync(stub)) copyDir(stub, path.join(dir, 'node_modules', 'electron'));
   return dir;

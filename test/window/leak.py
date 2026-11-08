@@ -1,6 +1,6 @@
 # leak.py PT.json: every text node of every state that still reads as English in the Portuguese run
 import json, re, sys
-G = json.load(open(sys.argv[1]))
+G = json.load(open(sys.argv[1], encoding='utf-8'))
 EN = set('the and of is are with this that from your you not can will has have by or when than which what how only if in on at to it its yet still'.split())
 SKIP_STATES = {'win:diag-report'}                     # the copyable report is English on purpose
 ALLOW = [re.compile(p) for p in (r'^[\W\d_]*$',)]

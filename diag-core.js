@@ -409,6 +409,22 @@
       }
       P();
     }
+    if (main && main.selftest && typeof main.selftest === 'object') {
+      const S = main.selftest, pn = Array.isArray(S.panels) ? S.panels : [], pb = Array.isArray(S.problems) ? S.problems : [];
+      const icon = v => (v === 'visible' ? 'yes' : v === 'hidden' ? 'yes (hidden in a narrow toolbar)' : v === 'missing' ? 'NOT FOUND' : v === 'notnow' ? 'not on the page now (it appears after Centro)' : '?');
+      P('GAME CHECK (Diagnostics › Check the game: what 4horizon relies on in each game page; nothing was pressed) · ' + ago(S.ageSec));
+      P('  ' + (pb.length ? pb.length + ' thing' + (pb.length > 1 ? 's' : '') + ' NOT FOUND:' : 'everything 4horizon needs was found'));
+      pb.slice(0, 12).forEach(x => P('    ' + lab(Number(x.n)) + ': ' + String(x.what).slice(0, 80) + ' \u2192 affects ' + String(x.affects).slice(0, 90)));
+      pn.forEach(p => {
+        if (p.error || p.timeout) { P('  ' + lab(Number(p.n)) + ': the page did not answer'); return; }
+        const tb = p.toolbar || {};
+        P('  ' + lab(Number(p.n)) + ': ' + (p.signedIn ? 'signed in' : 'SIGNED OUT') + ' \u00b7 toolbar: Hunts ' + icon(tb.hunts) + ', An\u00e1lise ' + icon(tb.analise) + ', Centro ' + icon(tb.centro) + ', Mochila ' + icon(tb.mochila) + ' \u00b7 "Ir ao Market" ' + (tb.market === 'hidden' ? 'yes (hidden)' : icon(tb.market)) + ' \u00b7 Hunt Analyzer ' + (p.analyzer === 'open' ? 'open' : 'closed'));
+        const h = p.hunts;
+        if (h) P('      Hunts panel open: search box yes \u00b7 region tabs ' + (h.regions && h.regions.length ? h.regions.join(', ') : 'NONE') + ' \u00b7 "Todos" ' + (h.todos ? 'yes' : 'NO') + ' \u00b7 "Todos os n\u00edveis" ' + (h.levels ? 'yes' : 'NO') + (h.weak ? ' \u00b7 "Fraco contra": ' + String(h.weak).slice(0, 20) : '') + ' \u00b7 cards ' + (Number(h.cards) || 0) + ' \u00b7 Ca\u00e7ar button ' + (h.cacar === 'found' ? 'yes' : 'none (no hunt chosen)'));
+      });
+      if (!pn.some(p => p.hunts)) P('  (no Hunts panel was open: open it on one account before "Check the game" to have it checked too)');
+      P();
+    }
     if (main && main.updates && typeof main.updates === 'object') {
       const U = main.updates, agoU = s => (typeof s === 'number' ? ago(s) : 'not yet');
       P('UPDATES (GitHub is asked for the latest release shortly after the start and every 6 hours)');

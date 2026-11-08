@@ -236,8 +236,8 @@ function tidyInPage(cfg) {
 // ---------------------------------------------------------------------------------------------------------------
 function attach(n, wc) {
   try {
-    wc.on('console-message', (...a) => {                                       // the page reports what it did; show it in the console window
-      const msg = (a[0] && typeof a[0].message === 'string') ? a[0].message : a[2];     // newer Electron sends one object, older sends separate arguments
+    wc.on('console-message', function (ev) {                                  // the page reports what it did; show it in the console window
+      const msg = (ev && typeof ev.message === 'string') ? ev.message : arguments[2];   // newer Electron: one object (one parameter, so no warning); older: separate arguments
       if (typeof msg === 'string' && msg.indexOf('[hg-tidy]') === 0) console.log('tidy (panel ' + n + '): ' + msg.slice(9).trim());
     });
     wc.on('dom-ready', () => {

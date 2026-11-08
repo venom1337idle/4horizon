@@ -1,5 +1,8 @@
 import { writeFileSync } from 'fs';
-import { I as items, H as hunts, j as species } from './game-data.mjs';
+import { loadGame } from './game-exports.mjs';
+// (the game's data is found by its content, not by the short names of its exports: see game-exports.mjs)
+const { items, hunts, species, names } = await loadGame();
+console.log('found in game-data.mjs: items ' + names.items + ', hunts ' + names.hunts + ', species ' + names.species);
 
 const out = { items: {}, hunts: {}, species: {} };
 for (const it of items)   out.items[it.id]   = { name: it.name, price: it.npcPrice ?? 0, kind: it.kind };

@@ -21,7 +21,8 @@ GitHub: https://github.com/venom1337idle/4horizon
 - **Popup tidy**: after a login it closes the announcement, closes the Hunt Analyzer and collapses the chat.
 - **Economy mode**: hides the game screens while you are away (the games keep hunting), and saves most of the CPU.
 - Minimize to tray, start with Windows, English and Portuguese.
-- **Diagnostics** (Settings › Diagnostics): a self-check and a report to send when something is wrong.
+- **Diagnostics** (Settings › Diagnostics): a self-check and a report to send when something is wrong. The **Check the game** button looks in the game pages for everything 4horizon relies on (without pressing anything): useful after a game update.
+- **Settings backup** (Settings): save your settings to a file and load them on a new PC. Saved logins, passwords and history are never in it.
 
 ## Install
 

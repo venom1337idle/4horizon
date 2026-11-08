@@ -332,6 +332,7 @@
         <label title="Replace the character names by Account 1, 2, 3, 4 in the report"><input type="checkbox" id="diagHide" checked> Hide character names</label>
         <span class="grow"></span>
         <button id="diagProbe" title="Describe the page each panel is showing (its shape only, never what is typed), whether it is signed out or not. It is added to the report.">Look at login pages</button>
+        <button id="diagSelfTest" title="Look in every game page for what 4horizon relies on (the toolbar icons, and the Hunts panel if one is open), without pressing anything. Useful after a game update. It is added to the report.">Check the game</button>
         <button id="diagRefresh">Refresh</button>
         <button id="diagSave">Save as file…</button>
         <button class="primary" id="diagCopy">Copy report</button>
@@ -355,6 +356,10 @@
         <div class="ctl"><button id="btnAccounts"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Open accounts</button></div>
       </div>
       <div class="srow">
+        <div><b>Settings backup</b><span class="sd">Save your settings to a file, or load them from one (on a new PC, after a fresh install). Saved logins and passwords are never in it, nor your history.</span></div>
+        <div class="ctl"><button id="btnSetExport">Save to a file</button> <button id="btnSetImport">Load from a file</button></div>
+      </div>
+      <div class="srow">
         <div><b>Language</b><span class="sd">The language of the whole app: the screens, the notifications and the tray menu.</span></div>
         <div class="ctl"><select id="langSel" data-no-i18n><option value="en">English</option><option value="pt-BR">Português (Brasil)</option></select></div>
       </div>
@@ -365,6 +370,10 @@
       <div class="srow">
         <div><b>Minimize to tray</b><span class="sd">Minimizing the window hides 4horizon in the tray, as closing it does. Click the tray icon to bring it back.</span></div>
         <div class="ctl"><label class="tick"><input type="checkbox" id="sTray"> Hide in the tray when minimized</label></div>
+      </div>
+      <div class="srow">
+        <div><b>Disable GPU acceleration</b><span class="sd">Turn this on if you see visual glitches when hovering or taking screenshots. Requires restarting 4horizon.</span></div>
+        <div class="ctl"><label class="tick"><input type="checkbox" id="sGpu"> Disable hardware acceleration</label></div>
       </div>
       <div class="shead"><span>Notifications</span><span class="saved" id="nSaved">Saved</span></div>
       <div class="srow">
@@ -547,6 +556,41 @@
       b.classList.toggle('hidden', !u.available);
       if (u.available) b.title = t('Version {v} is out: opens its page, to download the new installer', { v: u.latest });
     }
+    // ---------- lang-67: Settings › Settings backup ----------
+    // the window's part (and the Summary's, asked by message); loading checks every value before it is used, then the window is loaded again
+    const askDash = (type, payload) => new Promise(res => {
+      const id = Math.random().toString(36).slice(2);
+      const on = ev => { if (ev.data && ev.data.id === id && /^settings-(data|set-done)$/.test(ev.data.type)) { removeEventListener('message', on); res(ev.data); } };
+      addEventListener('message', on);
+      try { dash.contentWindow.postMessage(Object.assign({ type: type, id: id }, payload || {}), '*'); } catch (e) { res(null); }
+      setTimeout(() => { removeEventListener('message', on); res(null); }, 1500);
+    });
+    const WIN_KEYS = ['simple', 'panel', 'panels', 'zoom', 'hidden', 'diagHide'];
+    const okWin = {
+      simple: v => typeof v === 'boolean', panel: v => typeof v === 'boolean', diagHide: v => typeof v === 'boolean',
+      panels: v => Number.isInteger(v) && v >= 1 && v <= 4,
+      hidden: v => Array.isArray(v) && v.length <= 4 && v.every(n => Number.isInteger(n) && n >= 1 && n <= 4),
+      zoom: v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).every(k => /^[1-4]$/.test(k) && typeof v[k] === 'number' && v[k] >= 0.25 && v[k] <= 3)
+    };
+    document.getElementById('btnSetExport').onclick = async () => {
+      if (!api.settingsExport) { toast(t('This needs a newer 4horizon'), 'warn'); return; }
+      const win = {}; WIN_KEYS.forEach(k => { const v = store.get(k, undefined); if (v !== undefined) win[k] = v; });
+      const d = await askDash('settings-get');
+      const r = await api.settingsExport({ window: win, summary: d && d.summary ? d.summary : {} });
+      if (r && r.ok) toast(t('Settings saved to {file}', { file: r.file }));
+      else if (!(r && r.canceled)) toast(t('The settings could not be saved'), 'bad');
+    };
+    document.getElementById('btnSetImport').onclick = async () => {
+      if (!api.settingsImport) { toast(t('This needs a newer 4horizon'), 'warn'); return; }
+      const r = await api.settingsImport();
+      if (!r || r.canceled) return;
+      const WHY = { 'not a 4horizon settings file': () => t('not a 4horizon settings file'), 'made by a newer 4horizon': () => t('made by a newer 4horizon'), 'the file is too big': () => t('the file is too big') };
+      if (!r.ok) { toast(t('Not loaded: {why}', { why: (WHY[r.reason] || (() => t('the file could not be read')))() }), 'bad'); return; }
+      const w = r.window || {}; WIN_KEYS.forEach(k => { if (k in w && okWin[k](w[k])) store.set(k, w[k]); });
+      await askDash('settings-set', { summary: r.summary || {} });
+      toast(t('Settings loaded: the window is loading again\u2026'));
+      setTimeout(() => location.reload(), 900);
+    };
     document.getElementById('btnUpdate').onclick = async () => {
       let r = null; try { r = api.updateOpen ? await api.updateOpen() : null; } catch (e) { r = null; }
       toast(r && r.ok ? t('The page of the new version opens in your browser: download the installer there and run it.') : t('The page of the new version could not be opened.'), r && r.ok ? '' : 'warn');
@@ -847,7 +891,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-65';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-68';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 
@@ -913,6 +957,18 @@
     document.getElementById('btnDiag').onclick = () => { closeSettings(); openDiag(); };
     document.getElementById('diagClose').onclick = () => diagModal.classList.add('hidden');
     document.getElementById('diagRefresh').onclick = openDiag;
+    // lang-67: "Check the game": looks only (nothing pressed); a short answer here, the details in the Report tab
+    document.getElementById('diagSelfTest').onclick = async () => {
+      if (!api.diagSelfTest) { toast(t('This needs a newer 4horizon'), 'warn'); return; }
+      toast(t('Looking at the game pages\u2026'));
+      try {
+        const r = await api.diagSelfTest();
+        await openDiag();
+        if (!r || !r.panels) { toast(t('No game panel to look at'), 'warn'); return; }
+        const hint = r.huntsSeen ? '' : ' ' + t('(Open the Hunts panel on one account first to have it checked too.)');
+        toast(r.problems ? t('{n} things 4horizon needs were not found. See the Report tab (GAME CHECK)', { n: r.problems }) + hint : t('Everything 4horizon needs was found on {n} panels', { n: r.panels }) + hint, r.problems ? 'warn' : '');
+      } catch (e) { toast(t('Could not look: {msg}', { msg: e.message }), 'bad'); }
+    };
     document.getElementById('diagProbe').onclick = async () => {
       if (!api.diagProbe) { toast(t('Looking at login pages needs install-diagnostics.js (run it again)'), 'warn'); return; }
       toast(t('Looking at the panels that are signed out\u2026'));
@@ -951,7 +1007,7 @@
       toast(t('{n} game panels: the window is loading again\u2026', { n: v }));
       setTimeout(() => location.reload(), 700);
     };
-    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
+    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); loadGpu(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
     document.getElementById('setClose').onclick = closeSettings;
     settingsModal.addEventListener('mousedown', e => { if (e.target === settingsModal) closeSettings(); });
     // ---------- Settings: the notifications (the main process keeps them in notify-settings.json and checks every value; this only shows them and asks for changes) ----------
@@ -1045,6 +1101,21 @@
     S_('sStartup').onchange = () => sendStartup({ enabled: S_('sStartup').checked });
     S_('sHidden').onchange = () => sendStartup({ hidden: S_('sHidden').checked });
     S_('sTray').onchange = () => sendStartup({ toTray: S_('sTray').checked });
+    // ---------- Settings: GPU acceleration (disabling it fixes visual glitches on some systems; requires restart) ----------
+    async function loadGpu() {
+      const ok = !!(api.gpuGet && api.gpuSet);
+      S_('sGpu').disabled = !ok;
+      if (!ok) return;
+      try { const c = await api.gpuGet(); if (c) S_('sGpu').checked = !!c.disableGpu; } catch (e) {}
+    }
+    S_('sGpu').onchange = async () => {
+      try {
+        const c = await api.gpuSet(S_('sGpu').checked);
+        if (!c || c.saved === false) { toast(t('Could not save the setting'), 'warn'); return; }
+        S_('sGpu').checked = !!c.disableGpu;
+        toast(t('Saved. Restart 4horizon for the change to take effect.'), '');
+      } catch (e) { toast(t('Could not save the setting'), 'warn'); }
+    };
     // ---------- Settings: the tooltips (the description of a setting stays in the page, hidden; the small "i" after the name of the setting shows its text when the pointer rests on it) ----------
     (function () {
       const tip = document.getElementById('tip'), DELAY = 450;

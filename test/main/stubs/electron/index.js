@@ -11,7 +11,7 @@ module.exports = {
   ipcMain: { handle: (c, f) => { handlers[c] = f; } },
   BrowserWindow: { fromWebContents: s => (s === WINDOW_SENDER ? {} : null), getAllWindows: () => [] },
   clipboard: { writeText: t => { clip.text = t; } },
-  dialog: { showSaveDialog: async () => { dlg.calls++; return dlg.result; }, showMessageBox: function () { dlg.boxCalls.push(Array.from(arguments)); if (dlg.boxReject) return Promise.reject(new Error('dialog failed')); return Promise.resolve(dlg.box); } },
+  dialog: { showSaveDialog: async () => { dlg.calls++; return dlg.result; }, showOpenDialog: async () => { dlg.opens = (dlg.opens || 0) + 1; return dlg.openResult || { canceled: true, filePaths: [] }; }, showMessageBox: function () { dlg.boxCalls.push(Array.from(arguments)); if (dlg.boxReject) return Promise.reject(new Error('dialog failed')); return Promise.resolve(dlg.box); } },
   safeStorage: { isEncryptionAvailable: () => true, encryptString: t => Buffer.from('S:' + t), decryptString: b => String(b).replace(/^S:/, '') },          // (like an Electron before the async functions)
   shell: { openExternal: url => { (global.__OPENED = global.__OPENED || []).push(url); return Promise.resolve(); } },
   session: { fromPartition: p => SESS[p] || (SESS[p] = { p }) },

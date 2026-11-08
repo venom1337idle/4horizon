@@ -1,5 +1,9 @@
 import { writeFileSync } from 'fs';
-import * as G from './game-data.mjs';
+import { loadGame } from './game-exports.mjs';
+// (the game's data is found by its content, not by the short names of its exports: see game-exports.mjs)
+const g = await loadGame();
+const G = { B: g.cfg, I: g.items, H: g.hunts, j: g.species, am: g.moves, a: g.speciesById, s: g.regionOf, aa: g.drops, h: g.unlockOf };
+console.log('found in game-data.mjs: ' + Object.entries(g.names).map(([k, v]) => k + '=' + v).join(', '));
 
 const cfg = G.B;
 const price = {};
@@ -13,6 +17,10 @@ const JACKPOT_FROM = 10000;
 const bands = cfg.killXpHuntLevelBands || [];
 
 function xpPerKill(h) {
+  // since the game's update of 2026-11-03: a fixed XP per kill for the hunts of Nv. 150 and up (killXpCurve.fixedKillXp, the "EXP por abate" of
+  // the Hunts panel); below that the game works it out from its minutes-per-level curve in code that is not in this file, so it is left empty
+  // (4horizon itself does not use the XP per kill: it only uses the names, levels, unlock levels and Pokémon of the hunts)
+  if (cfg.killXpCurve && Array.isArray(cfg.killXpCurve.fixedKillXp)) { const f = cfg.killXpCurve.fixedKillXp.find(x => x.level === h.level); return f ? f.xp : null; }
   const sp = G.a(h.species[0]);
   const base = cfg.killXpByHuntLevel[h.level] ?? sp.experience * cfg.killXpMultiplier;
   const band = bands.find(b => h.level >= b.minLevel && h.level <= b.maxLevel);
@@ -38,7 +46,7 @@ for (const h of G.H) {
     region: G.s(h.species[0]),
     species: h.species.map(id => G.a(id).name),
     ids: h.species,
-    xp: round(xpPerKill(h)), loot: round(loot / n, 2), rare: round(rare / n, 6),
+    xp: (x => (x === null ? null : round(x)))(xpPerKill(h)), loot: round(loot / n, 2), rare: round(rare / n, 6),
     sells: h.species.map(id => G.a(id).sellValue)
   });
 }

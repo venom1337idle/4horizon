@@ -21,7 +21,8 @@ GitHub: https://github.com/venom1337idle/4horizon
 - **Limpeza de popups**: depois de um login ela fecha o anúncio, fecha o Hunt Analyzer e recolhe o chat.
 - **Modo economia**: esconde as telas do jogo enquanto você está longe (os jogos continuam caçando) e poupa quase toda a CPU.
 - Minimizar para a bandeja, iniciar com o PC, português e inglês.
-- **Diagnóstico** (Configurações › Diagnóstico): uma autoverificação e um relatório para enviar quando algo der errado.
+- **Diagnóstico** (Configurações › Diagnóstico): uma autoverificação e um relatório para enviar quando algo der errado. O botão **Verificar o jogo** procura nas páginas do jogo tudo o que o 4horizon usa (sem apertar nada): útil depois de uma atualização do jogo.
+- **Cópia das configurações** (Configurações): salve as suas configurações num arquivo e carregue num PC novo. Os logins salvos, as senhas e o histórico nunca vão nele.
 
 ## Instalar
 
