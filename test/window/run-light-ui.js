@@ -21,8 +21,10 @@ const STUB = on => `window.__light = { on: ${on ? 'true' : 'false'}, calls: [] }
   const b = await chromium.launch();
   // ---- 1. the game page
   {
-    const ctx = await b.newContext(); const p = await ctx.newPage(); await p.setContent(GAME); const cdp = await ctx.newCDPSession(p);
+    // (reducedMotion: null: Playwright sets nothing of its own, so a page shows the computer's own choice, as a game panel of the app does)
+    const ctx = await b.newContext({ reducedMotion: null }); const p = await ctx.newPage(); await p.setContent(GAME); const cdp = await ctx.newCDPSession(p);
     const anim = () => p.evaluate(() => ['.trainer-vip', '.fishing-bubble', '.no-rule'].map(s => getComputedStyle(document.querySelector(s)).animationName));
+    await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });          // a person whose Windows has its animations on
     const before = await anim();
     // a game panel as light.js sees it, whose debugger is the browser's own protocol connection to this page
     const wc = { getType: () => 'webview', isDestroyed: () => false, on() {}, debugger: { isAttached: () => true, on() {}, sendCommand: (m, prm) => cdp.send(m, prm) } };
@@ -35,7 +37,12 @@ const STUB = on => `window.__light = { on: ${on ? 'true' : 'false'}, calls: [] }
     const t0 = await p.evaluate(() => window.__ticks); await p.waitForTimeout(600); const t1 = await p.evaluate(() => window.__ticks);
     ok('the page\u2019s own script keeps running at full speed (a 100 ms timer ticked ' + (t1 - t0) + ' times in 600 ms): nothing of the game is slowed', t1 - t0 >= 4, t1 - t0);
     L._setOn(false); await L.apply(wc);          // turned off: light.js clears what it had set
-    ok('turned off: light.js clears it and the animations run again', (await anim())[0] === 'vip-shine');
+    // (what the page shows then is the computer's own choice: GitHub's Windows Server has Windows' animation effects off, so there it is "reduce" again. So the page is
+    // compared with a page of the same browser that light.js never touched, not with a fixed answer.)
+    const p2 = await ctx.newPage(); await p2.setContent(GAME);
+    const own = await p2.evaluate(() => ({ rm: matchMedia('(prefers-reduced-motion: reduce)').matches, a: getComputedStyle(document.querySelector('.trainer-vip')).animationName }));
+    const now = await p.evaluate(() => ({ rm: matchMedia('(prefers-reduced-motion: reduce)').matches, a: getComputedStyle(document.querySelector('.trainer-vip')).animationName }));
+    ok('turned off: light.js clears it, and the page is back to the computer\u2019s own choice (the same as a page it never touched: reduced motion ' + own.rm + ', VIP shine ' + own.a + ')', now.rm === own.rm && now.a === own.a, [now, own]);
     await ctx.close();
   }
 

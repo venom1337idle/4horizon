@@ -37,6 +37,8 @@
   /* last resort, a very short window: the four tiles of the session go (the three numbers above and every account stay) */
   body.tightest .sess .grid4 { display: none; } body.tightest .sess .sec-h { margin-bottom: 0; }
   body.tightest .acard { padding: 2px 6px; } body.tightest .acard .ln.btime { font-size: 11px; }          /* lang-70: room for the time left of the auto-catch ball */
+  /* lang-70: in the shortest windows the card text is a little smaller and tighter too (fonts of Linux, or a larger Windows font, are taller: the 4 cards still fit) */
+  body.tightest .acard .ln { font-size: 10.5px; line-height: 1.25; } body.tightest .acard .ln.balls, body.tightest .acard .ln.btime { font-size: 10.5px; } body.tightest .acard .top { font-size: 12px; line-height: 1.25; }
 
   /* a section: its label in Cinzel with a fading gold line, like "DROPS" on the game's card */
   .sec { padding: 12px 16px 12px; }          /* the sections are separated by the fading line under their titles, not by boxes or hard lines */
@@ -402,7 +404,7 @@ const captureLog = [];                // every capture seen since this page open
 
 const SESSION_KEYS = ['defeated', 'xpGained', 'captures', 'lootSell', 'captureSell', 'suppliesCost', 'ballsUsed', 'healsUsed', 'profit',
   'minutes', 'sessionTime', 'goldH', 'xpH', 'killsH', 'killsHAll', 'partyKills', 'drops', 'lastCaught', 'recentCatches', 'bestIV', 'bestQ', 'bestS',
-  'shinyCaptured', 'catchesSeen', 'lastProgress', 'ballsByType'];
+  'shinyCaptured', 'catchesSeen', 'lastProgress', 'ballsByType', 'btSamples', 'btBall', 'btStart'];
 
 // called by live.js when a new hunt starts: keep a summary of the hunt that just ended for the "previous hunt" comparison
 function resetSession(a) {
@@ -693,9 +695,26 @@ function cardBalls(a) {
   if (!ids.length) return '<span class="dim">0 ' + t('balls') + '</span>';
   return ids.map(id => '<span class="bk" data-kind="' + esc(id) + '" title="' + esc(supplyName(id)) + ': ' + fullNum(n0(a.ballTypes[id])) + '"><b>' + fmt(n0(a.ballTypes[id])) + '</b> ' + esc(supplyName(id).replace(/ Ball$/, '')) + '</span>').join('');
 }
-// how long the auto-catch ball lasts at the pace of this hunt: its stock / (that ball used in this hunt / hours of this hunt).
-// Only the auto-catch ball is counted (the balls thrown at shinies are another kind). The pace needs 5 minutes of hunt first.
-const BT_MIN_MINUTES = 5, BT_WARN_H = 3, BT_LOW_H = 1, BT_MAX_H = 99;
+// how long the auto-catch ball lasts at the CURRENT pace: its stock / (that ball thrown in the last 30 minutes of the hunt / that time).
+// Only the auto-catch ball is counted (the balls thrown at shinies are another kind).
+// lang-70 fix: the pace is measured over the last 30 minutes of hunting, not the whole hunt. Over the whole hunt a ball chosen late (Eng Ball Magu after 9 h of Ultra
+// Balls) looked as if it were hardly thrown: 521 balls "28 h", when they last a few hours. The counts of the game are noted as they come (btSample, also while the window
+// is hidden); the pace is known after 5 minutes of them, and a new hunt, another ball or counters that go back start the measure again.
+const BT_MIN_MINUTES = 5, BT_WARN_H = 3, BT_LOW_H = 1, BT_MAX_H = 99, BT_WINDOW_MIN = 30;
+function btSample(a) {
+  const id = a.autoBall ? String(a.autoBall) : null;
+  if (!id || typeof a.elapsedMs !== 'number' || !isFinite(a.elapsedMs) || !a.ballsByType || typeof a.ballsByType !== 'object') return;
+  const e = a.elapsedMs, u = n0(a.ballsByType[id]);
+  let s = a.btSamples;
+  if (!Array.isArray(s) || a.btBall !== id || a.btStart !== a.startedAt) { s = a.btSamples = []; a.btBall = id; a.btStart = a.startedAt; }
+  const last = s[s.length - 1];
+  if (last && (e < last.e || u < last.u)) s.length = 0;                                   // the counters went back: the measure starts again
+  // the notes: fixed ones about every 20 s of hunting, and the newest one, which follows the newest count until it is 20 s after the fixed one before it
+  if (s.length < 2) { if (!s.length || e !== s[0].e || u !== s[0].u) s.push({ e: e, u: u }); }
+  else { const fixed = s[s.length - 2], live = s[s.length - 1]; if (live.e - fixed.e >= 20000) s.push({ e: e, u: u }); else { live.e = e; live.u = u; } }
+  while (s.length > 2 && s[1].e <= e - BT_WINDOW_MIN * 60000) s.shift();                  // the window: the last 30 minutes (one note just before them is kept as its start)
+  if (s.length > 200) s.splice(0, s.length - 200);
+}
 function ballTime(a) {
   const id = a.autoBall ? String(a.autoBall) : null;
   const ball = id ? esc(supplyName(id)) : '';
@@ -706,14 +725,15 @@ function ballTime(a) {
   if (stock <= 0) return { cls: 'low', txt: t('{ball}: none left', { ball: ball }), tip: t('No {ball} left: auto-catch has nothing to throw.', { ball: ball }) };
   const paused = a.active === false ? ' ' + t('(paused)') : '';
   if (typeof a.elapsedMs !== 'number' || !(a.elapsedMs > 0)) return { cls: 'na', txt: t('{ball}: not used in this hunt', { ball: ball }) + paused };
-  const hours = a.elapsedMs / 3600000;
-  const used = (a.ballsByType && typeof a.ballsByType === 'object') ? n0(a.ballsByType[id]) : 0;
-  if (hours * 60 < BT_MIN_MINUTES) return { cls: 'na', txt: t('{ball}: measuring\u2026', { ball: ball }) + paused, tip: t('The pace of the hunt is known after {n} minutes.', { n: BT_MIN_MINUTES }) };
-  if (used <= 0) return { cls: 'na', txt: t('{ball}: not used in this hunt', { ball: ball }) + paused };
+  const s = (a.btBall === id && Array.isArray(a.btSamples)) ? a.btSamples : [], first = s[0], last = s[s.length - 1];
+  const spanMs = first && last ? last.e - first.e : 0;
+  if (spanMs < BT_MIN_MINUTES * 60000) return { cls: 'na', txt: t('{ball}: measuring\u2026', { ball: ball }) + paused, tip: t('The pace of the hunt is known after {n} minutes.', { n: BT_MIN_MINUTES }) };
+  const used = last.u - first.u, hours = spanMs / 3600000;
+  if (used <= 0) return { cls: 'na', txt: (n0(a.ballsByType && a.ballsByType[id]) > 0 ? t('{ball}: none thrown lately', { ball: ball }) : t('{ball}: not used in this hunt', { ball: ball })) + paused };
   const rate = used / hours, left = stock / rate;
   const time = left > BT_MAX_H ? BT_MAX_H + 'h+' : left >= 1 ? Math.floor(left) + 'h ' + Math.floor((left % 1) * 60) + 'm' : Math.max(1, Math.floor(left * 60)) + 'm';
   return { cls: paused ? 'na' : (left > BT_WARN_H ? 'ok' : left >= BT_LOW_H ? 'warn' : 'low'), txt: t('{ball}: {time} left', { ball: ball, time: time }) + paused,
-    tip: t('{n} {ball} left, {r} thrown per hour in this hunt', { n: fullNum(stock), ball: ball, r: fullNum(Math.round(rate)) }) };
+    tip: t('{n} {ball} left, {r} thrown per hour (the last {m} minutes of the hunt)', { n: fullNum(stock), ball: ball, r: fullNum(Math.round(rate)), m: Math.round(spanMs / 60000) }) };
 }
 function sideAll() {
   const live = liveAccounts();
@@ -1243,6 +1263,7 @@ function drawEggs() {
 // lang-70: what is KEPT (the hunts of each account, Today's highlights) is apart from what is DRAWN, so that it goes on while nothing is drawn
 function keepRecords() {
   accounts.forEach(huntLogRecord); huntLogSave(false);
+  accounts.forEach(a => { try { btSample(a); } catch (e) {} });          // the counts of the auto-catch ball, for its time left (also while nothing is drawn)
   try { todayScan(); } catch (e) { diagNote('today: ' + (e && e.message)); }     // the sessions that run are kept (saved at most every 20 s)
 }
 // lang-70: the window is minimized or hidden in the tray: nobody sees the Summary, so it is not drawn (for everyone, not only Light mode); it is drawn at once when the window shows again

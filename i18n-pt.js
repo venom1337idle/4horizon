@@ -143,6 +143,7 @@
     "XP/h": "XP/h",
     "{ball}: measuring…": "{ball}: medindo…",
     "{ball}: none left": "{ball}: nenhuma sobrando",
+    "{ball}: none thrown lately": "{ball}: nenhuma lançada ultimamente",
     "{ball}: not used in this hunt": "{ball}: não usada nesta hunt",
     "{ball}: {time} left": "{ball}: {time} restantes",
     "{ball}: —": "{ball}: —",
@@ -152,7 +153,7 @@
     "{n} species opened": "{n} espécies abertas",
     "{n} thrown": "{n} lançadas",
     "{n} visits": "{n} visitas",
-    "{n} {ball} left, {r} thrown per hour in this hunt": "{n} {ball} sobrando, {r} lançadas por hora nesta hunt",
+    "{n} {ball} left, {r} thrown per hour (the last {m} minutes of the hunt)": "{n} {ball} sobrando, {r} lançadas por hora (os últimos {m} minutos da hunt)",
     "{n}m ago": "há {n}m",
     "✦ shiny only": "✦ só shiny",
     // ---- diag
