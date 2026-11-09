@@ -7,6 +7,9 @@
 //     is stopped before the game sees it, so it does nothing even if the game draws it again in another way;
 //   - in its place there is a note: "Visit the official webpage to donate", with the word "webpage" as a link to https://pokehorizonidle.com/ that opens in the default browser
 //     (the link asks for a new window, which external.js sends to the browser). The note follows the language of the app.
+// lang-70, the Battle Pass ("Passe de Batalha"): its two buttons that are paid with real money, "Comprar passe" and "Dar o Passe para um amigo", are hidden and stopped in the same way,
+// only inside the Battle Pass window, and ONE note takes their place: "To buy or gift the Battle Pass, visit the official [webpage]" (a box, as wide as the buttons were).
+// The rewards ("Resgatar", "Resgatar tudo") and the rest of the window work as before.
 // Only that one button is touched: another "Doar" of the game (a guild, for example) is not in the box of the diamonds and works as before.
 // How: a small script is put in each game page (when it loads) and watches the page. Nothing is clicked in the game. The script uses no style sheet and no markup text (so a strict
 // content policy of the page cannot stop it) and tells this module, with a line in the console of the page, when it saw the button and when it stopped a press (for the report).
@@ -22,10 +25,11 @@ const states = new WeakMap();            // per web contents: { loads, at, error
 let started = false, langHooked = false;
 let clock = () => Date.now();
 
-// the words of the note, in the language of the app (the link is the second part)
+// the words of the note, in the language of the app (the link is the second part); "pass" is the note of the Battle Pass window (lang-70)
 function texts(lang) {
   const pt = /^pt/i.test(String(lang || ''));
-  return pt ? { before: 'Visite a ', link: 'página', after: ' oficial para doar' } : { before: 'Visit the official ', link: 'webpage', after: ' to donate' };
+  return pt ? { before: 'Visite a ', link: 'página', after: ' oficial para doar', pass: { before: 'Para comprar ou dar o Passe de Batalha, visite a ', link: 'página', after: ' oficial' } }
+    : { before: 'Visit the official ', link: 'webpage', after: ' to donate', pass: { before: 'To buy or gift the Battle Pass, visit the official ', link: 'webpage', after: '' } };
 }
 function config() {
   let lang = 'en';
@@ -44,6 +48,10 @@ function guardInPage(cfg) {
   const WORD = /^[+\s]*(doar|donate|donar|doacao|donation)[\s!.]*$/;                       // "+ Doar"
   const PAY = /^(doar|donate|donar)\s*(r\$|us\$|\$|\u20ac)/;                               // "Doar R$ 33,25 com Pix": the button that makes the donation (real money, anywhere)
   const TAB = /^(diamantes|diamonds)$/;                                                    // the tab "Diamantes" of the shop: the page of the donation
+  // lang-70, the Battle Pass window: "Comprar passe" and "🎁 Dar o Passe para um amigo" (they are paid with real money). The leading picture or symbol of a label is not counted.
+  const PASS_BUY = /^(comprar|buy|purchase|adquirir|obter|get)\s+(o\s+|the\s+|el\s+)?(passe|pass|pase)\b/;
+  const PASS_GIFT = /^(dar|presentear|enviar|gift|give|send|regalar)\b.{0,20}\b(passe|pass|pase)\b.{0,25}\b(amigo|amiga|amigos|friend|friends)\b/;
+  const lead = t => t.replace(/^[^a-z0-9]+/, '');
   const CLICKABLE = 'button,[role="button"],[role="tab"],a,[onclick],input[type="button"],input[type="submit"]';
   // something the game draws as a button but is not a <button> (a box with a click handler) still has the hand cursor
   // (the hand cursor is inherited by everything inside the box, so the whole box is the biggest element with the hand cursor and the very same text)
@@ -86,17 +94,28 @@ function guardInPage(cfg) {
     }
     return false;
   }
-  // what this button is: 'donate' (+ Doar of the box), 'tab' (the tab Diamantes), 'pay' (Doar R$ ... com Pix), or nothing
+  // the window of the Battle Pass: a box around the button whose text has its title
+  function passWindow(c) {
+    let a = c;
+    for (let i = 0; a && a !== document.body && a !== document.documentElement && i < 18; i++, a = a.parentElement) {
+      if (/passe de batalha|battle pass|pase de batalla/.test(plain(a.textContent))) return true;
+    }
+    return false;
+  }
+  // what this button is: 'donate' (+ Doar of the box), 'tab' (the tab Diamantes), 'pay' (Doar R$ ... com Pix), 'passbuy' / 'passgift' (the Battle Pass), or nothing
   function kindOf(c) {
     const t = textOf(c);
     if (!t || t.length > 48) return null;
     if (PAY.test(t)) return 'pay';
     if (t.length <= 24 && WORD.test(t) && (diamondBox(c) || shopTitle(c))) return 'donate';
     if (TAB.test(t) && (shopTitle(c) || shopTabs(c))) return 'tab';
+    const p = lead(t);
+    if (PASS_BUY.test(p) && passWindow(c)) return 'passbuy';
+    if (PASS_GIFT.test(p) && passWindow(c)) return 'passgift';
     return null;
   }
   let C = cfg, blocked = 0, lastLine = 0;
-  const seen = { donate: false, tab: false, pay: false };
+  const seen = { donate: false, tab: false, pay: false, pass: false };
   const say = line => { try { console.log(line); } catch (e) {} };
   // every press of them is stopped at the top of the page, before the game sees it
   const stop = (e, count) => {
@@ -114,21 +133,25 @@ function guardInPage(cfg) {
     }, true);
   });
   // the note: "Visit the official [webpage] to donate"
+  // (the note of the Battle Pass, data-4h-note="pass": "To buy or gift the Battle Pass, visit the official [webpage]", in a box where the two buttons were)
   function fill(s) {
+    const W = (s.getAttribute(NOTE) === 'pass' && C.pass) ? C.pass : C;
     s.textContent = '';
-    s.appendChild(document.createTextNode(C.before));
+    s.appendChild(document.createTextNode(W.before));
     const a = document.createElement('a');
-    a.href = C.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = C.link;
+    a.href = C.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = W.link;
     a.style.cssText = 'color:#7fd6ff;font-weight:700;text-decoration:underline;cursor:pointer;';
     s.appendChild(a);
-    s.appendChild(document.createTextNode(C.after));
+    if (W.after) s.appendChild(document.createTextNode(W.after));
   }
-  function ensureNote(b) {
+  function ensureNote(b, kind) {
     const prev = b.previousElementSibling;
     if (prev && prev.hasAttribute(NOTE)) return;
-    const s = document.createElement('span');
-    s.setAttribute(NOTE, '1');
-    s.style.cssText = 'display:inline-block;max-width:190px;margin:0 6px;font-size:12px;line-height:1.3;font-weight:500;text-align:left;color:rgba(255,255,255,.85);';
+    const s = document.createElement(kind === 'pass' ? 'div' : 'span');
+    s.setAttribute(NOTE, kind === 'pass' ? 'pass' : '1');
+    s.style.cssText = kind === 'pass'
+      ? 'display:block;box-sizing:border-box;width:100%;margin:6px 0;padding:12px 14px;border-radius:10px;border:1px solid rgba(127,214,255,.45);background:rgba(12,24,48,.75);font-size:13px;line-height:1.4;font-weight:500;text-align:center;color:rgba(255,255,255,.9);'
+      : 'display:inline-block;max-width:190px;margin:0 6px;font-size:12px;line-height:1.3;font-weight:500;text-align:left;color:rgba(255,255,255,.85);';
     fill(s);
     if (b.parentNode) b.parentNode.insertBefore(s, b);
   }
@@ -140,15 +163,16 @@ function guardInPage(cfg) {
       const raw = n.nodeValue;
       if (!raw || raw.length > 60) continue;
       const t = plain(raw);
-      if (!t || !(WORD.test(t) || PAY.test(t) || TAB.test(t))) continue;
+      if (!t || !(WORD.test(t) || PAY.test(t) || TAB.test(t) || PASS_BUY.test(lead(t)) || PASS_GIFT.test(lead(t)))) continue;
       const c = clickableOf(n.parentElement);
       if (c) out.add(c);
     }
     return Array.from(out);
   }
   function sweep() {
-    const found = { donate: [], tab: [], pay: [] };
+    const found = { donate: [], tab: [], pay: [], passbuy: [], passgift: [] };
     candidates().forEach(c => { const k = kindOf(c); if (k) found[k].push(c); });
+    const passNoteOn = found.passbuy[0] || found.passgift[0];          // one note for the Battle Pass: where "Comprar passe" was (or the gift button, when it is alone)
     Object.keys(found).forEach(k => found[k].forEach(b => {
       if (b.getAttribute(MARK) !== '1') {
         b.setAttribute(MARK, '1'); b.setAttribute('aria-hidden', 'true'); b.setAttribute('tabindex', '-1');
@@ -158,17 +182,19 @@ function guardInPage(cfg) {
       b.setAttribute(KIND, k);
       b.style.setProperty('display', 'none', 'important');
       if (k === 'donate') ensureNote(b);
+      if (b === passNoteOn) ensureNote(b, 'pass');
     }));
     Array.prototype.forEach.call(document.querySelectorAll('[' + NOTE + ']'), n => {      // a note whose button is gone (the shop was closed or drawn again)
       const nx = n.nextElementSibling;
       if (!(nx && nx.getAttribute(MARK) === '1')) n.remove();
     });
-    Object.keys(found).forEach(k => { if (found[k].length && !seen[k]) { seen[k] = true; say(k === 'donate' ? '4h-donate:seen' : '4h-donate:' + k); } else if (!found[k].length) seen[k] = false; });
+    ['donate', 'tab', 'pay'].forEach(k => { if (found[k].length && !seen[k]) { seen[k] = true; say(k === 'donate' ? '4h-donate:seen' : '4h-donate:' + k); } else if (!found[k].length) seen[k] = false; });
+    if (passNoteOn && !seen.pass) { seen.pass = true; say('4h-donate:pass'); } else if (!passNoteOn) seen.pass = false;
   }
   let timer = 0;
   const later = () => { if (timer) return; timer = setTimeout(() => { timer = 0; try { sweep(); } catch (e) {} }, 200); };
   try { new MutationObserver(later).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
-  window.__4hDonate = { set: c => { C = c; Array.prototype.forEach.call(document.querySelectorAll('[' + NOTE + ']'), fill); }, sweep: sweep, stats: () => ({ blocked: blocked, seen: seen.donate, tab: seen.tab, pay: seen.pay }) };
+  window.__4hDonate = { set: c => { C = c; Array.prototype.forEach.call(document.querySelectorAll('[' + NOTE + ']'), fill); }, sweep: sweep, stats: () => ({ blocked: blocked, seen: seen.donate, tab: seen.tab, pay: seen.pay, pass: seen.pass }) };
   sweep();
   return 'installed';
 }
@@ -191,6 +217,7 @@ function onConsole(wc, a, c) {                       // (event, level, message, 
     if (msg === '4h-donate:seen') s.seenAt = clock();
     else if (msg === '4h-donate:tab') s.tabAt = clock();
     else if (msg === '4h-donate:pay') s.payAt = clock();
+    else if (msg === '4h-donate:pass') s.passAt = clock();
     else if (msg === '4h-donate:blocked') { s.blocked = Math.min(s.blocked + 1, 9999); s.blockedAt = clock(); }
   } catch (e) {}
 }
@@ -223,9 +250,9 @@ function info() {
     for (let n = 1; n <= 4; n++) {
       const wc = g[n];
       if (!wc) continue;
-      const s = states.get(wc) || { loads: 0, at: 0, error: '', seenAt: 0, tabAt: 0, payAt: 0, blocked: 0, blockedAt: 0 };
+      const s = states.get(wc) || { loads: 0, at: 0, error: '', seenAt: 0, tabAt: 0, payAt: 0, passAt: 0, blocked: 0, blockedAt: 0 };
       const age = v => (v ? Math.max(0, Math.round((t - v) / 1000)) : null);
-      out.push({ n: n, loads: s.loads, ageSec: age(s.at), error: s.error, seenAgeSec: age(s.seenAt), tabAgeSec: age(s.tabAt), payAgeSec: age(s.payAt), blocked: s.blocked });
+      out.push({ n: n, loads: s.loads, ageSec: age(s.at), error: s.error, seenAgeSec: age(s.seenAt), tabAgeSec: age(s.tabAt), payAgeSec: age(s.payAt), passAgeSec: age(s.passAt), blocked: s.blocked });
     }
   } catch (e) {}
   return { panels: out };

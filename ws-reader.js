@@ -38,6 +38,13 @@ const pretty = id => String(id).split('-').filter(Boolean)
   .map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 const nameOf = id => species[id] ? pretty(species[id]) : '#' + id;
 const sum = obj => Object.values(obj || {}).reduce((a, n) => a + (Number(n) || 0), 0);
+// the amounts of an object by kind ({ 'ultra-ball': 500 }): only names and numbers, at most 30 kinds; undefined when the game sent none
+const byType = obj => {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return undefined;
+  const out = {};
+  Object.keys(obj).slice(0, 30).forEach(k => { const n = Number(obj[k]); if (isFinite(n) && n >= 0) out[String(k).slice(0, 40)] = n; });
+  return out;
+};
 const isPotion = id => /(^|-)potion$/.test(id);
 const hhmm = ms => new Date(ms).toTimeString().slice(0, 5);
 
@@ -239,7 +246,8 @@ function attachReader(wc, account, send) {
       autoBallId = ac.ballId; shinyBallId = ac.shinyBallId;
       [ac.ballId, ac.shinyBallId].forEach(id => { if (id && !ballIds.includes(id)) ballIds.push(id); });
       const until = c.vipUntil ? (c.vipUntil > 1e12 ? c.vipUntil : c.vipUntil * 1000) : 0;
-      return { name: c.name, level: c.level, trainerXp: c.xp, money: c.gold, diamonds: c.diamonds, vip: until > Date.now(), autoBall: ac.ballId, autoBalls: stockOf(ac.ballId), shinyBalls: stockOf(ac.shinyBallId) };
+      return { name: c.name, level: c.level, trainerXp: c.xp, money: c.gold, diamonds: c.diamonds, vip: until > Date.now(), autoBall: ac.ballId, autoBalls: stockOf(ac.ballId), shinyBalls: stockOf(ac.shinyBallId),
+        autoCatchOn: typeof ac.enabled === 'boolean' ? ac.enabled : undefined };      // lang-70: the card's "time left" of the auto-catch ball says "auto-catch off" when it is off
     }
 
     if (type === 'party' || type === 'party-leave') {
@@ -293,6 +301,7 @@ function attachReader(wc, account, send) {
         defeated: Math.round((s.kills || 0) / partySize), partyKills: s.kills, partySize: partySize, xpGained: s.xp, captures: s.captures,
         lootSell: s.lootValue, captureSell: s.captureValue, suppliesCost: supplies,
         ballsUsed: sum(s.balls), healsUsed: sum(s.potions), profit: profit, ballCost: s.ballCost, potionCost: s.potionCost,
+        ballsByType: byType(s.balls),          // lang-70: the balls used in this hunt by kind ({ 'ultra-ball': 500 }), for the "time left" of the auto-catch ball
         minutes: Math.floor(secs / 60),
         sessionTime: (secs >= 3600 ? Math.floor(secs / 3600) + 'h ' : '') +
                      Math.floor((secs % 3600) / 60) + 'm ' + (secs % 60) + 's',

@@ -30,12 +30,12 @@ refreshDerived = function () {
   });
 };
 
-// Redraw at most once per second, even if messages arrive faster
+// Redraw at most once per second, even if messages arrive faster (lang-70: every 5 s in Light mode; while the window is hidden only the records are kept, see renderAll)
 let drawPending = false;
 function renderSoon() {
   if (drawPending) return;
   drawPending = true;
-  setTimeout(() => { drawPending = false; renderAll(); }, 1000);
+  setTimeout(() => { drawPending = false; renderAll(); }, (typeof lightMode !== 'undefined' && lightMode) ? 5000 : 1000);
 }
 
 window.addEventListener('message', e => {

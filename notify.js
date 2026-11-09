@@ -31,6 +31,7 @@ const DEFAULTS = {
     eggReady: true        // an egg is ready to hatch (missions.js)
   },
   goodCatch: { minIV: 175, minQuality: 1.7, mode: 'or' },        // IV out of 192, quality multiplier (1.7 = Lendaria and above); mode 'or': one of the two is enough, 'and': both are needed
+  goodCatch2: { enabled: false, minIV: 170, minQuality: 5, mode: 'or' },     // lang-70: a second rule (off at first); a catch is great when it meets the first rule OR this one
   rareDrop: { minValue: 10000 },                     // NPC price of ONE item
   suppliesLow: { minRunwayHours: 1, minSampleMinutes: 10 },
   stopped: { noKillsSeconds: 180, silentSeconds: 120 },
@@ -215,7 +216,7 @@ function handleOne(account, d) {
     const e = d.catchEvent;
     const line = e.name + ' \u00b7 IV ' + e.iv + '/' + (e.max || 192) + ' \u00b7 ' + e.rarity;
     if (e.shiny) show(account, 'shiny', t('Shiny captured!'), who + ': ' + line, { noCooldown: true, key: 'shiny' });
-    else if (isGoodCatch(e, c.goodCatch)) show(account, 'goodCatch', t('Great catch'), who + ': ' + line, { noCooldown: true, key: 'catch' });
+    else if (isGoodCatch(e, c.goodCatch) || (c.goodCatch2 && c.goodCatch2.enabled === true && isGoodCatch(e, c.goodCatch2))) show(account, 'goodCatch', t('Great catch'), who + ': ' + line, { noCooldown: true, key: 'catch' });
   }
 
   // the hunt session (arrives every couple of seconds while hunting)
@@ -306,7 +307,7 @@ function openSettings() { cfg(); shell.openPath(SETTINGS_FILE).catch(() => {}); 
 // ---------- the Settings window: reads the settings and changes them (it never writes the file itself, and every value is checked here) ----------
 const EVENTS = Object.keys(DEFAULTS.events);
 const NUMBERS = {                       // setting: [lowest, highest, decimals]
-  'goodCatch.minIV': [0, 200, 0], 'goodCatch.minQuality': [0, 5, 2], 'rareDrop.minValue': [0, 1e9, 0],
+  'goodCatch.minIV': [0, 200, 0], 'goodCatch.minQuality': [0, 5, 2], 'goodCatch2.minIV': [0, 200, 0], 'goodCatch2.minQuality': [0, 5, 2], 'rareDrop.minValue': [0, 1e9, 0],
   'suppliesLow.minRunwayHours': [0.25, 48, 2], 'suppliesLow.minSampleMinutes': [1, 240, 0],
   'stopped.noKillsSeconds': [30, 7200, 0], 'stopped.silentSeconds': [30, 7200, 0]
 };
@@ -316,6 +317,7 @@ function publicConfig() {
   EVENTS.forEach(k => { out.events[k] = e[k] !== false; });
   Object.keys(NUMBERS).forEach(key => { const g = key.split('.')[0], f = key.split('.')[1]; (out[g] = out[g] || {})[f] = c[g][f]; });
   out.goodCatch.mode = catchMode(c.goodCatch);
+  out.goodCatch2.mode = catchMode(c.goodCatch2); out.goodCatch2.enabled = !!(c.goodCatch2 && c.goodCatch2.enabled === true);
   const q = c.quietHours || {};
   out.quietHours = { enabled: q.enabled === true, from: minutesOf(q.from) === null ? DEFAULTS.quietHours.from : q.from, to: minutesOf(q.to) === null ? DEFAULTS.quietHours.to : q.to, allowShiny: q.allowShiny === true };
   return out;
@@ -326,7 +328,8 @@ function cleanChange(p) {
   if (!p || typeof p !== 'object') return out;
   ['enabled', 'startupNotice', 'sound'].forEach(k => { if (typeof p[k] === 'boolean') out.push([[k], p[k]]); });
   if (p.events && typeof p.events === 'object') EVENTS.forEach(k => { if (typeof p.events[k] === 'boolean') out.push([['events', k], p.events[k]]); });
-  if (p.goodCatch && typeof p.goodCatch === 'object' && (p.goodCatch.mode === 'and' || p.goodCatch.mode === 'or')) out.push([['goodCatch', 'mode'], p.goodCatch.mode]);      // exactly 'and' or 'or'
+  ['goodCatch', 'goodCatch2'].forEach(g => { if (p[g] && typeof p[g] === 'object' && (p[g].mode === 'and' || p[g].mode === 'or')) out.push([[g, 'mode'], p[g].mode]); });      // exactly 'and' or 'or'
+  if (p.goodCatch2 && typeof p.goodCatch2 === 'object' && typeof p.goodCatch2.enabled === 'boolean') out.push([['goodCatch2', 'enabled'], p.goodCatch2.enabled]);
   if (p.quietHours && typeof p.quietHours === 'object') {
     ['enabled', 'allowShiny'].forEach(k => { if (typeof p.quietHours[k] === 'boolean') out.push([['quietHours', k], p.quietHours[k]]); });
     ['from', 'to'].forEach(k => { if (typeof p.quietHours[k] === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.quietHours[k])) out.push([['quietHours', k], p.quietHours[k]]); });     // 24-hour HH:MM

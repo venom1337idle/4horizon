@@ -18,7 +18,7 @@ function mainPart() {
   const out = {};
   try { out.notifications = require('./notify').getConfig(); } catch (e) {}
   try { out.tidy = require('./tidy').settings(); } catch (e) {}
-  try { const s = require('./settings').read() || {}; out.app = { lang: s.lang, minimizeToTray: s.minimizeToTray === true }; } catch (e) {}
+  try { const s = require('./settings').read() || {}; out.app = { lang: s.lang, minimizeToTray: s.minimizeToTray === true, lightMode: s.lightMode === true }; } catch (e) {}
   return out;
 }
 
@@ -50,6 +50,7 @@ function apply(o) {
       if (typeof o.app.lang === 'string') { const i18n = require('./i18n'); lang = i18n.normalize(o.app.lang); s.lang = lang; try { i18n.setLang(lang); } catch (e) {} }
       if (typeof o.app.minimizeToTray === 'boolean') s.minimizeToTray = o.app.minimizeToTray;
       S.write(s); done.push('app');
+      if (typeof o.app.lightMode === 'boolean') { try { require('./light').set(o.app.lightMode); } catch (e) {} }          // lang-70: Light mode (saved by light.js, and given to the game panels at once)
     } catch (e) {}
   }
   return { ok: true, done: done, lang: lang, window: plainObject(o.window) ? o.window : {}, summary: plainObject(o.summary) ? o.summary : {} };

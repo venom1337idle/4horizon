@@ -68,7 +68,7 @@ const seq = (from, n, cpu, extra) => Array.from({ length: n }, (_, i) => mk(from
   ok('4 minutes at 59%: no warning yet', sent.length === 0);
   feed([mk(4, BUSY)]);
   ok('the 5th minute: one warning', sent.length === 1, sent);
-  ok('...its text says how much, how long and what (English)', sent[0].title === '4horizon is using a lot of CPU' && sent[0].body === 'About 59% of your processor for 5 minutes, mostly game panel 2. Economy mode (the leaf button) can lower it; Diagnostics has the details.', sent[0]);
+  ok('...its text says how much, how long and what (English)', sent[0].title === '4horizon is using a lot of CPU' && sent[0].body === 'About 59% of your processor for 5 minutes, mostly game panel 2. Economy mode (the leaf button) or Light mode (Settings) can lower it; Diagnostics has the details.', sent[0]);
   feed(seq(5, 30, BUSY));
   ok('it stays high for 30 more minutes: no second warning', sent.length === 1);
   feed(seq(35, 3, { p2: 40 }));                                      // 40%: under "high", but not "calm"

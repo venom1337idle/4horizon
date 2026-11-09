@@ -47,6 +47,12 @@ EXACT = {
   'Saved. Restart 4horizon for the change to take effect.': 'Salvo. Reinicie o 4horizon para a mudança ter efeito.',
   'Hide in the tray when minimized': 'Esconder na bandeja ao minimizar',
   'Could not save the setting': 'Não foi possível salvar a configuração',
+  # lang-70: Light mode
+  'Light mode': 'Modo leve',
+  'For slower PCs. The game screens stop their decorative animations (the game\'s own \"reduce motion\": shine, glows, pulsing buttons), the Summary is redrawn every 5 seconds instead of every second, and 4horizon\'s own animations stop. The hunts, the numbers and the captures do not change. No restart needed.': 'Para PCs mais lentos. As telas do jogo param as animações decorativas (o \"reduzir movimento\" do próprio jogo: brilhos, reflexos, botões pulsando), o Resumo é redesenhado a cada 5 segundos em vez de a cada segundo, e as animações do próprio 4horizon param. As hunts, os números e as capturas não mudam. Não precisa reiniciar.',
+  'Use light mode': 'Usar modo leve',
+  'Light mode is on': 'Modo leve ligado',
+  'Light mode is off': 'Modo leve desligado',
   'Back to last hunt': 'Voltar para a última hunt',
   'Centro: back to the city': 'Centro: volta para a cidade',
   'Going back to the hunt: {name}': 'Voltando para a hunt: {name}',
@@ -123,6 +129,10 @@ EXACT = {
   'An account stops hunting, gets no kills or goes silent': 'Uma conta parar de caçar, ficar sem kills ou ficar em silêncio',
   'A new hunt unlocks': 'Uma nova hunt for liberada',
   'A catch counts as great by its IV and its quality. OR: it notifies when a catch reaches at least one of the two numbers. AND: it notifies only when a catch reaches both. The IV goes up to 192. The quality is the number after the × of a catch (Rara ×1.37, Lendária ×1.78). To ignore one of the two: with OR put a number above the highest possible, with AND put 0.': 'Uma captura é ótima pelo IV e pela qualidade. OU: avisa quando a captura chega a pelo menos um dos dois números. E: avisa só quando chega aos dois. O IV vai até 192. A qualidade é o número depois do × de uma captura (Rara ×1,37, Lendária ×1,78). Para ignorar um dos dois: com OU coloque um número acima do maior possível, com E coloque 0.',
+  # lang-70: the second rule of Great catch
+  'Great catch, 2nd rule': 'Ótima captura, 2ª regra',
+  'Tick Active to have a second combination. A catch is great when it meets the rule above OR this one. Example: above IV 130 AND quality 1.75, here IV 170 OR quality 5 (no catch reaches 5, so only the IV counts).': 'Marque Ativa para ter uma segunda combinação. Uma captura é ótima quando atende à regra de cima OU a esta. Exemplo: em cima IV 130 E qualidade 1,75, aqui IV 170 OU qualidade 5 (nenhuma captura chega a 5, então só o IV conta).',
+  'Active': 'Ativa',
   'IV at least': 'IV mínimo',
   'Quality at least': 'Qualidade mínima',
   'Valuable drop': 'Drop valioso',

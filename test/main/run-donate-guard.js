@@ -23,7 +23,7 @@ const tick = () => new Promise(r => setTimeout(r, 15));
   ok('only the game panels (webview) are hooked: the window of the app and the other kinds get no listener and no script', Object.keys(wv.listeners).length >= 3 && [win, bg, rem].every(w => Object.keys(w.listeners).length === 0), [wv, win, bg, rem].map(w => Object.keys(w.listeners)));
   ok('a panel that is still loading gets nothing until its page is ready', wv.js.length === 0);
   wv.emit('dom-ready'); await tick();
-  ok('when its page is ready (dom-ready) the guard script is put in the page, once', wv.js.length === 1 && /guardInPage/.test(wv.js[0]) && /\(\{"url":"https:\/\/pokehorizonidle\.com\/","before":"Visit the official ","link":"webpage","after":" to donate"\}\)$/.test(wv.js[0]), wv.js.map(x => x.slice(-140)));
+  ok('when its page is ready (dom-ready) the guard script is put in the page, once', wv.js.length === 1 && /guardInPage/.test(wv.js[0]) && /\(\{"url":"https:\/\/pokehorizonidle\.com\/","before":"Visit the official ","link":"webpage","after":" to donate","pass":\{"before":"To buy or gift the Battle Pass, visit the official ","link":"webpage","after":""\}\}\)$/.test(wv.js[0]), wv.js.map(x => x.slice(-140)));
   wv.emit('did-finish-load'); await tick();
   ok('it is put in again when the load finishes (a script that is already there only updates)', wv.js.length === 2);
   wv.emit('dom-ready'); await tick();

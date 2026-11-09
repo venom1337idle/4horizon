@@ -13,7 +13,7 @@ const crypto = require('crypto');
 const electron = require('electron');
 const { app, ipcMain } = electron;
 
-const BUILD = 'lang-69';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
+const BUILD = 'lang-70';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
 const T0 = Date.now();
 const APP_DIR = __dirname;
 const MAX_ERRORS = 40, MAX_LOGS = 150, MAX_TYPES = 80, MAX_FIELDS = 120;
@@ -251,7 +251,7 @@ async function probe(n, wc, opts) {
 // Closing the window only hides the app in the tray, so an update copied over the old files does nothing until the app is quit from the tray and started
 // again. These are the files whose version matters. Their fingerprints are taken when the app starts, and compared later.
 const WATCHED = ['main.js', 'preload.js', 'ws-reader.js', 'accounts.js', 'diag.js', 'diag-core.js', 'team.js', 'tidy.js', 'notify.js', 'history.js', 'schema.js', 'live.js',
-                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js', 'updates.js', 'selftest.js', 'backup.js', 'gpu.js', 'perf.js'];
+                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js', 'updates.js', 'selftest.js', 'backup.js', 'gpu.js', 'perf.js', 'light.js'];
 const fingerprint = name => { try { const full = path.join(APP_DIR, name); if (!fs.existsSync(full)) return null; return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 16); } catch (e) { return null; } };
 let startPrints = null;
 function takePrints() { startPrints = {}; WATCHED.forEach(n => { startPrints[n] = fingerprint(n); }); }
@@ -314,6 +314,7 @@ const FEATURES = [
   ['vault.js', 'password encryption (new and old Electron)', 'decryptStringAsync'],
   ['updates.js', 'checks GitHub for a newer release (the Update button)', 'releases/latest'],
   ['gpu.js', 'GPU acceleration setting and graphics card report', 'getGPUInfo'],
+  ['light.js', 'Light mode for slower PCs: reduced motion in the game panels (lang-70)', 'prefers-reduced-motion'],
   ['perf.js', 'CPU and memory history, and the high-CPU warning', 'onSample'],
   ['selftest.js', 'Check the game (Diagnostics): what 4horizon relies on in the game page', 'selfTestInPage'],
   ['backup.js', 'settings backup (save to a file, load from a file)', 'settings:import'],
@@ -324,6 +325,7 @@ const FEATURES = [
   ['gamenav.js', 'Centro, Market, Mochila, Hunts and Back to last hunt buttons', 'nav:hunt'],
   ['external.js', 'links open in the default browser', 'setWindowOpenHandler'],
   ['donate-guard.js', 'the + Doar button, the Diamantes tab and the pay button of the diamond shop are blocked', 'guardInPage'],
+  ['donate-guard.js', 'the two pay buttons of the Battle Pass are hidden, with a link to the official page (lang-70)', 'PASS_BUY'],
   ['analyzer.js', 'analyzer button (opens or closes the game\'s Hunt Analyzer)', 'analyzer:toggle'],
   ['notify.js', 'notification settings (Settings window)', "'notify:set'"],
   ['main.js', 'tray menu in the chosen language', "i18n.t('Show / Hide')"],
@@ -490,6 +492,7 @@ function collect() {
   try { out.datadir = require('./datadir').info(); } catch (e) { out.datadir = undefined; }          // where your own files are (the folder without your user name), and what was moved
   try { out.selftest = require('./selftest').info(); } catch (e) { out.selftest = undefined; }          // the last "Check the game"
   try { out.updates = require('./updates').info(); } catch (e) { out.updates = undefined; }          // this version, the latest release, when it was checked
+  try { out.light = require('./light').info(); } catch (e) { out.light = undefined; }          // lang-70: Light mode, and whether each panel got reduced motion
   try { out.gpu = require('./gpu').info(); } catch (e) { out.gpu = undefined; }          // 1.0.7: the graphics cards (maker, name, driver), the one in use, acceleration on or off
   try { out.perf = require('./perf').info(); } catch (e) { out.perf = undefined; }        // 1.0.7: CPU and memory over the last 24 hours (now, average, highest, stretches of high CPU, warnings)
   try { out.lockdown = require('./lockdown').info(); } catch (e) { out.lockdown = undefined; }          // what the panels asked for and were refused (permission names and counts)
@@ -511,6 +514,7 @@ function init() {
   try { takePrints(); } catch (e) {}
   try { require('./lockdown').init(); } catch (e) { error('lockdown', e); }          // first: the game panels get no permission and no other settings than the safe ones
   try { require('./settings').init(); } catch (e) { error('settings', e); }          // the language, and the answers to the window about it
+  try { require('./light').init(); } catch (e) { error('light', e); }                  // lang-70: Settings › Light mode (light:get / light:set), reduced motion in the game panels
   try { require('./gpu').init(); } catch (e) { error('gpu', e); }                    // 1.0.7: Settings › Disable GPU acceleration (gpu:get / gpu:set), and the graphics cards for the report
   try { require('./external').init(); } catch (e) { error('external', e); }
   try { require('./donate-guard').init(); } catch (e) { error('donate-guard', e); }      // the buttons that make a donation (+ Doar, the Diamantes tab, the pay button) cannot be pressed, and a note with a link takes the place of + Doar          // links that a game page opens in a new window go to the default browser

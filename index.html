@@ -150,6 +150,7 @@
   #settingsModal .f input { width: 100%; height: 34px; background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 9px; font: inherit; min-width: 0; box-sizing: border-box; }
   #settingsModal .f input[type=time] { color-scheme: dark; }
   #settingsModal .ctl.off .f { opacity: .5; }
+  #settingsModal #nGc2Row.g2off .ctl .f, #settingsModal #nGc2Row.g2off .ctl .seg { opacity: .5; }          /* lang-70: the 2nd rule of Great catch while it is off (its boxes can still be filled in) */
   .seg { display: inline-flex; width: 104px; height: 34px; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; background: var(--bg2); box-sizing: border-box; }
   .ctl .seg label { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--dim); user-select: none; }
   .ctl .seg label + label { border-left: 1px solid var(--line); }
@@ -215,6 +216,8 @@
   #appVer { color: var(--dim2, #7f8bb0); font-size: 12px; font-variant-numeric: tabular-nums; padding: 0 4px; white-space: nowrap; }
   #btnUpdate { border-color: var(--gold, #ffd86b); color: var(--gold, #ffd86b); }
   #btnUpdate svg { stroke: currentColor; }
+  /* lang-70: Light mode (Settings, for slower PCs): no animations and no fades in 4horizon's own window (the game screens get the game's own reduced motion, light.js) */
+  body.light *, body.light *::before, body.light *::after { animation: none !important; transition: none !important; }
 </style>
 </head>
 <body>
@@ -375,6 +378,10 @@
         <div><b>Disable GPU acceleration</b><span class="sd">Turn this on if you see visual glitches when hovering or taking screenshots. Requires restarting 4horizon.</span></div>
         <div class="ctl"><label class="tick"><input type="checkbox" id="sGpu"> Disable hardware acceleration</label></div>
       </div>
+      <div class="srow" id="sLightRow">
+        <div><b>Light mode</b><span class="sd">For slower PCs. The game screens stop their decorative animations (the game's own "reduce motion": shine, glows, pulsing buttons), the Summary is redrawn every 5 seconds instead of every second, and 4horizon's own animations stop. The hunts, the numbers and the captures do not change. No restart needed.</span></div>
+        <div class="ctl"><label class="tick"><input type="checkbox" id="sLight"> Use light mode</label></div>
+      </div>
       <div class="shead"><span>Notifications</span><span class="saved" id="nSaved">Saved</span></div>
       <div class="srow">
         <div><b>Windows notifications</b><span class="sd">Alerts that pop up on your screen, even when the window is hidden in the tray. The tray menu has the same switch.</span></div>
@@ -398,6 +405,10 @@
         <div class="srow cap">
           <div><b>Great catch</b><span class="sd">A catch counts as great by its IV and its quality. OR: it notifies when a catch reaches at least one of the two numbers. AND: it notifies only when a catch reaches both. The IV goes up to 192. The quality is the number after the × of a catch (Rara ×1.37, Lendária ×1.78). To ignore one of the two: with OR put a number above the highest possible, with AND put 0.</span></div>
           <div class="ctl"><label class="f f1">IV at least<input type="number" id="nIV" min="0" max="200" step="1"></label><div class="seg mid" id="nMode" role="radiogroup"><label><input type="radio" name="gcMode" value="and"><span data-word="AND"></span></label><label><input type="radio" name="gcMode" value="or"><span data-word="OR"></span></label></div><label class="f f3">Quality at least<input type="number" id="nQuality" min="0" max="5" step="0.05"></label></div>
+        </div>
+        <div class="srow" id="nGc2Row">
+          <div><b>Great catch, 2nd rule</b><span class="sd">Tick Active to have a second combination. A catch is great when it meets the rule above OR this one. Example: above IV 130 AND quality 1.75, here IV 170 OR quality 5 (no catch reaches 5, so only the IV counts).</span></div>
+          <div class="ctl"><label class="tick"><input type="checkbox" id="nGc2On"> Active</label><label class="f f1">IV at least<input type="number" id="nIV2" min="0" max="200" step="1"></label><div class="seg mid" id="nMode2" role="radiogroup"><label><input type="radio" name="gcMode2" value="and"><span data-word="AND"></span></label><label><input type="radio" name="gcMode2" value="or"><span data-word="OR"></span></label></div><label class="f f3">Quality at least<input type="number" id="nQuality2" min="0" max="5" step="0.05"></label></div>
         </div>
         <div class="srow cap">
           <div><b>Valuable drop</b><span class="sd">The price of ONE item at the NPC shop. An item worth less than this does not notify.</span></div>
@@ -891,7 +902,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-69';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-70';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 
@@ -1007,14 +1018,14 @@
       toast(t('{n} game panels: the window is loading again\u2026', { n: v }));
       setTimeout(() => location.reload(), 700);
     };
-    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); loadGpu(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
+    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); loadGpu(); loadLight(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
     document.getElementById('setClose').onclick = closeSettings;
     settingsModal.addEventListener('mousedown', e => { if (e.target === settingsModal) closeSettings(); });
     // ---------- Settings: the notifications (the main process keeps them in notify-settings.json and checks every value; this only shows them and asks for changes) ----------
     const N_ = id => document.getElementById(id);
-    const N_NUM = [['nIV', 'goodCatch', 'minIV'], ['nQuality', 'goodCatch', 'minQuality'], ['nDrop', 'rareDrop', 'minValue'], ['nRunway', 'suppliesLow', 'minRunwayHours'], ['nSample', 'suppliesLow', 'minSampleMinutes'], ['nNoKills', 'stopped', 'noKillsSeconds'], ['nSilent', 'stopped', 'silentSeconds']];
+    const N_NUM = [['nIV', 'goodCatch', 'minIV'], ['nQuality', 'goodCatch', 'minQuality'], ['nIV2', 'goodCatch2', 'minIV'], ['nQuality2', 'goodCatch2', 'minQuality'], ['nDrop', 'rareDrop', 'minValue'], ['nRunway', 'suppliesLow', 'minRunwayHours'], ['nSample', 'suppliesLow', 'minSampleMinutes'], ['nNoKills', 'stopped', 'noKillsSeconds'], ['nSilent', 'stopped', 'silentSeconds']];
     const N_FLAG = [['nEnabled', 'enabled'], ['nSound', 'sound'], ['nStartup', 'startupNotice']];
-    const fillWords = () => { document.querySelectorAll('#nMode [data-word]').forEach(e => { e.textContent = t(e.dataset.word); }); };      // AND / OR: E / OU in Portuguese
+    const fillWords = () => { document.querySelectorAll('#nMode [data-word], #nMode2 [data-word]').forEach(e => { e.textContent = t(e.dataset.word); }); };      // AND / OR: E / OU in Portuguese
     const N_QUIET_FLAG = [['nQuiet', 'enabled'], ['nQShiny', 'allowShiny']], N_QUIET_TIME = [['nQFrom', 'from'], ['nQTo', 'to']];
     let nCfg = null, nSavedTimer = null;
     function fillNotif(c) {
@@ -1022,8 +1033,11 @@
       nCfg = c;
       N_FLAG.forEach(f => { N_(f[0]).checked = !!c[f[1]]; });
       document.querySelectorAll('#notifBody [data-ev]').forEach(b => { b.checked = c.events[b.dataset.ev] !== false; });
-      N_NUM.forEach(f => { N_(f[0]).value = c[f[1]][f[2]]; });
+      N_NUM.forEach(f => { if (c[f[1]]) N_(f[0]).value = c[f[1]][f[2]]; });
       document.querySelectorAll('#nMode input').forEach(r => { r.checked = r.value === (c.goodCatch.mode === 'and' ? 'and' : 'or'); });
+      // lang-70: the second rule of Great catch (an older main process does not send it: the row is hidden); its fields are dimmed while it is off
+      const g2 = c.goodCatch2; N_('nGc2Row').classList.toggle('hidden', !g2);
+      if (g2) { N_('nGc2On').checked = g2.enabled === true; document.querySelectorAll('#nMode2 input').forEach(r => { r.checked = r.value === (g2.mode === 'and' ? 'and' : 'or'); }); N_('nGc2Row').classList.toggle('g2off', g2.enabled !== true); }
       N_QUIET_FLAG.forEach(f => { N_(f[0]).checked = !!c.quietHours[f[1]]; });
       N_QUIET_TIME.forEach(f => { N_(f[0]).value = c.quietHours[f[1]]; });
       N_('nQuietBox').classList.toggle('off', !c.quietHours.enabled);
@@ -1032,7 +1046,8 @@
     function flashSaved() { const e = N_('nSaved'); e.classList.add('on'); clearTimeout(nSavedTimer); nSavedTimer = setTimeout(() => e.classList.remove('on'), 1800); }
     // lang-56: the Great catch and Valuable drop settings go to the Summary too: its day's tracker (Today) follows them, as the notifications do
     function sendRules(c) {
-      try { if (c && c.goodCatch && dash.contentWindow) dash.contentWindow.postMessage({ type: 'rules', goodCatch: { minIV: c.goodCatch.minIV, minQuality: c.goodCatch.minQuality, mode: c.goodCatch.mode }, rareDrop: { minValue: c.rareDrop && c.rareDrop.minValue } }, '*'); } catch (e) {}
+      const g2 = c && c.goodCatch2 && c.goodCatch2.enabled === true ? { minIV: c.goodCatch2.minIV, minQuality: c.goodCatch2.minQuality, mode: c.goodCatch2.mode } : null;          // lang-70: the second rule, only when it is on
+      try { if (c && c.goodCatch && dash.contentWindow) dash.contentWindow.postMessage({ type: 'rules', goodCatch: { minIV: c.goodCatch.minIV, minQuality: c.goodCatch.minQuality, mode: c.goodCatch.mode }, goodCatch2: g2, rareDrop: { minValue: c.rareDrop && c.rareDrop.minValue } }, '*'); } catch (e) {}
     }
     async function pushRules() { if (!api.notifyGet) return; try { sendRules(await api.notifyGet()); } catch (e) {} }
     dash.addEventListener('load', pushRules); pushRules();
@@ -1054,6 +1069,8 @@
     N_FLAG.forEach(f => { N_(f[0]).onchange = () => sendNotif({ [f[1]]: N_(f[0]).checked }); });
     document.querySelectorAll('#notifBody [data-ev]').forEach(b => { b.onchange = () => sendNotif({ events: { [b.dataset.ev]: b.checked } }); });
     document.querySelectorAll('#nMode input').forEach(r => { r.onchange = () => { if (r.checked) sendNotif({ goodCatch: { mode: r.value } }); }; });
+    document.querySelectorAll('#nMode2 input').forEach(r => { r.onchange = () => { if (r.checked) sendNotif({ goodCatch2: { mode: r.value } }); }; });
+    N_('nGc2On').onchange = () => sendNotif({ goodCatch2: { enabled: N_('nGc2On').checked } });
     fillWords();
     N_QUIET_FLAG.forEach(f => { N_(f[0]).onchange = () => sendNotif({ quietHours: { [f[1]]: N_(f[0]).checked } }); });
     N_QUIET_TIME.forEach(f => {
@@ -1116,6 +1133,30 @@
         toast(t('Saved. Restart 4horizon for the change to take effect.'), '');
       } catch (e) { toast(t('Could not save the setting'), 'warn'); }
     };
+    // ---------- Settings: Light mode (lang-70, for slower PCs). The main process gives the game panels "reduced motion" (light.js); here the window and the
+    // Summary are told: the Summary redraws every 5 s instead of every second, and the app's own animations stop (body.light). An older main process: the row is hidden.
+    let lightOn = false;
+    function showLight(v) {
+      lightOn = v === true;
+      document.body.classList.toggle('light', lightOn);
+      S_('sLight').checked = lightOn;
+      try { if (dash.contentWindow) dash.contentWindow.postMessage({ type: 'light', on: lightOn }, '*'); } catch (e) {}
+    }
+    async function loadLight() {
+      const ok = !!(api.lightGet && api.lightSet);
+      S_('sLightRow').classList.toggle('hidden', !ok);
+      if (!ok) return;
+      try { const c = await api.lightGet(); if (c) showLight(c.on === true); } catch (e) {}
+    }
+    S_('sLight').onchange = async () => {
+      try {
+        const c = await api.lightSet(S_('sLight').checked);
+        if (!c || c.saved === false) { toast(t('Could not save the setting'), 'warn'); if (c) showLight(c.on === true); else S_('sLight').checked = lightOn; return; }
+        showLight(c.on === true);
+        toast(c.on ? t('Light mode is on') : t('Light mode is off'), '');
+      } catch (e) { toast(t('Could not save the setting'), 'warn'); S_('sLight').checked = lightOn; }
+    };
+    loadLight(); dash.addEventListener('load', () => { if (lightOn) showLight(true); });
     // ---------- Settings: the tooltips (the description of a setting stays in the page, hidden; the small "i" after the name of the setting shows its text when the pointer rests on it) ----------
     (function () {
       const tip = document.getElementById('tip'), DELAY = 450;

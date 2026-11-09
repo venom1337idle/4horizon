@@ -142,6 +142,28 @@ const read = () => JSON.parse(fs.readFileSync(FILE, 'utf8'));
   ok('switching to OR: the first of those notifies now (immediately, no restart)', catchN(190, 1.2, 3) === 1 && catchN(160, 1.2, 4) === 0);
   N.setConfig({ goodCatch: { mode: 'and' } }); SHOWN = []; console.log = () => {}; N.handle(1, { name: 'trainer2', catchEvent: { name: 'Gengar', iv: 20, max: 192, quality: 0.8, rarity: 'Fraca', shiny: true }, catchSeq: 5 }); console.log = quiet;
   ok('a shiny notifies in both modes (the mode is only about great catches)', SHOWN.length === 1 && /Shiny/.test(SHOWN[0].title), SHOWN);
+  // ---- lang-70: a second rule of Great catch (the example of the request: IV 130 AND quality 1.75, or IV 170 alone)
+  N = fresh();
+  const g2 = N.getConfig().goodCatch2;
+  ok('the 2nd rule: off at first, IV 170 OR quality 5 (so with OR only the IV counts), and the first rule is unchanged', g2 && g2.enabled === false && g2.minIV === 170 && g2.minQuality === 5 && g2.mode === 'or' && N.getConfig().goodCatch.minIV === 175, g2);
+  r = N.setConfig({ goodCatch: { minIV: 130, minQuality: 1.75, mode: 'and' } });
+  ok('first rule set to IV 130 AND quality 1.75', r.goodCatch.minIV === 130 && r.goodCatch.minQuality === 1.75 && r.goodCatch.mode === 'and' && r.goodCatch2.enabled === false, r.goodCatch);
+  let seq2 = 100;
+  ok('with the 2nd rule off: IV 135 + quality 1.8 notifies (rule 1), IV 172 + quality 1.0 does not', catchN(135, 1.8, ++seq2) === 1 && catchN(172, 1.0, ++seq2) === 0);
+  r = N.setConfig({ goodCatch2: { enabled: true } });
+  ok('"Active" ticked: saved in the file as goodCatch2.enabled = true, the numbers of the 2nd rule stay', r.saved && r.goodCatch2.enabled === true && read().goodCatch2.enabled === true && r.goodCatch2.minIV === 170, r.goodCatch2);
+  ok('...now IV 172 + quality 1.0 notifies too (rule 2), immediately, as "Great catch"', catchN(172, 1.0, ++seq2) === 1 && /Great catch/.test(SHOWN[0].title), SHOWN);
+  ok('...IV 135 + quality 1.8 still notifies (rule 1), and IV 135 + quality 1.2 (neither rule) does not', catchN(135, 1.8, ++seq2) === 1 && catchN(135, 1.2, ++seq2) === 0);
+  ok('...a catch that meets both rules notifies once, not twice', catchN(180, 1.9, ++seq2) === 1);
+  r = N.setConfig({ goodCatch2: { minIV: 999, minQuality: 1.234, mode: 'and' } });
+  ok('the 2nd rule\u2019s numbers are held inside the same limits (IV 200, quality with 2 decimals), and AND is saved', r.goodCatch2.minIV === 200 && r.goodCatch2.minQuality === 1.23 && r.goodCatch2.mode === 'and', r.goodCatch2);
+  const before70 = JSON.stringify(read());
+  N.setConfig({ goodCatch2: { enabled: 'yes', mode: 'AND', minIV: 'x' } }); N.setConfig({ goodCatch2: 5 });
+  ok('...and what makes no sense ("yes", "AND", a word for a number, a number for the rule) changes nothing', JSON.stringify(read()) === before70, read().goodCatch2);
+  r = N.setConfig({ goodCatch2: { enabled: false } });
+  ok('unticked again: only rule 1 counts (IV 200 AND 1.23 does not matter any more)', r.goodCatch2.enabled === false && catchN(172, 1.0, ++seq2) === 0);
+  N = fresh({ goodCatch2: { enabled: 'true', minIV: 150 } });
+  ok('a file written by hand with enabled "true" (a word): the 2nd rule stays off', N.getConfig().goodCatch2.enabled === false && catchN(160, 1.0, 1) === 0, N.getConfig().goodCatch2);
   // ---- lang-54: leaving the hunt (the city) is told only after the "No kills" time, not after 20 s
   N = fresh({ stopped: { noKillsSeconds: 500, silentSeconds: 500 } });
   let t = Date.now(); const realNow54 = Date.now; Date.now = () => t;

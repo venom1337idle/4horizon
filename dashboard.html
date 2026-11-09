@@ -36,6 +36,7 @@
   body.tighter .strip .v { font-size: 16px; } body.tighter .stat .v { font-size: 15px; } body.tighter .acard .ln.dim { display: none; } body.tighter .acard { padding: 3px 6px; } body.tighter .acard .ln { margin-top: 0; font-size: 11.5px; } body.tighter .acard .ln.balls { font-size: 11px; } body.tighter .acard .top { font-size: 12.5px; } body.tighter .side-head { padding: 5px 16px 3px; } body.tighter #tabs { padding-bottom: 5px; } body.tighter .sec-h { margin-bottom: 4px; padding-bottom: 3px; } body.tighter .sec-h .chip { display: none; }
   /* last resort, a very short window: the four tiles of the session go (the three numbers above and every account stay) */
   body.tightest .sess .grid4 { display: none; } body.tightest .sess .sec-h { margin-bottom: 0; }
+  body.tightest .acard { padding: 2px 6px; } body.tightest .acard .ln.btime { font-size: 11px; }          /* lang-70: room for the time left of the auto-catch ball */
 
   /* a section: its label in Cinzel with a fading gold line, like "DROPS" on the game's card */
   .sec { padding: 12px 16px 12px; }          /* the sections are separated by the fading line under their titles, not by boxes or hard lines */
@@ -224,6 +225,8 @@
   #sumSettings .ss-empty { font-size: 12px; color: var(--dim); padding: 4px 2px; }
   .acard .ln.balls { gap: 2px 6px; font-size: 11px; }
   .acard .ln.balls b { color: #fff; font-weight: 700; }
+  /* the time the auto-catch ball lasts at the pace of this hunt: white above 3 h, yellow from 1 h to 3 h, red under 1 h, grey while it cannot be known */
+  .acard .ln.btime { font-size: 11.5px; } .acard .ln.btime.ok { color: #fff; } .acard .ln.btime.warn { color: #ffd84d; } .acard .ln.btime.low { color: #ff5c5c; font-weight: 700; } .acard .ln.btime.na { color: var(--dim); }
   .acard .ln { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; margin-top: 3px; color: #c9d2ea; }
   .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 
@@ -317,6 +320,8 @@
   body.no-main #mainCol { display: none; }
   body.no-main #side { width: 100%; min-width: 0; border-right: 0; }
   .hidden { display: none !important; }
+  /* lang-70: Light mode (Settings, for slower PCs): no animations and no fades in 4horizon's own window (the game screens get the game's own reduced motion, light.js) */
+  body.light *, body.light *::before, body.light *::after { animation: none !important; transition: none !important; }
 </style>
 </head>
 <body>
@@ -397,7 +402,7 @@ const captureLog = [];                // every capture seen since this page open
 
 const SESSION_KEYS = ['defeated', 'xpGained', 'captures', 'lootSell', 'captureSell', 'suppliesCost', 'ballsUsed', 'healsUsed', 'profit',
   'minutes', 'sessionTime', 'goldH', 'xpH', 'killsH', 'killsHAll', 'partyKills', 'drops', 'lastCaught', 'recentCatches', 'bestIV', 'bestQ', 'bestS',
-  'shinyCaptured', 'catchesSeen', 'lastProgress'];
+  'shinyCaptured', 'catchesSeen', 'lastProgress', 'ballsByType'];
 
 // called by live.js when a new hunt starts: keep a summary of the hunt that just ended for the "previous hunt" comparison
 function resetSession(a) {
@@ -688,6 +693,28 @@ function cardBalls(a) {
   if (!ids.length) return '<span class="dim">0 ' + t('balls') + '</span>';
   return ids.map(id => '<span class="bk" data-kind="' + esc(id) + '" title="' + esc(supplyName(id)) + ': ' + fullNum(n0(a.ballTypes[id])) + '"><b>' + fmt(n0(a.ballTypes[id])) + '</b> ' + esc(supplyName(id).replace(/ Ball$/, '')) + '</span>').join('');
 }
+// how long the auto-catch ball lasts at the pace of this hunt: its stock / (that ball used in this hunt / hours of this hunt).
+// Only the auto-catch ball is counted (the balls thrown at shinies are another kind). The pace needs 5 minutes of hunt first.
+const BT_MIN_MINUTES = 5, BT_WARN_H = 3, BT_LOW_H = 1, BT_MAX_H = 99;
+function ballTime(a) {
+  const id = a.autoBall ? String(a.autoBall) : null;
+  const ball = id ? esc(supplyName(id)) : '';
+  if (a.autoCatchOn === false) return { cls: 'na', txt: t('Auto-catch off') };
+  if (!id) return { cls: 'na', txt: t('Auto-catch ball: \u2014') };
+  const stock = (typeof a.autoBalls === 'number' && isFinite(a.autoBalls)) ? a.autoBalls : (a.ballTypes && typeof a.ballTypes[id] === 'number' ? a.ballTypes[id] : null);
+  if (stock === null) return { cls: 'na', txt: t('{ball}: \u2014', { ball: ball }) };
+  if (stock <= 0) return { cls: 'low', txt: t('{ball}: none left', { ball: ball }), tip: t('No {ball} left: auto-catch has nothing to throw.', { ball: ball }) };
+  const paused = a.active === false ? ' ' + t('(paused)') : '';
+  if (typeof a.elapsedMs !== 'number' || !(a.elapsedMs > 0)) return { cls: 'na', txt: t('{ball}: not used in this hunt', { ball: ball }) + paused };
+  const hours = a.elapsedMs / 3600000;
+  const used = (a.ballsByType && typeof a.ballsByType === 'object') ? n0(a.ballsByType[id]) : 0;
+  if (hours * 60 < BT_MIN_MINUTES) return { cls: 'na', txt: t('{ball}: measuring\u2026', { ball: ball }) + paused, tip: t('The pace of the hunt is known after {n} minutes.', { n: BT_MIN_MINUTES }) };
+  if (used <= 0) return { cls: 'na', txt: t('{ball}: not used in this hunt', { ball: ball }) + paused };
+  const rate = used / hours, left = stock / rate;
+  const time = left > BT_MAX_H ? BT_MAX_H + 'h+' : left >= 1 ? Math.floor(left) + 'h ' + Math.floor((left % 1) * 60) + 'm' : Math.max(1, Math.floor(left * 60)) + 'm';
+  return { cls: paused ? 'na' : (left > BT_WARN_H ? 'ok' : left >= BT_LOW_H ? 'warn' : 'low'), txt: t('{ball}: {time} left', { ball: ball, time: time }) + paused,
+    tip: t('{n} {ball} left, {r} thrown per hour in this hunt', { n: fullNum(stock), ball: ball, r: fullNum(Math.round(rate)) }) };
+}
 function sideAll() {
   const live = liveAccounts();
   // the cards of the accounts: the name with its money and diamonds, what it earns, and what it has
@@ -698,7 +725,8 @@ function sideAll() {
       '<div class="ln"><span class="' + signCls(n0(a.goldH)) + '">' + sgn(n0(a.goldH)) + '/h</span><span class="blue">' + fmt(n0(a.xpH)) + ' xp</span>' +
       '<span>' + fmt(n0(a.killsH)) + ' k/h</span><span>' + fmt(n0(a.captures)) + ' ' + t('cap') + '</span></div>' +
       '<div class="ln balls" title="' + t('Balls: the kinds that are checked in the settings (the gear)') + '">' + cardBalls(a) + '</div>' +
-      '<div class="ln dim"><span>' + star + ' ' + fmt(n0(a.shinyCaptured)) + ' ' + t('cap') + (n0(a.shinyThrown) > 0 ? ' \u00b7 ' + t('{n} thrown', { n: fmt(n0(a.shinyThrown)) }) : '') + '</span><span>' + fmt(potionsOf(a)) + ' ' + t('potions') + '</span></div></div>';
+      '<div class="ln dim"><span>' + star + ' ' + fmt(n0(a.shinyCaptured)) + ' ' + t('cap') + (n0(a.shinyThrown) > 0 ? ' \u00b7 ' + t('{n} thrown', { n: fmt(n0(a.shinyThrown)) }) : '') + '</span><span>' + fmt(potionsOf(a)) + ' ' + t('potions') + '</span></div>' +
+      (() => { const bt = ballTime(a); return '<div class="ln btime ' + bt.cls + '"' + (bt.tip ? ' title="' + bt.tip + '"' : '') + '><span>\u23f1 ' + bt.txt + '</span></div>'; })() + '</div>';
   }).join('');
   return '<div class="strip"><div><div class="v ' + signCls(sum('goldH')) + '">' + sgn(sum('goldH')) + '</div><div class="l">' + t('GOLD / H') + '</div></div>' +
       '<div><div class="v blue">' + fmt(sum('xpH')) + '</div><div class="l">' + t('XP / H') + '</div></div>' +
@@ -993,8 +1021,9 @@ const qualityOf = p => (typeof p.q === 'number' ? p.q : (m => (m ? Number(m[1]) 
 function isGreatCatch(iv, q, rarity) {
   const r = todayRule && todayRule.goodCatch;
   if (!r) return (typeof iv === 'number' && iv >= GREAT_IV) || (typeof q === 'number' && q >= GREAT_Q) || /lend|legend|divin|m[ií]t|myth/i.test(String(rarity || ''));
-  const ivOk = typeof iv === 'number' && iv >= r.minIV, qOk = typeof q === 'number' && q >= r.minQuality;     // (a number that is missing is not "enough")
-  return r.mode === 'and' ? ivOk && qOk : ivOk || qOk;
+  const meets = x => { const ivOk = typeof iv === 'number' && iv >= x.minIV, qOk = typeof q === 'number' && q >= x.minQuality;     // (a number that is missing is not "enough")
+    return x.mode === 'and' ? ivOk && qOk : ivOk || qOk; };
+  return meets(r) || !!(todayRule.goodCatch2 && meets(todayRule.goodCatch2));          // lang-70: or the second rule, when it is on
 }
 const minDrop = () => (todayRule && todayRule.rareDrop && typeof todayRule.rareDrop.minValue === 'number' ? todayRule.rareDrop.minValue : DROP_HOT);
 function todayCatch(a, ev) {
@@ -1211,9 +1240,19 @@ function drawEggs() {
 // =====================================================================================
 //  Drawing everything, and the clicks
 // =====================================================================================
-function renderAll() {
+// lang-70: what is KEPT (the hunts of each account, Today's highlights) is apart from what is DRAWN, so that it goes on while nothing is drawn
+function keepRecords() {
   accounts.forEach(huntLogRecord); huntLogSave(false);
   try { todayScan(); } catch (e) { diagNote('today: ' + (e && e.message)); }     // the sessions that run are kept (saved at most every 20 s)
+}
+// lang-70: the window is minimized or hidden in the tray: nobody sees the Summary, so it is not drawn (for everyone, not only Light mode); it is drawn at once when the window shows again
+let drawSkipped = false;
+const unseen = () => document.hidden === true;
+document.addEventListener('visibilitychange', () => { if (!unseen() && drawSkipped) { drawSkipped = false; renderAll(); } });
+let lightMode = false;                                       // lang-70: Light mode (Settings): redrawn every 5 s instead of every second (live.js), no animations
+function renderAll() {
+  keepRecords();
+  if (unseen()) { drawSkipped = true; return; }
   refreshDerived();
   drawTabs();
   drawLock();
@@ -1370,9 +1409,13 @@ window.addEventListener('message', e => {
       if (typeof sumCfg.tab === 'number' && sumCfg.tab >= np) { sumCfg.tab = 'sum'; saveSumCfg(); }
       renderAll();
     }
+  } else if (m.type === 'light') {                          // lang-70: Light mode turned on or off in Settings
+    lightMode = m.on === true; document.body.classList.toggle('light', lightMode);
   } else if (m.type === 'rules') {                          // lang-56: the Great catch and Valuable drop settings, for the day's tracker
     const g = m.goodCatch, d = m.rareDrop, num = v => (typeof v === 'number' && isFinite(v) ? v : null);
     todayRule = (g && num(g.minIV) !== null && num(g.minQuality) !== null) ? { goodCatch: { minIV: g.minIV, minQuality: g.minQuality, mode: g.mode === 'and' ? 'and' : 'or' }, rareDrop: { minValue: d && num(d.minValue) !== null ? d.minValue : DROP_HOT } } : null;
+    const g2 = m.goodCatch2;          // lang-70: the second rule (null when it is off)
+    if (todayRule && g2 && num(g2.minIV) !== null && num(g2.minQuality) !== null) todayRule.goodCatch2 = { minIV: g2.minIV, minQuality: g2.minQuality, mode: g2.mode === 'and' ? 'and' : 'or' };
     try { drawToday(); } catch (err) {}
   } else if (m.type === 'settings-get') {                  // lang-67: settings backup: the Summary's own settings and the sort of the captures
     let sum = null, cap = null; try { sum = JSON.parse(localStorage.getItem(SUMKEY)); } catch (err) {} try { cap = localStorage.getItem('4h.capSort'); } catch (err) {}

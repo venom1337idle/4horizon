@@ -129,7 +129,7 @@ ok('copy puts the text on the clipboard', H['diag:copy'](ours, 'hello report') =
 
   // ---- the build, and files that change after the app started
   const c6 = diag.collect();
-  ok('the build marker is in the report ("lang-69"), so what RUNS can be told from what is on the disk', c6.meta.build === 'lang-69' && diag.BUILD === 'lang-69', c6.meta);
+  ok('the build marker is in the report ("lang-70"), so what RUNS can be told from what is on the disk', c6.meta.build === 'lang-70' && diag.BUILD === 'lang-70', c6.meta);
   ok('right after the start nothing is stale', Array.isArray(c6.staleFiles) && c6.staleFiles.length === 0, c6.staleFiles);
   const tidyFile = path.join(__dirname, 'tidy.js'), tidyText = fs.readFileSync(tidyFile, 'utf8');
   fs.writeFileSync(tidyFile, tidyText + '\n// an update was copied over\n');

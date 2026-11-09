@@ -141,7 +141,7 @@ function onSample(s) {
   if (alert.streak.length < HIGH_MIN || !alert.armed || (alert.lastAt && s.t - alert.lastAt < COOLDOWN_MS)) return false;
   const st = alert.streak, p = Math.round(avg(st.map(x => x.pc))), m = st.length, top = topOf(st.map(x => x.s));
   const title = t('4horizon is using a lot of CPU');
-  const body = t('About {p}% of your processor for {m} minutes, mostly {who}. Economy mode (the leaf button) can lower it; Diagnostics has the details.', { p: p, m: m, who: whoText(top) });
+  const body = t('About {p}% of your processor for {m} minutes, mostly {who}. Economy mode (the leaf button) or Light mode (Settings) can lower it; Diagnostics has the details.', { p: p, m: m, who: whoText(top) });
   let shown = false;
   try { shown = deps.notify(title, body) === true; } catch (e) { shown = false; }
   alert.armed = false; alert.lastAt = s.t;

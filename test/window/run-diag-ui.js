@@ -7,7 +7,7 @@ const PREVIEW_FONTS = `@font-face{font-family:'Cinzel';src:local('Lora');font-we
 const wiki = L => Math.round(50 / 3 * (L ** 3 - 6 * L ** 2 + 17 * L - 12));
 const TEAM = [{ id: '1', speciesId: 7, name: 'Squirtle', level: 84, xp: wiki(84) + 1000, hp: 369, maxHp: 492, slot: 1, shiny: false }, { id: '2', speciesId: 62, name: 'Poliwrath', level: 120, xp: wiki(120) + 379200, hp: 2032, maxHp: 3156, slot: 2, shiny: false }];
 const ACC = (n, nm) => ({ frames: 230, firstAgeSec: 400, lastAgeSec: 2, kb: 120, types: [{ type: 'hunt-session', n: 120, lastAgeSec: 2 }, { type: 'ready', n: 1, lastAgeSec: 200 }] });
-const MAIN = () => ({ v: 1, staleFiles: [], meta: { app: '4horizon', version: '1.0.0', build: 'lang-69', electron: '31.0.0', chrome: '126', node: '20', os: 'Windows_NT 10.0', platform: 'win32', arch: 'x64', locale: 'pt-BR', uptimeSec: 900, rssMB: 300 },
+const MAIN = () => ({ v: 1, staleFiles: [], meta: { app: '4horizon', version: '1.0.0', build: 'lang-70', electron: '31.0.0', chrome: '126', node: '20', os: 'Windows_NT 10.0', platform: 'win32', arch: 'x64', locale: 'pt-BR', uptimeSec: 900, rssMB: 300 },
   files: [{ name: 'diag.js', size: 9000, ageDays: 0.1, sha8: 'abcd1234' }], features: [{ file: 'x.js', label: 'a part', ok: true, missingFile: false }],
   accounts: { 1: ACC(1), 2: ACC(2), 3: ACC(3), 4: ACC(4) }, fields: { ready: ['pokemon', 'pokemon[].teamSlot'] }, panels: [1, 2, 3, 4].map(n => ({ n: n, url: 'https://pokehorizonidle.com/', loading: false, crashed: false })),
   settings: { notify: { enabled: true, events: { shiny: true } }, tidy: { enabled: true }, accounts: { file: true, saved: 2, withPassword: 2, autoLogin: false, encryption: true }, history: { file: true, days: 2 }, species: { names: 493 } },
@@ -135,14 +135,14 @@ const row = (rs, title) => rs.find(r => r.title === title);
 
   // ============================================================== the build, and an app that runs old code (new)
   p = await open(b, { huntFile: 'hunt-data.full.js' }); await feed(p); await openDiag(p); rs = await rows(p);
-  ok('the title shows both builds: "window lang-69 \u00b7 app lang-69", and "Parts" is OK', /window lang-69 \u00b7 app lang-69/.test(await p.locator('#diagBuild').innerText()) && row(rs, 'Parts of the app').id === 'ok', [await p.locator('#diagBuild').innerText(), row(rs, 'Parts of the app')]);
+  ok('the title shows both builds: "window lang-70 \u00b7 app lang-70", and "Parts" is OK', /window lang-70 \u00b7 app lang-70/.test(await p.locator('#diagBuild').innerText()) && row(rs, 'Parts of the app').id === 'ok', [await p.locator('#diagBuild').innerText(), row(rs, 'Parts of the app')]);
   await p.evaluate(() => { window.__diag.main.staleFiles = ['accounts.js', 'ws-reader.js']; }); await p.click('#diagRefresh'); await p.waitForSelector('#diagCheck .ditem'); await p.waitForTimeout(100); rs = await rows(p);
   ok('files changed after the app started: the FIRST row says so in red: "2 files changed after the app started ... OLD version", lists them, and says to quit from the tray', rs[0].title === 'Parts of the app' && rs[0].id === 'fail' && /OLD version/.test(rs[0].detail) && rs[0].lines.join() === 'accounts.js,ws-reader.js' && /Quit the app from the tray/.test(rs[0].todo), rs[0]);
   await p.click('#dtReport');
   ok('...and the report starts with it ("FILES CHANGED AFTER THE APP STARTED")', /FILES CHANGED AFTER THE APP STARTED \(still running the old version\): accounts\.js, ws-reader\.js/.test(await p.locator('#diagReport').innerText()));
   await p.click('#dtCheck');
   await p.evaluate(() => { window.__diag.main.staleFiles = []; window.__diag.main.meta.build = 'login-fix-1'; }); await p.click('#diagRefresh'); await p.waitForSelector('#diagCheck .ditem'); await p.waitForTimeout(100); rs = await rows(p);
-  ok('the app behind the window is another build: FAIL, "window lang-69 but the app ... login-fix-1"', row(rs, 'Parts of the app').id === 'fail' && /build "lang-69" but the app behind it is build "login-fix-1"/.test(row(rs, 'Parts of the app').detail) && /app login-fix-1/.test(await p.locator('#diagBuild').innerText()), row(rs, 'Parts of the app'));
+  ok('the app behind the window is another build: FAIL, "window lang-70 but the app ... login-fix-1"', row(rs, 'Parts of the app').id === 'fail' && /build "lang-70" but the app behind it is build "login-fix-1"/.test(row(rs, 'Parts of the app').detail) && /app login-fix-1/.test(await p.locator('#diagBuild').innerText()), row(rs, 'Parts of the app'));
   await p.evaluate(() => { delete window.__diag.main.meta.build; }); await p.click('#diagRefresh'); await p.waitForSelector('#diagCheck .ditem'); await p.waitForTimeout(100);
   ok('an app from before the build marker: the title says "app old (no build)" and nothing breaks', /app old \(no build\)/.test(await p.locator('#diagBuild').innerText()) && p.errors.length === 0, p.errors);
   await p.context().close();
@@ -184,7 +184,7 @@ const row = (rs, title) => rs.find(r => r.title === title);
   // ============================================================== the build in the title (new)
   p = await open(b, { huntFile: 'hunt-data.full.js' }); await feed(p);
   await openDiag(p); rs = await rows(p);
-  ok('the title shows the new build on both sides: "window lang-69 \u00b7 app lang-69"', /window lang-69 \u00b7 app lang-69/.test(await p.locator('#diagBuild').innerText()), await p.locator('#diagBuild').innerText());
+  ok('the title shows the new build on both sides: "window lang-70 \u00b7 app lang-70"', /window lang-70 \u00b7 app lang-70/.test(await p.locator('#diagBuild').innerText()), await p.locator('#diagBuild').innerText());
   ok('no JavaScript errors', p.errors.length === 0, p.errors);
   await p.context().close();
 

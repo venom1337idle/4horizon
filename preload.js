@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('bridge', {
   startupSet: (p) => ipcRenderer.invoke('startup:set', p),
   gpuGet: () => ipcRenderer.invoke('gpu:get'),
   gpuSet: (disable) => ipcRenderer.invoke('gpu:set', disable),
+  lightGet: () => ipcRenderer.invoke('light:get'),                        // lang-70: Settings › Light mode
+  lightSet: (on) => ipcRenderer.invoke('light:set', on),
   analyzerToggle: () => ipcRenderer.invoke('analyzer:toggle'),
   navGo: (what, n) => ipcRenderer.invoke('nav:go', what, n),
   navHunt: (n, hunt) => ipcRenderer.invoke('nav:hunt', n, hunt),

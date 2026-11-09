@@ -110,6 +110,8 @@ for k in g:
         if part == 'options' and k.startswith('dash:'): b = drop_one(b, CAP_SORT)
         if part == 'options' and k.startswith('win:'): b = drop_one(b, ['1', '2', '3', '4'])          # lang-49: Settings › Game panels (1 to 4)
         if part == 'text' and k.startswith('dash:'): a = lastcatch_row(a); b = lastcatch_row(b)
+        if part == 'text' and k.startswith('dash:'): b = '\n'.join(l for l in b.split('\n') if not l.startswith('\u23f1'))          # lang-70: the time left of the auto-catch ball, the new last line of each card (tested by run-balltime.js)
+        if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not _re.match(r'^title: (.+ left, [\d,.]+ thrown per hour in this hunt|No .+ left: auto-catch has nothing to throw\.|The pace of the hunt is known after \d+ minutes\.)$', x)]          # lang-70: its tooltips
         if part == 'text' and k.startswith('dash:'): a = '\n'.join(strip_surplus(a.split('\n'), b.split('\n'), lambda l: l in HUNT_TEXT or bool(NUMLIKE.match(l))))
         if part == 'attrs' and k.startswith('dash:'): a = strip_surplus(list(a), list(b), lambda x: x in HUNT_ATTRS)
         if part == 'options' and k.startswith('dash:'): a = strip_surplus(list(a), list(b), lambda x: x in HUNT_OPTS)

@@ -418,7 +418,7 @@
       P();
     }
     if (main && main.donate !== undefined) {
-      P('DONATE BUTTONS GUARD (in the diamond shop the "+ Doar" button, the "Diamantes" tab and the "Doar R$ ..." pay button cannot be pressed in the app; a note with a link to the official page takes the place of "+ Doar")');
+      P('DONATE BUTTONS GUARD (in the diamond shop the "+ Doar" button, the "Diamantes" tab and the "Doar R$ ..." pay button cannot be pressed in the app, nor "Comprar passe" and "Dar o Passe para um amigo" of the Battle Pass; a note with a link to the official page takes the place of "+ Doar" and of the two Battle Pass buttons)');
       const dp = (main.donate && main.donate.panels) || [];
       const seenTxt = (v, no) => (v === null || v === undefined ? no : ago(v));
       if (!dp.length) P('  no game panel yet');
@@ -426,6 +426,7 @@
         + ' \u00b7 Doar button seen: ' + seenTxt(q.seenAgeSec, 'not yet (open the shop of diamonds in that panel)')
         + ' \u00b7 Diamantes tab hidden: ' + seenTxt(q.tabAgeSec, 'not yet')
         + ' \u00b7 pay button hidden: ' + seenTxt(q.payAgeSec, 'not yet (it exists only on the donation page)')
+        + (q.passAgeSec !== undefined ? ' \u00b7 Battle Pass buttons hidden: ' + seenTxt(q.passAgeSec, 'not yet (open the Battle Pass in that panel)') : '')
         + ' \u00b7 presses stopped: ' + (q.blocked || 0)));
       P();
     }
@@ -511,6 +512,12 @@
       P();
     }
     if (main && main.perf !== undefined) perfSection(main.perf).forEach(l => P(l));          // 1.0.7: CPU AND MEMORY
+    if (main && main.light !== undefined) {          // lang-70: Light mode (Settings, for slower PCs)
+      const Lm = main.light || {}, lp = Array.isArray(Lm.panels) ? Lm.panels : [];
+      P('LIGHT MODE (Settings, for slower PCs: reduced motion in the game panels, the Summary redrawn every 5 s, no animations in the window): ' + (Lm.on ? 'ON' : 'off'));
+      if (Lm.on) lp.forEach(q => P('  ' + lab(q.n) + ': ' + (q.reduced ? 'reduced motion on (set ' + ago(q.ageSec) + ')' : 'NOT set yet' + (q.error ? ' (' + q.error + ')' : ''))));
+      P();
+    }
     if (main && main.economy !== undefined) {
       P('ECONOMY MODE (turned on and off by hand; once a minute the app notes CPU and memory of its processes, the pace of each account, and how late a 1-second timer runs in each game page; last 24 hours)');
       const E = main.economy || {}, fn = v => typeof v === 'number' && isFinite(v);
