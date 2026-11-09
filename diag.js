@@ -13,7 +13,7 @@ const crypto = require('crypto');
 const electron = require('electron');
 const { app, ipcMain } = electron;
 
-const BUILD = 'lang-68';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
+const BUILD = 'lang-69';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
 const T0 = Date.now();
 const APP_DIR = __dirname;
 const MAX_ERRORS = 40, MAX_LOGS = 150, MAX_TYPES = 80, MAX_FIELDS = 120;
