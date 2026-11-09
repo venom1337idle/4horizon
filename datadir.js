@@ -50,8 +50,8 @@ function file(name) {
 // for the report of the Diagnostics: where the folder is (the user's own name is not shown), which files are in it, and what was moved
 function info() {
   const d = dir(), out = { folder: '', inAppFolder: d === APP_DIR, files: [], moves: {} };
-  try { const home = require('os').homedir(); out.folder = home && d.indexOf(home) === 0 ? '~' + d.slice(home.length) : d; } catch (e) { out.folder = d; }
-  if (/\\|\//.test(out.folder)) out.folder = out.folder.replace(/[\\/]+Users[\\/]+[^\\/]+/i, '\\Users\\~');
+  try { const home = require('os').homedir(); out.folder = home && d.toLowerCase().indexOf(home.toLowerCase()) === 0 ? '~' + d.slice(home.length) : d; } catch (e) { out.folder = d; }      // (1.0.7: also when the capitals differ)
+  if (/\\|\//.test(out.folder)) out.folder = out.folder.replace(/[\\/]+Users[\\/]+[^\\/]+/gi, '\\Users\\~');          // (1.0.7: EVERY "\Users\<name>", also a short 8.3 name such as RUNNER~1, not only the first)
   NAMES.forEach(n => {
     try { const p = path.join(d, n); if (fs.existsSync(p)) out.files.push({ name: n, kb: Math.round(fs.statSync(p).size / 102.4) / 10 }); } catch (e) {}
     if (moves[n]) out.moves[n] = Object.keys(moves[n])[0] + (moves[n].error ? ': ' + moves[n].error : '');

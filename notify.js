@@ -78,8 +78,11 @@ function writeSetting(mutator) {
   try { user = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8').replace(/^\uFEFF/, '')); } catch (e) { user = JSON.parse(JSON.stringify(DEFAULTS)); }
   mutator(user);
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(user, null, 2));
-  loadedAt = 0;
-  cfg();
+  // 1.0.7: what was just written counts at once. (Before, the file was read again only if its time had changed: two changes close together could get
+  // the same time on the disk, and the second one was then not seen, e.g. two boxes of Settings ticked quickly.)
+  settings = merge(DEFAULTS, user); warnedBadFile = false;
+  try { mtime = fs.statSync(SETTINGS_FILE).mtimeMs; } catch (e) {}
+  loadedAt = Date.now();
 }
 
 // ---------- hunts that each trainer level opens (from hunt-data.js, built by build-hunts.mjs) ----------
