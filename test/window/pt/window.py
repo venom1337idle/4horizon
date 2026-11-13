@@ -47,6 +47,13 @@ EXACT = {
   'Saved. Restart 4horizon for the change to take effect.': 'Salvo. Reinicie o 4horizon para a mudança ter efeito.',
   'Hide in the tray when minimized': 'Esconder na bandeja ao minimizar',
   'Could not save the setting': 'Não foi possível salvar a configuração',
+  # lang-71: Streamer mode
+  'Streamer mode': 'Modo streamer',
+  'For streaming 4horizon (OBS: Window Capture) while you use other apps. The game screens keep moving when other windows cover 4horizon (not when it is minimized: Windows cannot capture a minimized window), and the e-mails of the logins are hidden on screen. It uses about as much CPU as a visible window, and economy mode is not available while it is on. Restart 4horizon after changing it.': 'Para fazer live do 4horizon (OBS: Captura de janela) enquanto você usa outros apps. As telas do jogo continuam se movendo quando outras janelas cobrem o 4horizon (não quando ele está minimizado: o Windows não consegue capturar uma janela minimizada), e os e-mails dos logins ficam escondidos na tela. Usa mais ou menos a mesma CPU de uma janela visível, e o modo economia não fica disponível enquanto ele está ligado. Reinicie o 4horizon depois de mudar.',
+  'Use streamer mode': 'Usar modo streamer',
+  'Streamer mode is on': 'Modo streamer ligado',
+  'Streamer mode is off': 'Modo streamer desligado',
+  'Economy mode is not available while Streamer mode is on (Settings).': 'O modo economia não está disponível enquanto o Modo streamer está ligado (Configurações).',
   # lang-70: Light mode
   'Light mode': 'Modo leve',
   'For slower PCs. The game screens stop their decorative animations (the game\'s own \"reduce motion\": shine, glows, pulsing buttons), the Summary is redrawn every 5 seconds instead of every second, and 4horizon\'s own animations stop. The hunts, the numbers and the captures do not change. No restart needed.': 'Para PCs mais lentos. As telas do jogo param as animações decorativas (o \"reduzir movimento\" do próprio jogo: brilhos, reflexos, botões pulsando), o Resumo é redesenhado a cada 5 segundos em vez de a cada segundo, e as animações do próprio 4horizon param. As hunts, os números e as capturas não mudam. Não precisa reiniciar.',

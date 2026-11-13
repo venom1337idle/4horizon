@@ -129,6 +129,8 @@ function save() {
 // the mode: the window asks for it; the game panels are muted while it is on (so their sound is not worked out either)
 function set(on) {
   on = on === true;
+  // lang-71: not while Streamer mode is on (it would stop the drawing that streamer mode keeps going); the window does not offer it then either
+  if (on) { let blocked = false; try { blocked = require('./streamer').blocksEconomy(); } catch (e) {} if (blocked) return { on: state.on, since: state.since, blocked: 'streamer' }; }
   if (on !== state.on) { state = { on: on, since: now() }; changed = true; log.events.push({ t: state.since, on: on }); prune(); save(); }
   const guests = deps.guests() || {};
   [1, 2, 3, 4].forEach(n => { try { const g = guests[n]; if (g && !g.isDestroyed() && g.setAudioMuted) g.setAudioMuted(on); } catch (e) {} });

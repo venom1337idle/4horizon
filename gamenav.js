@@ -240,6 +240,25 @@ function huntInPage(arg, waitMs) {
             const opts = Array.prototype.slice.call(sel.options || []), neutral = opts.find(o => /^(qualquer|todos|todas|nenhum|any|all|none)$/.test(plain(o.textContent)));
             if (neutral && sel.value !== neutral.value) { sel.value = neutral.value; ['input', 'change'].forEach(t => sel.dispatchEvent(new Event(t, { bubbles: true }))); }
           });
+          // lang-71: since the game's update of 2026-11, "Fraco contra" is a list where SEVERAL types can be ticked (not a drop-down any more), and there is an
+          // "Item" filter: either one could hide the last hunt (the bug of 2026-11-13). When one is set it is cleared: its own "Limpar" button, its own ✕.
+          if (box) {
+            // (the page draws a filter again when it is opened or cleared: it is looked for again at each step, by its place among the filters of the panel)
+            const allCombos = () => Array.prototype.slice.call(box.querySelectorAll('.type-multi, .mk-combo')).filter((c, i, a) => !a.some(o => o !== c && o.contains(c)));
+            const btnOf = c => c && (c.querySelector('.mk-combo-button') || c.querySelector('button'));
+            const isSet = c => { const b = btnOf(c); return !!b && (/\bhas-value\b/.test(b.className) || (/^fraco contra:?/.test(plain(b.textContent)) && !/^fraco contra:?\s*(qualquer|todos|any)?\s*[\u25be\u25b4]?$/.test(plain(b.textContent)))); };
+            const combos = allCombos().map((c, i) => (isSet(c) ? i : -1)).filter(i => i >= 0);
+            for (const i of combos) {
+              let c = allCombos()[i], btn = btnOf(c); if (!btn) continue;
+              if (btn.getAttribute('aria-expanded') !== 'true') { press(btn); await sleep(200); c = allCombos()[i]; }
+              const clr = c && (c.querySelector('.type-multi-clear') || Array.prototype.find.call(c.querySelectorAll('button'), b => /^(limpar|limpar tudo|clear|clear all|limpiar)$/.test(plain(b.textContent))));
+              if (clr && !clr.disabled) { press(clr); await sleep(200); }
+              c = allCombos()[i]; btn = btnOf(c);
+              if (btn && (btn.getAttribute('aria-expanded') === 'true' || c.querySelector('.mk-combo-pop'))) { press(btn); await sleep(150); }          // the list is closed again
+            }
+            Array.prototype.forEach.call(box.querySelectorAll('.item-filter-clear'), b => press(b));
+            if (combos.length || box.querySelector('.item-filter-clear')) await sleep(250);
+          }
           typed = inp2; setValue(inp2, term);
           await sleep(700);
           const ir = inp2.getBoundingClientRect();

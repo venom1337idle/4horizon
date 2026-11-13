@@ -512,6 +512,19 @@
       P();
     }
     if (main && main.perf !== undefined) perfSection(main.perf).forEach(l => P(l));          // 1.0.7: CPU AND MEMORY
+    if (main && main.shinyAll !== undefined) {          // lang-71: the shinies of all time (the game's Perfil, kept current by the reader)
+      const SA = main.shinyAll || {}, sa = Array.isArray(SA.accounts) ? SA.accounts : [];
+      P('SHINIES OF ALL TIME (the game sends them when Perfil is opened in the game; 4horizon adds the shiny throws and captures it sees after that; nothing is asked of the game)');
+      if (!sa.length) P('  no account seen yet');
+      else sa.forEach(q => P('  ' + lab(q.n) + ': ' + (q.known ? 'from Perfil ' + ago(q.ageSec) + ', counted since: ' + (q.sinceBalls || 0) + ' balls at shinies, ' + (q.sinceCaught || 0) + ' shinies captured' : 'Perfil not opened yet on this account (open it once in the game)')));
+      P();
+    }
+    if (main && main.streamer !== undefined) {          // lang-71: Streamer mode
+      const St = main.streamer || {};
+      P('STREAMER MODE (Settings: the game screens keep moving behind other windows, e-mails hidden, no economy mode): ' + (St.on ? 'ON' : 'off') + (St.needsRestart ? ' · RESTART NEEDED (the setting was changed: the background part changes when 4horizon starts again)' : '') + (St.atStart ? ' · running since the start (' + (St.switches || []).length + ' Chromium switches)' : ''));
+      if (St.on) (St.panels || []).forEach(q => P('  ' + lab(q.n) + ': e-mails ' + (q.hidden ? 'hidden' : 'NOT hidden yet (the page has not loaded)')));
+      P();
+    }
     if (main && main.light !== undefined) {          // lang-70: Light mode (Settings, for slower PCs)
       const Lm = main.light || {}, lp = Array.isArray(Lm.panels) ? Lm.panels : [];
       P('LIGHT MODE (Settings, for slower PCs: reduced motion in the game panels, the Summary redrawn every 5 s, no animations in the window): ' + (Lm.on ? 'ON' : 'off'));

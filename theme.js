@@ -71,10 +71,10 @@
   // colour space) with only the hue changing, so they sit well on the navy; away from the app's gold, green and red so that an account is never
   // mistaken for "profit", "loss" or the gold highlight; and far enough from each other to be told apart by colour-blind eyes too.
   //   base = the bright colour (dots, ring, the line on top of a band)   a / b = the dark and the lighter end of the header band
-  window.HG_ACCOUNT = [
-    { name: 'orchid', base: '#ecbafe', a: '#4b2d57', b: '#724585' },
-    { name: 'cornflower', base: '#5995fb', a: '#1e3965', b: '#2b5699' },
-    { name: 'teal', base: '#05d6bd', a: '#014139', b: '#006356' },
-    { name: 'rose', base: '#f46683', a: '#622431', b: '#94374b' }
-  ];
+  window.HG_ACCOUNT = [          // lang-71: palette D, easy to tell apart (also for colour-blind eyes): sky, teal, vermilion, orchid
+  { name: 'sky', base: '#56b4e9', a: '#214059', b: '#2d5b7a' },
+  { name: 'teal', base: '#34c39a', a: '#174542', b: '#1d6256' },
+  { name: 'vermilion', base: '#e7694a', a: '#4c2a2a', b: '#703831' },
+  { name: 'orchid', base: '#cc79a7', a: '#442f46', b: '#63405c' }
+];
 })();

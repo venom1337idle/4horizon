@@ -11,6 +11,7 @@ const diag = require('./diag');
 let combat; try { combat = require('./combat'); } catch (e) { combat = { frame() {}, session() {}, summary() { return null; }, sample() { return false; } }; }
 let supplies; try { supplies = require('./supplies'); } catch (e) { supplies = { types() {} }; }
 let shinyballs; try { shinyballs = require('./shinyballs'); } catch (e) { shinyballs = { handle() {} }; }
+let shinyall; try { shinyall = require('./shinyall'); } catch (e) { shinyall = { profile() {}, add() {}, view() { return null; } }; }      // lang-71: the shinies since the account was created
 let missions; try { missions = require('./missions'); } catch (e) { missions = { handle() {} }; }
 
 // ---------- Pokémon names: Pokédex number -> name ----------
@@ -302,6 +303,7 @@ function attachReader(wc, account, send) {
         lootSell: s.lootValue, captureSell: s.captureValue, suppliesCost: supplies,
         ballsUsed: sum(s.balls), healsUsed: sum(s.potions), profit: profit, ballCost: s.ballCost, potionCost: s.potionCost,
         ballsByType: byType(s.balls),          // lang-70: the balls used in this hunt by kind ({ 'ultra-ball': 500 }), for the "time left" of the auto-catch ball
+        shinyKills: (typeof s.shinyKills === 'number' && isFinite(s.shinyKills) && s.shinyKills >= 0) ? s.shinyKills : undefined,      // lang-71: the shinies met in this hunt (the game's own counter, the ✦ of its Hunt Analyzer), for Today's shinies captured / encountered
         minutes: Math.floor(secs / 60),
         sessionTime: (secs >= 3600 ? Math.floor(secs / 3600) + 'h ' : '') +
                      Math.floor((secs % 3600) / 60) + 'm ' + (secs % 60) + 's',
@@ -350,7 +352,10 @@ function attachReader(wc, account, send) {
     return null;
   }
 
-  const WANTED = new Set(['character', 'inventory', 'hunt-session', 'pokemon-update', 'catch-result', 'party', 'party-leave', 'breeding', 'ready', 'pending', 'dex-stats', 'battle-pass']);
+  const WANTED = new Set(['character', 'inventory', 'hunt-session', 'pokemon-update', 'catch-result', 'party', 'party-leave', 'breeding', 'ready', 'pending', 'dex-stats', 'battle-pass', 'profile-stats']);
+  // lang-71: the shinies of the account since it was created (shinyall.js): the game's answer when YOU open Perfil, plus what the reader counted since. Nothing is asked of the game.
+  let charName = null, shownAll = '';
+  const sendAll = () => { try { if (!charName) return; const v = shinyall.view(account, charName); const key = v ? [v.caught, v.balls, v.at].join('|') : ''; if (v && key !== shownAll) { shownAll = key; send(account, { shinyAll: v }); } } catch (e) { diag.error('shinyall', e); } };
 
   wc.debugger.on('message', (event, method, params) => {
     if (schema.enabled && (method === 'Network.webSocketFrameReceived' || method === 'Network.webSocketFrameSent')) {
@@ -371,7 +376,15 @@ function attachReader(wc, account, send) {
     const out = convert(m[1], msg);
     try { if (out && m[1] === 'hunt-session') combat.session(account, out.startedAt, out.partySize, out.partyKills); } catch (e) {}
     try { team.handle(account, m[1], msg, send, nameOf); } catch (e) { diag.error('team', e); }
+    const sb0 = (() => { try { return shinyballs.summary ? shinyballs.summary(account) : null; } catch (e) { return null; } })();
     try { shinyballs.handle(account, m[1], msg, send); } catch (e) { diag.error('shinyballs', e); }
+    // lang-71: the all-time shinies: the name of the character, a Perfil answer, and the shiny throws and captures counted just now
+    try {
+      if (out && typeof out.name === 'string' && out.name && out.name !== charName) { charName = out.name; shownAll = ''; }
+      if (m[1] === 'profile-stats' && charName) shinyall.profile(account, charName, msg);
+      if (m[1] === 'catch-result' && charName && sb0 && shinyballs.summary) { const sb1 = shinyballs.summary(account); if (sb1) shinyall.add(account, charName, sb1.shinyThrown - sb0.shinyThrown, sb1.shinyCaught - sb0.shinyCaught); }
+      sendAll();
+    } catch (e) { diag.error('shinyall', e); }
     try { if (m[1] === 'battle-pass' || m[1] === 'ready' || m[1] === 'character' || m[1] === 'breeding' || m[1] === 'hunt-session') missions.handle(account, m[1], msg, nameOf); } catch (e) { diag.error('missions', e); }
     if (out) {
       out.live = true;

@@ -63,11 +63,11 @@
   .row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
   .row .k { color: #c9d2ea; } .row .v { font-weight: 700; }
   /* supplies and assets: two columns side by side, no boxes, a fading line between them */
-  .duo { display: grid; grid-template-columns: 1fr 1fr; padding: 0 16px; }
+  .duo { display: grid; grid-template-columns: max-content 1fr; column-gap: 32px; padding: 0 16px; }          /* lang-71: the left column as wide as what it holds, the line in the middle of the gap */
   .duo .col { padding: 12px 0 12px; min-width: 0; }
-  .duo .col:first-child { padding-right: 14px; }
-  .duo .col:last-child { padding-left: 14px; position: relative; }
-  .duo .col:last-child::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 10px; width: 1px; background: linear-gradient(180deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0)); }
+  .duo .col:first-child { padding-right: 0; }
+  .duo .col:last-child { padding-left: 0; position: relative; }
+  .duo .col:last-child::before { content: ''; position: absolute; left: -16px; top: 14px; bottom: 10px; width: 1px; background: linear-gradient(180deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0)); }
   .kv { display: flex; align-items: baseline; gap: 7px; padding: 2px 0; }
   .kv .v { font-size: 17px; font-weight: 700; }
   .kv .l { font-size: 10px; letter-spacing: .08em; color: var(--dim); text-transform: uppercase; font-weight: 600; }
@@ -207,6 +207,9 @@
   .gemc { color: var(--gem); }
   /* the settings of the Summary: opens under the header, over the Summary */
   #side-btn-on, #btnSumSettings.on, #btnSumLock.on { color: var(--gold); border-color: var(--gold); }
+  /* lang-71: the triangle of the top bar: gold while the bar is hidden, and a gold dot when a newer version is out (its Update button is in the hidden bar) */
+  #btnSumBar { position: relative; } #btnSumBar.on { color: var(--gold); border-color: var(--gold); }
+  #btnSumBar.dot::after { content: ''; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px rgba(227, 192, 107, .8); }
   #sumSettings { position: absolute; top: 48px; left: 10px; right: 10px; z-index: 40; max-height: calc(100% - 62px); overflow-y: auto; padding: 10px 14px 12px; background: #0e1730; border: 1px solid var(--gold); border-radius: var(--r); box-shadow: 0 14px 34px rgba(0, 0, 0, .6); }
   #sumSettings .ss-scope { font-size: 11px; color: var(--dim); margin: 0 0 4px; }
   #sumSettings .ss-h { font: 700 10.5px/1 var(--serif); letter-spacing: .16em; color: var(--dim); text-transform: uppercase; margin: 12px 0 5px; padding-bottom: 5px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
@@ -247,6 +250,17 @@
   .kpi { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04); }
   .kpi .v { font-size: 26px; font-weight: 700; letter-spacing: -.5px; }
   .kpi .l { font-size: 10px; letter-spacing: .12em; color: var(--dim); margin-top: 4px; text-transform: uppercase; font-weight: 600; }
+  /* lang-71: the Today row above the live cards: today's totals, quieter than the cards (flat, smaller), centred, in the same 6 columns */
+  #todayRow { margin: 0 0 12px; }
+  #todayRow .th { display: flex; align-items: center; gap: 12px; font-family: var(--serif); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  #todayRow .th::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(227, 192, 107, .4), rgba(227, 192, 107, 0)); }
+  #todayRow .th .sub { font-family: inherit; font-family: system-ui, "Segoe UI", sans-serif; letter-spacing: 0; text-transform: none; font-size: 11px; color: var(--dim); }
+  #todayRow .tg { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  #todayRow .tc { background: rgba(12, 18, 32, .75); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 8px; text-align: center; min-width: 0; }
+  #todayRow .tc .v { font-size: 20px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #todayRow .tc .v .sep { color: var(--dim); font-weight: 400; }
+  #todayRow .tc .l { font-size: 10px; letter-spacing: .12em; color: var(--dim); margin-top: 3px; text-transform: uppercase; font-weight: 600; }
+  #todayRow .tc .s { font-size: 11px; color: var(--dim); margin-top: 2px; min-height: 14px; }
 
   .card { background: linear-gradient(180deg, #131c36, #0e1629); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); }
   .card h2, .card .h { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; font-size: 12px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase;
@@ -329,7 +343,7 @@
 <body>
 <div id="app">
   <aside id="side">
-    <div class="side-head"><span>SUMMARY</span><span class="grow"></span><button class="icon-btn" id="btnSumLock" title="Lock the Summary on what it shows now, so it does not follow the expanded screen" aria-label="Lock the Summary" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button><button class="icon-btn" id="btnSumSettings" title="Summary settings" aria-label="Summary settings"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
+    <div class="side-head"><span>SUMMARY</span><span class="grow"></span><button class="icon-btn hidden" id="btnSumBar" title="Hide the top bar (Ctrl+B)" aria-label="Hide the top bar" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M12 7l7 10H5z"/></svg></button><button class="icon-btn" id="btnSumLock" title="Lock the Summary on what it shows now, so it does not follow the expanded screen" aria-label="Lock the Summary" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button><button class="icon-btn" id="btnSumSettings" title="Summary settings" aria-label="Summary settings"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
     <div id="sumSettings" class="hidden" role="dialog" aria-label="Summary settings"></div>
     <div id="cmpMenu" class="hidden" role="listbox" aria-label="Compare with"></div>
     <div id="cmpTip" class="hidden" role="tooltip"></div>
@@ -344,6 +358,7 @@
     </div>
     <div id="mainScroll">
       <div id="view-overview">
+        <div id="todayRow" class="hidden"></div>
         <div class="kpis" id="kpis"></div>
         <div class="card">
           <div class="h"><span>Per account &middot; click a header to sort, a row to open it in the summary</span><span class="grow"></span>
@@ -394,7 +409,7 @@ window.addEventListener('unhandledrejection', e => diagNote('unhandled rejection
 //  Data model. live.js (loaded below) fills `accounts` from the game's own connection.
 // =====================================================================================
 // one colour per account, from theme.js (the same ones the top bar and the panels use)
-const COLORS = (window.HG_ACCOUNT || [{ base: '#ecbafe' }, { base: '#5995fb' }, { base: '#05d6bd' }, { base: '#f46683' }]).map(c => c.base);
+const COLORS = (window.HG_ACCOUNT || [{ base: '#56b4e9' }, { base: '#34c39a' }, { base: '#e7694a' }, { base: '#cc79a7' }]).map(c => c.base);
 const accounts = [0, 1, 2, 3].map(i => ({ idx: i, name: 'Conta ' + (i + 1) }));
 let selected = 'sum';                 // 'sum' or the index of an account
 let bestMode = 'iv';                  // iv | quality | score (live.js adds the third option)
@@ -735,6 +750,25 @@ function ballTime(a) {
   return { cls: paused ? 'na' : (left > BT_WARN_H ? 'ok' : left >= BT_LOW_H ? 'warn' : 'low'), txt: t('{ball}: {time} left', { ball: ball, time: time }) + paused,
     tip: t('{n} {ball} left, {r} thrown per hour (the last {m} minutes of the hunt)', { n: fullNum(stock), ball: ball, r: fullNum(Math.round(rate)), m: Math.round(spanMs / 60000) }) };
 }
+// lang-71: the shinies of all time (the game's Perfil, "Shiny (capturas/gastas)", kept current by the reader: shinyall.js): { caught, balls, at, sinceCaught, sinceBalls }
+const allOf = a => (a.shinyAll && typeof a.shinyAll === 'object' && typeof a.shinyAll.caught === 'number' && typeof a.shinyAll.balls === 'number') ? a.shinyAll : null;
+const perShiny = (c, b) => (c > 0 ? t('1 shiny per {n} balls', { n: fmt(Math.round(b / c)) }) : t('no shiny captured yet'));
+// the shiny part of an account card: "✦ 5 / 512 all time" once Perfil was opened in the game on that account; before that what this session saw, with a hint
+function shinyCardPart(a) {
+  const A = allOf(a), sess = t('This session: {c} captured, {n} thrown.', { c: fmt(n0(a.shinyCaptured)), n: fmt(n0(a.shinyThrown)) });
+  if (A) return '<span class="sall" title="' + esc(t('All time (the game\u2019s Perfil): {c} shinies captured, {b} balls spent at shinies, {r}.', { c: fullNum(A.caught), b: fullNum(A.balls), r: perShiny(A.caught, A.balls) }) + ' ' + sess) + '">' + star + ' <span class="pink">' + fmt(A.caught) + '</span> / ' + fmt(A.balls) + ' ' + t('all time') + '</span>';
+  return '<span title="' + esc(sess + ' ' + t('Open Perfil once in the game on this account to see its shinies of all time here.')) + '">' + star + ' ' + fmt(n0(a.shinyCaptured)) + ' ' + t('cap') + (n0(a.shinyThrown) > 0 ? ' \u00b7 ' + t('{n} thrown', { n: fmt(n0(a.shinyThrown)) }) : '') + '</span>';
+}
+// a short number without a comma for a small box: 2116 -> "2.1K", 980 -> "980"
+const short = n => { n = Math.round(n0(n)); if (n < 1000) return String(n); const k = n >= 1e6 ? [1e6, 'M'] : [1e3, 'K'], v = n / k[0]; return I18N.dec(v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '')) + k[1]; };
+// the 4th box of the Session: all time for the accounts whose Perfil was opened ("13" and a smaller "/1.9K"), else the balls at shinies of this session as before
+function shinyTile() {
+  const known = accounts.filter(allOf);
+  if (!known.length) return '<div class="stat" title="' + t('Balls thrown at shiny Pok\u00e9mon since this window opened, counted from each throw. The Pok\u00e9dex has the total of all time of each species.') + '"><div class="v gold">' + (accounts.some(a => a.shinyThrown !== undefined) ? fmt(sum('shinyThrown')) : '\u2014') + '</div><div class="l">' + t('Balls at shinies') + '</div></div>';
+  const c = known.reduce((s, a) => s + allOf(a).caught, 0), b = known.reduce((s, a) => s + allOf(a).balls, 0);
+  const tip = t('Shinies captured / balls spent at shinies, all time, as the game\u2019s Perfil counts them: {c} / {b}, {r}.', { c: fullNum(c), b: fullNum(b), r: perShiny(c, b) }) + (known.length < accounts.length ? ' ' + t('{k} of {n} accounts: open Perfil once in the game on the others.', { k: known.length, n: accounts.length }) : '');
+  return '<div class="stat sall" title="' + esc(tip) + '"><div class="v" style="white-space:nowrap"><span class="pink">' + fmt(c) + '</span><span class="gold" style="font-size:11px;font-weight:600">/' + short(b) + '</span></div><div class="l">' + t('Shinies all time') + '</div></div>';
+}
 function sideAll() {
   const live = liveAccounts();
   // the cards of the accounts: the name with its money and diamonds, what it earns, and what it has
@@ -745,7 +779,7 @@ function sideAll() {
       '<div class="ln"><span class="' + signCls(n0(a.goldH)) + '">' + sgn(n0(a.goldH)) + '/h</span><span class="blue">' + fmt(n0(a.xpH)) + ' xp</span>' +
       '<span>' + fmt(n0(a.killsH)) + ' k/h</span><span>' + fmt(n0(a.captures)) + ' ' + t('cap') + '</span></div>' +
       '<div class="ln balls" title="' + t('Balls: the kinds that are checked in the settings (the gear)') + '">' + cardBalls(a) + '</div>' +
-      '<div class="ln dim"><span>' + star + ' ' + fmt(n0(a.shinyCaptured)) + ' ' + t('cap') + (n0(a.shinyThrown) > 0 ? ' \u00b7 ' + t('{n} thrown', { n: fmt(n0(a.shinyThrown)) }) : '') + '</span><span>' + fmt(potionsOf(a)) + ' ' + t('potions') + '</span></div>' +
+      '<div class="ln dim">' + shinyCardPart(a) + '<span>' + fmt(potionsOf(a)) + ' ' + t('potions') + '</span></div>' +
       (() => { const bt = ballTime(a); return '<div class="ln btime ' + bt.cls + '"' + (bt.tip ? ' title="' + bt.tip + '"' : '') + '><span>\u23f1 ' + bt.txt + '</span></div>'; })() + '</div>';
   }).join('');
   return '<div class="strip"><div><div class="v ' + signCls(sum('goldH')) + '">' + sgn(sum('goldH')) + '</div><div class="l">' + t('GOLD / H') + '</div></div>' +
@@ -755,7 +789,7 @@ function sideAll() {
       '<div class="grid4"><div class="stat"><div class="v">' + fmt(sum('defeated')) + '</div><div class="l">' + t('Defeated') + '</div></div>' +
       '<div class="stat"><div class="v">' + fmt(sum('captures')) + '</div><div class="l">' + t('Captures') + '</div></div>' +
       '<div class="stat"><div class="v pink">' + fmt(sum('shinyCaptured')) + '</div><div class="l">' + t('Shiny capt.') + '</div></div>' +
-      '<div class="stat" title="' + t('Balls thrown at shiny Pok\u00e9mon since this window opened, counted from each throw. The Pok\u00e9dex has the total of all time of each species.') + '"><div class="v gold">' + (accounts.some(a => a.shinyThrown !== undefined) ? fmt(sum('shinyThrown')) : '\u2014') + '</div><div class="l">' + t('Balls at shinies') + '</div></div></div></div>' +
+      shinyTile() + '</div></div>' +
     '<div class="duo"><div class="col"><div class="sec-h">' + t('Supplies') + '</div>' +
       '<div class="kv"><span class="v">' + fmt(sumFn(ballsOf)) + '</span><span class="l">' + t('Balls') + '</span></div>' +
       '<div class="kv"><span class="v">' + fmt(sumFn(potionsOf)) + '</span><span class="l">' + t('Potions') + '</span></div></div>' +
@@ -933,6 +967,41 @@ function drawKpis() {
   ];
   document.getElementById('kpis').innerHTML = k.map(x => '<div class="kpi"><div class="v ' + x[1] + '">' + x[0] + '</div><div class="l">' + x[2] + '</div></div>').join('');
   document.getElementById('liveNote').textContent = seen ? '' : t('Waiting for the game panels to send data\u2026');
+}
+
+// lang-71: the Today row of the Overview: today's totals of every account (the daily history of the main process, sent by the window every 30 s: "today-totals").
+// Six boxes in the columns of the live cards: net gold, XP, kills, captures (each with its average per hour today), shinies captured / encountered, time hunted.
+// The pointer on a box shows each account's share. The shinies encountered are the game's own counter (shinyKills), saved since lang-71: before that a day shows "—".
+let todayTotals = null;                                       // { day: 'YYYY-MM-DD', rows: { characterName: { kills, xp, captures, shiny, shinyKills, loot, capture, supplies, ms } } }
+function drawTodayRow() {
+  const el = document.getElementById('todayRow'); if (!el) return;
+  if (!todayTotals || typeof todayTotals.day !== 'string') { el.classList.add('hidden'); return; }
+  const rows = todayTotals.rows && typeof todayTotals.rows === 'object' ? todayTotals.rows : {};
+  const names = Object.keys(rows).filter(n => rows[n] && typeof rows[n] === 'object').slice(0, 40);
+  const val = (r, k) => (k === 'gold' ? n0(r.loot) + n0(r.capture) - n0(r.supplies) : n0(r[k]));
+  const total = k => names.reduce((s, n) => s + val(rows[n], k), 0);
+  const hoursOf = r => n0(r.ms) / 3600000;
+  const perHour = k => names.reduce((s, n) => { const h = hoursOf(rows[n]); return h >= 0.05 ? s + val(rows[n], k) / h : s; }, 0);        // the sum of each account's average, as the live cards add up the accounts
+  const shares = (k, show) => names.slice().sort((a, b) => val(rows[b], k) - val(rows[a], k)).map(n => n + ': ' + show(val(rows[n], k))).join('\n');
+  const hm = ms => { const m = Math.round(ms / 60000); return Math.floor(m / 60) + 'h ' + (m % 60) + 'm'; };
+  const ph = (k, f) => { const v = perHour(k); return v > 0 ? f(v) + t('/h') : '&nbsp;'; };
+  const enc = names.some(n => typeof rows[n].shinyKills === 'number');
+  const hunted = names.filter(n => n0(rows[n].ms) > 0).length;
+  const [y, m, d] = todayTotals.day.split('-').map(Number);
+  let date = todayTotals.day; try { date = new Date(y, m - 1, d).toLocaleDateString(I18N.locale(), { weekday: 'short', day: 'numeric', month: 'short' }); } catch (e) {}
+  const box = (v, cls, label, sub, tip) => '<div class="tc"' + (tip ? ' title="' + esc(tip) + '"' : '') + '><div class="v ' + cls + '">' + v + '</div><div class="l">' + label + '</div><div class="s">' + sub + '</div></div>';
+  const g = total('gold');
+  const html = '<div class="th">' + t('Today') + ' \u00b7 ' + esc(date) + '<span class="sub">' + t('00:00 to now \u00b7 all accounts \u00b7 counted even while 4horizon is in the tray') + '</span></div><div class="tg">' +
+    box(sgn(g), signCls(g), t('Net gold'), ph('gold', sgn), shares('gold', sgn)) +
+    box(fmt(total('xp')), 'blue', 'XP', ph('xp', fmt), shares('xp', fmt)) +
+    box((v => (v < 1e6 ? fullNum(v) : fmt(v)))(Math.round(total('kills'))), '', t('Kills'), ph('kills', v => fmt(Math.round(v))), shares('kills', v => fmt(Math.round(v)))) +
+    box(fmt(total('captures')), '', t('Captures'), ph('captures', v => (v < 100 ? I18N.num(v, 1) : fmt(Math.round(v)))), shares('captures', fmt)) +
+    box('<span class="pink">' + fmt(total('shiny')) + '</span> <span class="sep">/</span> <span class="gold">' + (enc ? fmt(total('shinyKills')) : '\u2014') + '</span>', '', t('Shiny captured / encountered'), '&nbsp;',
+      names.map(n => n + ': ' + fmt(n0(rows[n].shiny)) + ' / ' + (typeof rows[n].shinyKills === 'number' ? fmt(rows[n].shinyKills) : '\u2014')).join('\n') + (enc ? '' : '\n' + t('The shinies encountered are counted from version 1.0.9 on.'))) +
+    box(hm(names.reduce((s, n) => s + n0(rows[n].ms), 0)), '', t('Hunted'), hunted === 1 ? t('1 account') : t('{n} accounts', { n: hunted }), names.map(n => n + ': ' + hm(n0(rows[n].ms))).join('\n')) +
+    '</div>';
+  el.classList.remove('hidden');
+  if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; }       // (drawn again only when it changed: a tooltip that is open stays open)
 }
 
 // "Alakazam 121/192 Incomum x1.16": the IV number takes the colour of its IV step, the tier word and its multiplier the colour of the tier
@@ -1276,9 +1345,10 @@ function renderAll() {
   if (unseen()) { drawSkipped = true; return; }
   refreshDerived();
   drawTabs();
-  drawLock();
+  drawLock(); drawBar();
   drawSide();
   drawKpis();
+  try { drawTodayRow(); } catch (e) { diagNote('today row: ' + (e && e.message)); }
   drawTable();
   drawEggs();
   drawCaptures();
@@ -1356,6 +1426,20 @@ function drawLock() {
   const svg = b.querySelector('svg'), d = on ? LOCK_SHUT : LOCK_OPEN;
   if (svg.dataset.d !== d) { svg.dataset.d = d; svg.innerHTML = d; }
 }
+// lang-71: the triangle beside the lock hides the window's top bar (▲) or shows it again (▼). The window says what the bar is ("bar"), and whether a newer
+// version is out: the Update button is in the bar, so while it is hidden the triangle gets a gold dot. Hidden until the window says it knows the bar (an older window).
+var barState = { known: false, hidden: false, update: false };          // (var: renderAll may run before this line)
+function drawBar() {
+  const b = document.getElementById('btnSumBar'); if (!b || !barState) return;
+  b.classList.toggle('hidden', !barState.known);
+  b.classList.toggle('on', barState.hidden); b.classList.toggle('dot', barState.hidden && barState.update);
+  b.setAttribute('aria-pressed', barState.hidden ? 'true' : 'false');
+  b.setAttribute('aria-label', barState.hidden ? t('Show the top bar') : t('Hide the top bar'));
+  b.title = (barState.hidden ? t('Show the top bar (Ctrl+B)') : t('Hide the top bar (Ctrl+B)')) + (barState.hidden && barState.update ? ' \u00b7 ' + t('A newer version of 4horizon is out: the Update button is in the top bar') : '');
+  const d = barState.hidden ? 'M12 17L5 7h14z' : 'M12 7l7 10H5z', p = b.querySelector('path');
+  if (p.getAttribute('d') !== d) p.setAttribute('d', d);
+}
+document.getElementById('btnSumBar').onclick = e => { e.stopPropagation(); try { window.parent.postMessage({ type: 'bar-toggle' }, '*'); } catch (err) {} };
 document.getElementById('btnSumLock').onclick = e => { e.stopPropagation(); sumCfg.locked = !sumCfg.locked; sumCfg.tab = selected; saveSumCfg(); drawLock(); };
 document.addEventListener('click', e => { if (sumOpen && !document.getElementById('sumSettings').contains(e.target) && !document.getElementById('btnSumSettings').contains(e.target)) setSumOpen(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && sumOpen) { setSumOpen(false); document.getElementById('btnSumSettings').focus(); } });
@@ -1430,6 +1514,10 @@ window.addEventListener('message', e => {
       if (typeof sumCfg.tab === 'number' && sumCfg.tab >= np) { sumCfg.tab = 'sum'; saveSumCfg(); }
       renderAll();
     }
+  } else if (m.type === 'bar') {                            // lang-71: the window's top bar (hidden or not, and a newer version out)
+    if (e.source === window.parent) { barState.known = true; barState.hidden = m.hidden === true; barState.update = m.update === true; drawBar(); }
+  } else if (m.type === 'today-totals') {                   // lang-71: today's totals for the Today row (every 30 s)
+    if (typeof m.day === 'string' && /^\d{4}-\d\d-\d\d$/.test(m.day)) { todayTotals = { day: m.day, rows: m.rows && typeof m.rows === 'object' ? m.rows : {} }; try { if (!unseen()) drawTodayRow(); } catch (err) {} }
   } else if (m.type === 'light') {                          // lang-70: Light mode turned on or off in Settings
     lightMode = m.on === true; document.body.classList.toggle('light', lightMode);
   } else if (m.type === 'rules') {                          // lang-56: the Great catch and Valuable drop settings, for the day's tracker

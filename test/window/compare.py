@@ -23,6 +23,13 @@ def today_out(text):           # lang-47: the day's tracker (tested by run-today
     for i, l in enumerate(ls):
         if l.startswith('Today\u2019s highlights \u00b7 00:00 to 23:59'): return '\n'.join(ls[:i])
     return text
+def today_row_out(text):       # lang-71: the Today row of the Overview: from "Today · <date>" and its explanation to the line under "Hunted" (its number of accounts)
+    ls = text.split('\n')
+    for i in range(len(ls) - 1):
+        if ls[i].startswith('Today \u00b7 ') and ls[i + 1].startswith('00:00 to now'):
+            for j in range(i + 2, min(len(ls), i + 40)):
+                if ls[j] == 'Hunted': return '\n'.join(ls[:i] + ls[j + 2:])
+    return text
 def drop_one(items, block):
     items = list(items)
     for x in block:
@@ -110,6 +117,9 @@ for k in g:
         if part == 'options' and k.startswith('dash:'): b = drop_one(b, CAP_SORT)
         if part == 'options' and k.startswith('win:'): b = drop_one(b, ['1', '2', '3', '4'])          # lang-49: Settings › Game panels (1 to 4)
         if part == 'text' and k.startswith('dash:'): a = lastcatch_row(a); b = lastcatch_row(b)
+        if part == 'text' and k.startswith('dash:'): b = today_row_out(b)          # lang-71: the Today row of the Overview (tested by run-today-row.js)
+        if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not (x.startswith('title: This session: ') or all(_re.match(r'^[^:\n]+: .+$', l) or l.startswith('The shinies encountered') for l in x[len('title: '):].split('\n')) and '\n' in x)]          # lang-71: its tooltips (each account's share) and the shiny line of the cards
+        if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if x not in ('aria-label: Hide the top bar', 'title: Hide the top bar (Ctrl+B)', 'aria-label: Show the top bar', 'title: Show the top bar (Ctrl+B)')]          # lang-71: the triangle beside the lock (tested by run-topbar.js)
         if part == 'text' and k.startswith('dash:'): b = '\n'.join(l for l in b.split('\n') if not l.startswith('\u23f1'))          # lang-70: the time left of the auto-catch ball, the new last line of each card (tested by run-balltime.js)
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not _re.match(r'^title: (.+ left, [\d,.]+ thrown per hour in this hunt|No .+ left: auto-catch has nothing to throw\.|The pace of the hunt is known after \d+ minutes\.)$', x)]          # lang-70: its tooltips
         if part == 'text' and k.startswith('dash:'): a = '\n'.join(strip_surplus(a.split('\n'), b.split('\n'), lambda l: l in HUNT_TEXT or bool(NUMLIKE.match(l))))

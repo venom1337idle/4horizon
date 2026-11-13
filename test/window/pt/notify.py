@@ -55,6 +55,7 @@ PREFIX = {
 }
 INDIRECT = {
   'Show / Hide': 'Mostrar / Ocultar',
+  'Show the top bar': 'Mostrar a barra superior',          # lang-71: the tray menu (main.js)
   'Send test notification': 'Enviar notificação de teste',
   'Open notification settings': 'Abrir configurações de notificações',
   'Quit': 'Sair',

@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('bridge', {
   gpuSet: (disable) => ipcRenderer.invoke('gpu:set', disable),
   lightGet: () => ipcRenderer.invoke('light:get'),                        // lang-70: Settings › Light mode
   lightSet: (on) => ipcRenderer.invoke('light:set', on),
+  streamerGet: () => ipcRenderer.invoke('streamer:get'),                  // lang-71: Settings › Streamer mode
+  streamerSet: (on) => ipcRenderer.invoke('streamer:set', on),
   analyzerToggle: () => ipcRenderer.invoke('analyzer:toggle'),
   navGo: (what, n) => ipcRenderer.invoke('nav:go', what, n),
   navHunt: (n, hunt) => ipcRenderer.invoke('nav:hunt', n, hunt),
@@ -34,5 +36,6 @@ contextBridge.exposeInMainWorld('bridge', {
   accountsLogin: (which) => ipcRenderer.invoke('accounts:login', which),
   getHistory: () => ipcRenderer.invoke('history:get'),
   exportCsv: (text, name) => ipcRenderer.invoke('history:export', text, name),
-  onStats: (callback) => ipcRenderer.on('stats', (event, account, data) => callback(account, data))
+  onStats: (callback) => ipcRenderer.on('stats', (event, account, data) => callback(account, data)),
+  onBar: (callback) => ipcRenderer.on('bar', (event, what) => callback(what === 'show' ? 'show' : 'toggle'))      // lang-71: Ctrl+B and the tray menu show or hide the top bar
 });

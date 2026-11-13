@@ -4,13 +4,14 @@ const Module = require('module');
 let pass = 0, fail = 0; const ok = (l, c, x) => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (c ? '' : '   ' + JSON.stringify(x))); c ? pass++ : fail++; };
 const MENU = ['Pokédex', 'Talentos', 'Breed', 'Hunts', 'Missões', 'Mochila', 'Trade', 'Amigos'];
 const HUNTS = [['grass-100', 'Cratera dos Torchic', 'Torchic', 100, 'Fogo', 0], ['psychic-100', 'Cripta dos Gengar', 'Gengar', 100, 'Fantasma', 1], ['fire-200', 'Prado Flamejante dos Quilava', 'Quilava', 200, 'Fogo', 1], ['psychic-200', 'Templo dos Unown', 'Unown', 200, 'Psíquico', 1], ['unown-250', 'Ruínas dos Unown', 'Unown', 250, 'Psíquico', 0], ['steel-300', 'Mina de Ferro dos Aron', 'Aron', 300, 'Aço', 1]];
-const page = cfg => { cfg = Object.assign({ menu: MENU, startOpen: false, preselect: null, current: null, tab: 'all', typeFilter: null, levelFilter: null, noSearch: false, brokenSelect: false, login: false, plainInput: false }, cfg || {});
+const page = cfg => { cfg = Object.assign({ menu: MENU, startOpen: false, preselect: null, current: null, tab: 'all', typeFilter: null, levelFilter: null, noSearch: false, brokenSelect: false, login: false, plainInput: false, weak: [], item: null }, cfg || {});
   return `<!doctype html><meta charset=utf-8><body style="margin:0;background:#111;color:#eee;font:13px sans-serif;width:1108px;height:893px;overflow:hidden">
 <div id="menu" style="position:fixed;top:6px;left:60px;display:flex;gap:6px">${cfg.menu.map(t => `<div class="mi" style="padding:8px;border:1px solid #555;cursor:pointer"><span class="lb">${t}</span></div>`).join('')}</div>
 <div id="chat" style="position:fixed;left:6px;top:850px;width:300px"><button>Todos</button> Fulano: vai na Cratera dos Torchic</div>
 ${cfg.login ? '<input type="password" style="position:fixed;top:300px;left:300px">' : ''}
 <div id="hp" style="display:none;position:fixed;left:22px;top:117px;width:1068px;height:750px;background:#0b1020;border:2px solid #3c3">
   ${cfg.noSearch ? '' : '<input id="q" type="text" placeholder="Buscar hunt ou Pokémon…" style="position:absolute;left:18px;top:140px;width:640px;height:36px">'}
+  <div id="wkbox" style="position:absolute;left:680px;top:140px"></div><div id="itbox" style="position:absolute;left:880px;top:140px"></div>
   <div style="position:absolute;left:18px;top:200px"><button id="ftodos">Todos</button> <button id="faco">Aço</button> <button id="ffogo">Fogo</button></div>
   <div style="position:absolute;left:18px;top:262px"><button id="fniveis">Todos os níveis</button> <button id="fn300">Nv. 300</button></div>
   <div style="position:absolute;left:18px;top:322px"><button id="tall"><span>◆</span> TODOS</button> <button id="tfav"><span>★</span> FAVORITOS <b>1</b></button></div>
@@ -24,14 +25,17 @@ ${cfg.login ? '<input type="password" style="position:fixed;top:300px;left:300px
 </div>
 <script>
 const cfg = ${JSON.stringify(cfg)}, H = ${JSON.stringify(HUNTS)}; window.__log = [];
-let tab = cfg.tab, tf = cfg.typeFilter, lf = cfg.levelFilter, query = '', sel = cfg.preselect, cur = cfg.current;
+let tab = cfg.tab, tf = cfg.typeFilter, lf = cfg.levelFilter, query = '', sel = cfg.preselect, cur = cfg.current, weak = cfg.weak.slice(), item = cfg.item, wkOpen = false;
 const P = s => s.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
 const find = id => H.find(h => h[0] === id);
 function render() {
-  const rows = H.filter(h => (tab === 'all' || h[5]) && (!tf || h[4] === tf) && (!lf || h[3] === lf) && (!query || P(h[1]).includes(P(query)) || P(h[2]).includes(P(query))));
+  const rows = H.filter(h => (tab === 'all' || h[5]) && (!tf || h[4] === tf) && (!lf || h[3] === lf) && (!weak.length || weak.includes(h[4])) && (!item || h[0] === 'steel-300') && (!query || P(h[1]).includes(P(query)) || P(h[2]).includes(P(query))));
   const levels = [...new Set(rows.map(h => h[3]))].sort((a, b) => a - b); let html = '';
   levels.forEach(lv => { html += '<div class="hd" style="background:#124;padding:6px;width:693px;height:20px"><span>Nível ' + lv + '</span><span> · libera no treinador Nv. ' + lv + '</span></div><div style="padding:8px 0;display:flex;gap:10px;flex-wrap:wrap">'; rows.filter(h => h[3] === lv).forEach(h => { html += '<div class="card" data-id="' + h[0] + '" style="position:relative;width:110px;height:82px;border:1px solid #556"><span class="star" style="position:absolute;right:4px;top:4px;cursor:pointer">★</span><img src="data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'30\\' height=\\'48\\'><rect width=\\'30\\' height=\\'48\\' fill=\\'gray\\'/></svg>" width="30" height="48" style="position:absolute;left:40px;top:10px"><b class="nm" style="position:absolute;left:0;right:0;bottom:3px;text-align:center">' + h[2] + '</b></div>'; }); html += '</div>'; });
   document.getElementById('list').innerHTML = html;
+  // lang-71: the game's filters since 2026-11: 'Fraco contra' where several types can be ticked (mk-combo type-multi, its list with 'Limpar'), and the Item filter with its ✕
+  document.getElementById('wkbox').innerHTML = '<div class="mk-combo type-multi"><button type="button" class="mk-combo-button animated-border' + (weak.length ? ' has-value' : '') + '" aria-haspopup="listbox" aria-expanded="' + wkOpen + '"><span class="type-multi-label">Fraco contra:</span>' + (weak.length ? '<span class="mk-combo-name type-multi-icons"><i class="ty"></i></span>' : '<span class="muted mk-combo-name">Qualquer</span>') + '<span aria-hidden="true">' + (wkOpen ? '\u25b4' : '\u25be') + '</span></button>' + (wkOpen ? '<div class="mk-combo-pop"><button type="button" class="type-multi-clear"' + (weak.length ? '' : ' disabled') + '>Limpar</button><ul class="mk-combo-list type-multi-list" role="listbox">' + ['Fogo', 'Água', 'Aço', 'Psíquico'].map(x => '<li role="option" data-ty="' + x + '">' + x + '</li>').join('') + '</ul></div>' : '') + '</div>';
+  document.getElementById('itbox').innerHTML = '<div class="item-filter"><button type="button" class="item-filter-btn' + (item ? ' on' : '') + '">' + (item || 'Item') + '</button>' + (item ? '<button type="button" class="item-filter-clear" title="Limpar o filtro de item">\u2715</button>' : '') + '</div>';
   const h = sel && find(sel);
   document.getElementById('dtitle').textContent = h ? h[1] : '—'; document.getElementById('dname').textContent = h ? h[2] : '—'; document.getElementById('dlv').textContent = h ? h[3] : '—';
   document.getElementById('here').style.display = (h && sel === cur) ? 'block' : 'none';
@@ -49,6 +53,9 @@ document.getElementById('fn300').addEventListener('click', () => { lf = 300; ren
 document.getElementById('tall').addEventListener('click', () => { tab = 'all'; window.__log.push('tab-all'); render(); });
 document.getElementById('tfav').addEventListener('click', () => { tab = 'fav'; window.__log.push('tab-fav'); render(); });
 document.getElementById('chat').querySelector('button').addEventListener('click', () => window.__log.push('chat-todos'));
+document.getElementById('wkbox').addEventListener('click', e => { if (e.target.closest('.type-multi-clear')) { if (!e.target.closest('.type-multi-clear').disabled) { weak = []; window.__log.push('weak-clear'); } render(); return; } if (e.target.closest('li')) { const ty = e.target.closest('li').dataset.ty; weak = weak.includes(ty) ? weak.filter(x => x !== ty) : weak.concat(ty); render(); return; } if (e.target.closest('.mk-combo-button')) { wkOpen = !wkOpen; window.__log.push(wkOpen ? 'weak-open' : 'weak-close'); render(); } });
+document.addEventListener('pointerdown', e => { if (wkOpen && !document.getElementById('wkbox').contains(e.target)) { wkOpen = false; render(); } });
+document.getElementById('itbox').addEventListener('click', e => { if (e.target.closest('.item-filter-clear')) { item = null; window.__log.push('item-clear'); render(); } });
 document.getElementById('list').addEventListener('click', e => { if (e.target.closest('.star')) { window.__log.push('star'); return; } const c = e.target.closest('.card'); if (!c) return; window.__log.push('select:' + find(c.dataset.id)[1]); if (!cfg.brokenSelect) { sel = c.dataset.id; render(); } });
 document.getElementById('cacar').addEventListener('click', () => { if (document.getElementById('cacar').textContent === 'Caçar' && sel) { cur = sel; window.__log.push('hunt:' + find(sel)[1]); render(); } else window.__log.push('pressed-while-hunting'); });
 </script>`; };
@@ -94,6 +101,27 @@ const TORCHIC = { id: 'grass-100', name: 'Cratera dos Torchic' };
   ok('the details never show the hunt (the card does not select it): "hunt did not open", Caçar NOT pressed, the search box emptied again', r.ok === false && r.reason === 'hunt did not open' && !(await log(p)).some(x => x.startsWith('hunt:')) && (await q(p)) === '', [r, await log(p)]);
   p = await open(ctx, { startOpen: true, preselect: 'steel-300' }); put(3, p); r = await A.goHunt(3, { id: 'x-9', name: 'Castelo dos Mewtwo' });
   ok('a hunt that has no card (the Pokémon is not in the list): "hunt not found", nothing selected or started, search emptied', r.ok === false && r.reason === 'hunt not found' && !(await log(p)).some(x => x.startsWith('select:') || x.startsWith('hunt:')) && (await q(p)) === '', [r, await log(p)]);
+  // ---- lang-71, the bug of 2026-11-13: "Fraco contra" is now a list where several types can be ticked, and there is an Item filter; either could hide the last hunt
+  let L7; const shownCards = p => p.evaluate(() => Array.from(document.querySelectorAll('#list .card')).map(c => c.dataset.id));
+  p = await open(ctx, { preselect: 'steel-300', weak: ['Água'] }); put(1, p);
+  ok('the bug: "Fraco contra: Água" is ticked, and the last hunt (Cratera dos Torchic, Fogo) is not in the list it shows', !(await shownCards(p)).includes('grass-100'), await shownCards(p));
+  r = await A.goHunt(1, TORCHIC); L7 = await log(p);
+  ok('...Back to last hunt now clears "Fraco contra" (its own "Limpar"), finds Torchic and presses Caçar', r.ok === true && L7.includes('weak-clear') && L7.includes('hunt:Cratera dos Torchic'), [r, L7]);
+  ok('...in this order: the list of "Fraco contra" is opened, cleared and closed again before the search', L7.indexOf('weak-open') >= 0 && L7.indexOf('weak-open') < L7.indexOf('weak-clear') && L7.indexOf('weak-clear') < L7.indexOf('weak-close') && L7.indexOf('weak-close') < L7.findIndex(x => x.startsWith('search:Torchic')), L7);
+  ok('...and afterwards "Fraco contra" is empty ("Qualquer") and its list is closed', await p.evaluate(() => { const b = document.querySelector('#wkbox .mk-combo-button'); return !/has-value/.test(b.className) && b.getAttribute('aria-expanded') === 'false' && !document.querySelector('#wkbox .mk-combo-pop'); }));
+  p = await open(ctx, { preselect: 'steel-300', weak: ['Fogo', 'Psíquico'] }); put(1, p); r = await A.goHunt(1, { id: 'unown-250', name: 'Ruínas dos Unown' });
+  ok('two types ticked that do not hide the hunt: it is cleared all the same (simpler than guessing), and Ruínas dos Unown is started', r.ok === true && (await log(p)).includes('weak-clear') && (await log(p)).includes('hunt:Ruínas dos Unown'), [r, await log(p)]);
+  p = await open(ctx, { preselect: 'steel-300' }); put(1, p); r = await A.goHunt(1, TORCHIC); L7 = await log(p);
+  ok('"Fraco contra" empty: it is not touched at all (not opened, not cleared)', r.ok === true && !L7.some(x => /^weak-/.test(x)), L7);
+  p = await open(ctx, { preselect: 'steel-300', item: 'Pedra do Fogo' }); put(2, p);
+  ok('the Item filter is set ("Pedra do Fogo"): Torchic is not in the list', !(await shownCards(p)).includes('grass-100'), await shownCards(p));
+  r = await A.goHunt(2, TORCHIC); L7 = await log(p);
+  ok('...Back to last hunt clears it (its ✕) and starts Cratera dos Torchic', r.ok === true && L7.includes('item-clear') && L7.includes('hunt:Cratera dos Torchic'), [r, L7]);
+  p = await open(ctx, { preselect: 'steel-300', weak: ['Aço'], item: 'Pedra do Fogo', typeFilter: 'Aço', levelFilter: 300, tab: 'fav' }); put(3, p); r = await A.goHunt(3, TORCHIC); L7 = await log(p);
+  ok('everything at once (Fraco contra, Item, a type, a level, the favorites tab): all set back, and the hunt is started', r.ok === true && ['weak-clear', 'item-clear', 'f:todos', 'f:niveis', 'tab-all', 'hunt:Cratera dos Torchic'].every(x => L7.includes(x)), L7);
+  p = await open(ctx, { startOpen: true, preselect: 'grass-100', weak: ['Água'] }); put(3, p); r = await A.goHunt(3, TORCHIC); L7 = await log(p);
+  ok('the details already show the hunt: Caçar is pressed and your filters are left as they are', r.ok === true && JSON.stringify(L7) === '["hunt:Cratera dos Torchic"]', L7);
+
   p = await open(ctx, { startOpen: true, preselect: 'steel-300', noSearch: true }); put(3, p); r = await A.goHunt(3, TORCHIC);
   // (lang-63: the Hunts panel is recognised by its search box; one without it is not taken for the panel, so it is not found either)
   ok('no search box in the panel: not done ("hunts panel did not open" / "search box not found"), with the buttons of the page for the report, and no card or Caçar pressed', r.ok === false && /hunts panel did not open|search box not found/.test(r.reason) && r.labels.indexOf('todos') >= 0 && !(await log(p)).some(x => x.startsWith('select:') || x.startsWith('hunt:')), [r, await log(p)]);

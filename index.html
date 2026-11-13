@@ -17,6 +17,10 @@
          background: linear-gradient(180deg, #131d3a, #0c1326); border-bottom: 1px solid rgba(227, 192, 107, .30);
          box-shadow: 0 6px 18px rgba(0, 0, 0, .4); overflow-x: auto; overflow-y: hidden; white-space: nowrap; position: relative; z-index: 5; }
   #bar::-webkit-scrollbar { height: 0; }
+  body.nobar #bar { display: none; }
+  /* lang-71: Streamer mode: the e-mails of the saved logins are dots on screen (they can still be typed and saved); economy mode is not offered */
+  body.streamer #arows .f-user { -webkit-text-security: disc; }
+  body.ecoblock #bar #btnEco { opacity: .35; cursor: not-allowed; }          /* lang-71: the top bar hidden (the triangle of the Summary, Ctrl+B, the tray menu): the game screens get its room */
   .brand { display: flex; align-items: center; gap: 9px; margin-right: 8px; }
   .brand .mark { display: none; }
   .sep { width: 1px; height: 26px; background: linear-gradient(180deg, transparent, var(--line2), transparent); margin: 0 6px; flex: none; }
@@ -62,32 +66,34 @@
   /* the look of the boxes of the calibration plan: dark navy inside, a thin neutral outline, and the colour of the account on the line at the top (and on the thin line under the header) */
   .panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: var(--plan-fill, #0c1222);
            border: 1px solid var(--line); border-top: 3px solid var(--c, var(--line2)); border-radius: 6px; box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
-  .phead { flex: none; height: 54px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 10px; min-width: 0; user-select: none;
+  /* lang-71: the header is thinner (40 px, it was 54): the name and the hunt on one line, slightly smaller pieces, and 14 px more for each game screen */
+  .phead { flex: none; height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 10px 0 8px; min-width: 0; user-select: none;
            background: var(--plan-fill, #0c1222); border-bottom: 1px solid color-mix(in srgb, var(--c, var(--gold)) 60%, transparent); }
-  .ptxt { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; line-height: 1.15; }
-  .pname { font-family: var(--serif); font-weight: 700; font-size: 15px; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ptxt { display: flex; flex-direction: row; align-items: baseline; gap: 10px; min-width: 0; flex: 0 1 auto; line-height: 1.15; }
+  .phead .emb { width: 26px; height: 26px; font-size: 12px; }
+  .pname { flex: 0 1 auto; min-width: 3em; font-family: var(--serif); font-weight: 700; font-size: 14px; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* the status line under the name, like "Planta \00b7 Floresta" on the game's card */
-  .chip { margin-top: 3px; font-size: 11.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .chip { flex: 0 1 auto; margin-top: 0; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .chip::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: currentColor; vertical-align: 1px; box-shadow: 0 0 6px currentColor; }
   .chip.hunt { color: #d4f5da; } .chip.stop { color: #ffb4b4; } .chip.conn { color: #c2d4ff; } .chip.wait { color: #b5bfd8; }
   /* the buttons of each panel: "Back to last hunt" right after the name, and Centro, Market, Mochila, Hunts in the free middle of the header. They give way when the header is narrow. */
   .phead { container-type: inline-size; container-name: ph; }
   .pnav { display: flex; gap: 4px; flex: none; }
-  .phead .pn { width: 30px; height: 30px; border-radius: 9px; }
-  .phead .pback { width: auto; height: 26px; padding: 0 11px 0 8px; gap: 6px; border-radius: 13px; background: rgba(227, 192, 107, .12); border: 1px solid rgba(227, 192, 107, .55); color: var(--gold); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .phead .pn { width: 26px; height: 26px; border-radius: 8px; }
+  .phead .pback { width: auto; height: 24px; padding: 0 11px 0 8px; gap: 6px; border-radius: 13px; background: rgba(227, 192, 107, .12); border: 1px solid rgba(227, 192, 107, .55); color: var(--gold); font-size: 12px; font-weight: 600; white-space: nowrap; }
   .phead .pback:hover { background: rgba(227, 192, 107, .24); color: #fff; }
   .phead .pback svg { width: 14px; height: 14px; }
   .phead .pn.busy, .phead .pback.busy { opacity: .5; pointer-events: none; }
-  @container ph (max-width: 800px) { .phead .pback .pbt { display: none; } .phead .pback { width: 27px; padding: 0; } }
+  @container ph (max-width: 800px) { .phead .pback .pbt { display: none; } .phead .pback { width: 24px; padding: 0; } }
   @container ph (max-width: 610px) { .pnav { display: none; } }
   @container ph (max-width: 470px) { .phead .lvl { display: none; } }
   .phead .zoom { display: flex; align-items: center; gap: 2px; color: rgba(255, 255, 255, .78); font-size: 11px; flex: none; }
   .phead .zv { min-width: 40px; text-align: center; cursor: pointer; font-weight: 600; }
   .phead .zv:hover { color: #fff; }
-  .phead button { font: inherit; cursor: pointer; background: rgba(255, 255, 255, .07); border: 0; color: #eef3ff; width: 27px; height: 27px; border-radius: 8px;
+  .phead button { font: inherit; cursor: pointer; background: rgba(255, 255, 255, .07); border: 0; color: #eef3ff; width: 24px; height: 24px; border-radius: 7px;
                   display: inline-flex; align-items: center; justify-content: center; flex: none; padding: 0; }
   .phead button:hover { background: rgba(255, 255, 255, .15); color: #fff; }
-  .phead svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .phead svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .panel webview { display: flex; flex: 1 1 auto; min-height: 0; width: 100%; background: #05080f; }
 
   /* ---------- small message at the bottom ---------- */
@@ -247,7 +253,7 @@
   <div id="stage">
     <div id="grid">
       <!-- allowpopups: without it Electron refuses every window the game asks for (the Wiki, a Twitch or Kick stream, the vote buttons) before the app is asked; external.js then sends each one to the default browser and answers "deny", so no window of the app opens -->
-      <div class="panel" id="panel1" data-n="1" style="--c:#ecbafe">
+      <div class="panel" id="panel1" data-n="1" style="--c:#56b4e9">
         <div class="phead">
           <span class="emb"><b>1</b></span>
           <span class="ptxt"><span class="pname">Conta 1</span><span class="chip wait">Waiting</span></span>
@@ -261,7 +267,7 @@
         </div>
         <webview id="p1" data-src="https://pokehorizonidle.com" partition="persist:conta1" allowpopups></webview>
       </div>
-      <div class="panel" id="panel2" data-n="2" style="--c:#5995fb">
+      <div class="panel" id="panel2" data-n="2" style="--c:#34c39a">
         <div class="phead">
           <span class="emb"><b>2</b></span>
           <span class="ptxt"><span class="pname">Conta 2</span><span class="chip wait">Waiting</span></span>
@@ -275,7 +281,7 @@
         </div>
         <webview id="p2" data-src="https://pokehorizonidle.com" partition="persist:conta2" allowpopups></webview>
       </div>
-      <div class="panel" id="panel3" data-n="3" style="--c:#05d6bd">
+      <div class="panel" id="panel3" data-n="3" style="--c:#e7694a">
         <div class="phead">
           <span class="emb"><b>3</b></span>
           <span class="ptxt"><span class="pname">Conta 3</span><span class="chip wait">Waiting</span></span>
@@ -289,7 +295,7 @@
         </div>
         <webview id="p3" data-src="https://pokehorizonidle.com" partition="persist:conta3" allowpopups></webview>
       </div>
-      <div class="panel" id="panel4" data-n="4" style="--c:#f46683">
+      <div class="panel" id="panel4" data-n="4" style="--c:#cc79a7">
         <div class="phead">
           <span class="emb"><b>4</b></span>
           <span class="ptxt"><span class="pname">Conta 4</span><span class="chip wait">Waiting</span></span>
@@ -382,6 +388,10 @@
         <div><b>Light mode</b><span class="sd">For slower PCs. The game screens stop their decorative animations (the game's own "reduce motion": shine, glows, pulsing buttons), the Summary is redrawn every 5 seconds instead of every second, and 4horizon's own animations stop. The hunts, the numbers and the captures do not change. No restart needed.</span></div>
         <div class="ctl"><label class="tick"><input type="checkbox" id="sLight"> Use light mode</label></div>
       </div>
+      <div class="srow hidden" id="sStreamRow">
+        <div><b>Streamer mode</b><span class="sd">For streaming 4horizon (OBS: Window Capture) while you use other apps. The game screens keep moving when other windows cover 4horizon (not when it is minimized: Windows cannot capture a minimized window), and the e-mails of the logins are hidden on screen. It uses about as much CPU as a visible window, and economy mode is not available while it is on. Restart 4horizon after changing it.</span></div>
+        <div class="ctl"><label class="tick"><input type="checkbox" id="sStream"> Use streamer mode</label></div>
+      </div>
       <div class="shead"><span>Notifications</span><span class="saved" id="nSaved">Saved</span></div>
       <div class="srow">
         <div><b>Windows notifications</b><span class="sd">Alerts that pop up on your screen, even when the window is hidden in the tray. The tray menu has the same switch.</span></div>
@@ -459,7 +469,7 @@
     const api = window.bridge || {};
     const eco = { on: false, since: 0, warned: false };           // economy mode (see setEco)
     // one colour per account, from theme.js (the same ones the dashboard uses)
-    const COLORS = (window.HG_ACCOUNT || [{ base: '#ecbafe' }, { base: '#5995fb' }, { base: '#05d6bd' }, { base: '#f46683' }]).map(c => c.base);
+    const COLORS = (window.HG_ACCOUNT || [{ base: '#56b4e9' }, { base: '#34c39a' }, { base: '#e7694a' }, { base: '#cc79a7' }]).map(c => c.base);
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     // ---------- what the buttons remember between runs ----------
@@ -467,7 +477,7 @@
       get(k, d) { try { const v = localStorage.getItem('hg.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
       set(k, v) { try { localStorage.setItem('hg.' + k, JSON.stringify(v)); } catch (e) {} }
     };
-    const ui = { simple: !!store.get('simple', false), panel: !!store.get('panel', false), hidden: store.get('hidden', []), solo: null };   // solo = the panel that is expanded
+    const ui = { simple: !!store.get('simple', false), panel: !!store.get('panel', false), hidden: store.get('hidden', []), solo: null, nobar: store.get('nobar', false) === true };   // solo = the panel that is expanded
     const zooms = store.get('zoom', {});          // zoom of each panel, kept between runs
     // ---------- how many game panels are in use (Settings › Game panels, 1 to 4, kept in the window storage; 4 at first) ----------
     // A panel not in use gets no address, so its game page is never loaded; its pill, its account in the Summary and its row in Accounts are not shown.
@@ -537,9 +547,18 @@
       document.body.classList.toggle('panelonly', !(ui.simple || eco.on) && ui.panel);
       document.getElementById('btnSimple').classList.toggle('on', ui.simple);
       document.getElementById('btnPanel').classList.toggle('on', ui.panel);
-      store.set('simple', ui.simple); store.set('panel', ui.panel); store.set('hidden', ui.hidden);
-      renderPills(); updateGrid(); sendLayout(); followSummary();
+      // lang-71: the top bar is only hidden while the Summary (and its triangle, the way back) is on screen
+      if (ui.nobar && !(ui.panel || ui.simple || eco.on)) ui.nobar = false;
+      document.body.classList.toggle('nobar', ui.nobar);
+      store.set('simple', ui.simple); store.set('panel', ui.panel); store.set('hidden', ui.hidden); store.set('nobar', ui.nobar);
+      renderPills(); updateGrid(); sendLayout(); followSummary(); sendBar();
     }
+    // lang-71: the triangle of the Summary: is the bar hidden, and is a newer version out (then the triangle has a gold dot, as the Update button is in the bar)
+    function sendBar() {
+      const up = !document.getElementById('btnUpdate').classList.contains('hidden');
+      try { if (dash.contentWindow) dash.contentWindow.postMessage({ type: 'bar', hidden: ui.nobar, update: up }, '*'); } catch (e) {}
+    }
+    function setBar(hidden) { ui.nobar = hidden === true; applyUI(); }
     document.getElementById('btnSimple').onclick = () => { ui.simple = !ui.simple; if (!ui.simple) followed = null; applyUI(); };   // (forgetting it makes followSummary send the expanded screen again)
     document.getElementById('btnPanel').onclick = () => { ui.panel = !ui.panel; applyUI(); };
 
@@ -548,6 +567,7 @@
     // which are behind it, are not updated, and the main process mutes the game panels. The games keep running: nothing of them is paused.
     // The main process notes CPU, memory and the pace of each account once a minute (economy.js); the Diagnostics report says whether it works.
     async function setEco(on) {
+      if (on && streamerOn) { toast(t('Economy mode is not available while Streamer mode is on (Settings).'), 'warn'); return; }          // lang-71: streamer mode keeps the screens drawn
       eco.on = !!on; eco.since = Date.now();
       document.body.classList.toggle('eco', eco.on);
       const b = document.getElementById('btnEco'); b.classList.toggle('on', eco.on); b.setAttribute('aria-pressed', String(eco.on));
@@ -566,6 +586,7 @@
       const b = document.getElementById('btnUpdate');
       b.classList.toggle('hidden', !u.available);
       if (u.available) b.title = t('Version {v} is out: opens its page, to download the new installer', { v: u.latest });
+      sendBar();
     }
     // ---------- lang-67: Settings › Settings backup ----------
     // the window's part (and the Summary's, asked by message); loading checks every value before it is used, then the window is loaded again
@@ -902,7 +923,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-70';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-71';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 
@@ -1018,7 +1039,7 @@
       toast(t('{n} game panels: the window is loading again\u2026', { n: v }));
       setTimeout(() => location.reload(), 700);
     };
-    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); loadGpu(); loadLight(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
+    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); loadGpu(); loadLight(); loadStreamer(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
     document.getElementById('setClose').onclick = closeSettings;
     settingsModal.addEventListener('mousedown', e => { if (e.target === settingsModal) closeSettings(); });
     // ---------- Settings: the notifications (the main process keeps them in notify-settings.json and checks every value; this only shows them and asks for changes) ----------
@@ -1157,6 +1178,48 @@
       } catch (e) { toast(t('Could not save the setting'), 'warn'); S_('sLight').checked = lightOn; }
     };
     loadLight(); dash.addEventListener('load', () => { if (lightOn) showLight(true); });
+    // ---------- Settings: Streamer mode (lang-71). The main process keeps the screens drawn behind other windows (after a restart) and hides the e-mails in the
+    // game panels (at once); here the e-mails of the Accounts window become dots and economy mode is not offered. An older main process: the row is hidden.
+    let streamerOn = false;
+    function showStreamer(c) {
+      streamerOn = !!(c && (c.on === true || c.atStart === true));          // economy mode: blocked when it is chosen, or still running since the start (until the restart)
+      document.body.classList.toggle('streamer', !!(c && c.on === true));          // the e-mails: hidden as long as it is chosen (at once, as in the game panels)
+      document.body.classList.toggle('ecoblock', streamerOn);
+      S_('sStream').checked = !!(c && c.on === true);
+      const eb = document.getElementById('btnEco');
+      eb.title = streamerOn ? t('Economy mode is not available while Streamer mode is on (Settings).') : t('Economy mode: hides the game screens and shows the Overview, to save your computer while you are away. The games keep hunting.');
+      if (streamerOn && eco.on) setEco(false);
+    }
+    async function loadStreamer() {
+      const ok = !!(api.streamerGet && api.streamerSet);
+      S_('sStreamRow').classList.toggle('hidden', !ok);
+      if (!ok) return;
+      try { const c = await api.streamerGet(); if (c) showStreamer(c); } catch (e) {}
+    }
+    S_('sStream').onchange = async () => {
+      try {
+        const c = await api.streamerSet(S_('sStream').checked);
+        if (!c || c.saved === false) { toast(t('Could not save the setting'), 'warn'); S_('sStream').checked = streamerOn; return; }
+        showStreamer(c);
+        toast(c.needsRestart ? t('Saved. Restart 4horizon for the change to take effect.') : (c.on ? t('Streamer mode is on') : t('Streamer mode is off')), '');
+      } catch (e) { toast(t('Could not save the setting'), 'warn'); }
+    };
+    loadStreamer();
+    // ---------- lang-71: the Overview's "Today" row: today's totals of every account, from the daily history the main process keeps (history.js; it counts while the window
+    // is in the tray too). Asked for every 30 s while the window is seen, and at once when it shows again or the Summary is loaded. Only today's rows are passed on.
+    async function pushToday() {
+      if (!api.getHistory || document.hidden) return;
+      try {
+        const h = await api.getHistory();
+        if (!h || !h.days || typeof h.today !== 'string' || !dash.contentWindow) return;
+        dash.contentWindow.postMessage({ type: 'today-totals', day: h.today, rows: h.days[h.today] || {} }, '*');
+      } catch (e) {}
+    }
+    // ---------- lang-71: hiding the top bar. The triangle of the Summary asks for it ("bar-toggle"); Ctrl+B anywhere and the tray menu come from the main process ("bar") ----------
+    window.addEventListener('message', e => { const m = e.data; if (m && m.type === 'bar-toggle' && e.source === dash.contentWindow) setBar(!ui.nobar); });
+    if (api.onBar) api.onBar(what => { if (what === 'toggle') setBar(!ui.nobar); else if (what === 'show') setBar(false); });
+    dash.addEventListener('load', sendBar); sendBar();
+    setInterval(pushToday, 30000); dash.addEventListener('load', pushToday); document.addEventListener('visibilitychange', () => { if (!document.hidden) pushToday(); }); pushToday();
     // ---------- Settings: the tooltips (the description of a setting stays in the page, hidden; the small "i" after the name of the setting shows its text when the pointer rests on it) ----------
     (function () {
       const tip = document.getElementById('tip'), DELAY = 450;

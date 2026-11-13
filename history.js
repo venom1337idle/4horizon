@@ -1,5 +1,5 @@
 // history.js
-// Daily totals per account (gold, XP, kills, captures, shinies, time hunted), saved in history.json (lang-50: in the user-data folder, see datadir.js; an older one in the app folder is moved there once).
+// Daily totals per account (gold, XP, kills, captures, shinies captured and (lang-71) shinies met: shinyKills, time hunted), saved in history.json (lang-50: in the user-data folder, see datadir.js; an older one in the app folder is moved there once).
 // It runs in the main process, so it keeps counting while the window is hidden in the tray.
 //
 // How it counts: the game resets its counters on every hunt change, so we add up the INCREASES between
@@ -71,7 +71,7 @@ function add(name, ts, inc) {
 
 // ---------- reading the game's messages ----------
 const slots = {};                                 // per panel (1..4): which character, party size, last capture seen
-const ZERO = { partyKills: 0, xp: 0, captures: 0, loot: 0, capture: 0, supplies: 0, ms: 0 };
+const ZERO = { partyKills: 0, xp: 0, captures: 0, loot: 0, capture: 0, supplies: 0, ms: 0, shinyKills: 0 };
 
 function increase(cur, base, size, wallMs, fromZero) {
   const inc = {};
@@ -81,6 +81,8 @@ function increase(cur, base, size, wallMs, fromZero) {
     const v = cur[k] - base[k];
     inc[k] = v > 0 ? v : 0;                                         // a counter that went down was reset: count nothing
   });
+  // lang-71: the shinies met (the game's counter shinyKills, newer than the rest): only when both sides have it, so the first message after the update does not count a whole hunt
+  if (typeof cur.shinyKills === 'number' && typeof base.shinyKills === 'number') { const v = cur.shinyKills - base.shinyKills; inc.shinyKills = v > 0 ? v : 0; }
   let ms = cur.ms - base.ms;
   if (!(ms > 0)) ms = 0;
   if (!fromZero) ms = Math.min(ms, wallMs + 2000);                  // time hunted cannot be more than time that passed
@@ -108,6 +110,7 @@ function run(account, d) {
     loot: d.lootSell || 0, capture: d.captureSell || 0, supplies: d.suppliesCost || 0,
     ms: d.elapsedMs || 0
   };
+  if (typeof d.shinyKills === 'number') cur.shinyKills = d.shinyKills;            // lang-71
   const size = d.partySize !== undefined ? Math.max(1, d.partySize) : s.size;
   const prev = db.last[s.name];
 
