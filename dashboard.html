@@ -175,6 +175,7 @@
   #cmpMenu .cm-item .val { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   #cmpMenu .cm-item .sub { grid-column: 2 / 4; color: var(--dim); font-size: 11px; }
   #cmpMenu .cm-item .here { color: var(--teal); }
+  #cmpMenu .cm-views { margin: 8px 12px 4px; } .cmp-dd .pty, #cmpMenu .pty { color: var(--blue); }          /* lang-72: Last 5 / Best 5, and "party of N" */
   #cmpMenu .cm-empty, #cmpMenu .cm-note { margin: 2px 12px; color: var(--dim); font-size: 11px; line-height: 1.45; }
   #cmpMenu .cm-note { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
   #cmpTip { position: fixed; z-index: 60; max-width: 300px; padding: 9px 11px; background: #0b1224; border: 1px solid var(--line2); border-radius: var(--r-sm); box-shadow: 0 10px 26px rgba(0, 0, 0, .55);
@@ -422,11 +423,8 @@ const SESSION_KEYS = ['defeated', 'xpGained', 'captures', 'lootSell', 'captureSe
   'minutes', 'sessionTime', 'goldH', 'xpH', 'killsH', 'killsHAll', 'partyKills', 'drops', 'lastCaught', 'recentCatches', 'bestIV', 'bestQ', 'bestS',
   'shinyCaptured', 'catchesSeen', 'lastProgress', 'ballsByType', 'btSamples', 'btBall', 'btStart'];
 
-// called by live.js when a new hunt starts: keep a summary of the hunt that just ended for the "previous hunt" comparison
+// called by live.js when a new hunt starts: the hunt that just ended is kept (the comparison's "Last 5" and "Best 5" read it from the kept hunts)
 function resetSession(a) {
-  if ((a.minutes || 0) >= 2 && a.hunt) {
-    a.prev = { hunt: a.hunt, goldH: a.goldH || 0, xpH: a.xpH || 0, killsH: a.killsH || 0, minutes: a.minutes };
-  }
   huntLogRecord(a); huntLogSave(true);                // the hunt that ends is kept with its last numbers
   delete a.__sid;
   SESSION_KEYS.forEach(k => { delete a[k]; });
@@ -434,10 +432,17 @@ function resetSession(a) {
 
 // ---------------------------------------------------------------------------------------------------------------
 // the hunts of each account, kept on this computer, for the comparison with the best ones ("4h.hunts")
-// one entry per hunt session (the game's own session: its startedAt), with the averages the game shows for it: { h: hunt, m: minutes, g: gold/h, x: xp/h, k: kills/h, q: order }
+// one entry per hunt session (the game's own session: its startedAt), with the averages the game shows for it: { h: hunt, m: minutes, g: gold/h, x: xp/h, k: kills/h, q: order, p: party size }
 // the session that is running is kept too (it is updated while it runs), so a session is not lost when the app is closed; it is left out of the comparison while it runs
+// lang-72: the party size is kept apart (p, 1 = alone); before, live.js's " · party of N" was part of the name (in the language of the moment): such a name is read back as the hunt and its party
 // ---------------------------------------------------------------------------------------------------------------
-const HUNTKEY = '4h.hunts', HUNT_KEEP = 200, HUNT_MIN = 2, HUNT_GOOD = 30;          // at most 200 sessions per account; sessions under 2 min are not kept; 30 min = the suggested time for a reliable average
+const HUNTKEY = '4h.hunts', HUNT_KEEP = 200, HUNT_MIN = 2, HUNT_GOOD = 30, HUNT_LAST = 5;          // at most 200 sessions per account; sessions under 2 min are not kept; 30 min = the suggested time for a reliable average; the last 5 visits
+const PARTY_TAG = /\s\u00b7\s(?:party of|grupo de)\s(\d{1,2})$/;          // live.js's tag, in English and in Portuguese
+const okParty = v => (typeof v === 'number' && isFinite(v) && v >= 1 && v <= 20) ? Math.round(v) : 1;
+function huntBase(h, p) {                                // the hunt's own name and its party size
+  const s = String(h == null ? '' : h), m = PARTY_TAG.exec(s);
+  return m ? { h: s.slice(0, m.index), p: p > 1 ? okParty(p) : okParty(Number(m[1])) } : { h: s, p: okParty(p) };
+}
 const huntLog = (() => {
   let o = {}; try { o = JSON.parse(localStorage.getItem(HUNTKEY)) || {}; } catch (e) {}
   const fin = v => typeof v === 'number' && isFinite(v);
@@ -447,20 +452,23 @@ const huntLog = (() => {
     Object.keys(src).slice(0, HUNT_KEEP * 2).forEach(sid => {
       const e = src[sid];
       if (!e || typeof e.h !== 'string' || !e.h || !fin(e.m) || e.m < HUNT_MIN || e.m > 1e6 || !fin(e.g) || !fin(e.x) || !fin(e.k) || !fin(e.q)) return;
-      out[n][String(sid).slice(0, 60)] = { h: e.h.slice(0, 80), m: e.m, g: e.g, x: e.x, k: e.k, q: e.q }; q = Math.max(q, e.q);
+      const b = huntBase(e.h, e.p); if (!b.h) return;
+      out[n][String(sid).slice(0, 60)] = { h: b.h.slice(0, 80), m: e.m, g: e.g, x: e.x, k: e.k, q: e.q, p: b.p }; q = Math.max(q, e.q);
     });
   });
   return { acc: out, q: q, dirty: false, savedAt: -1e9, error: false };
 })();
 let huntSidN = 0;
 const huntSid = a => (a.startedAt !== undefined && a.startedAt !== null) ? 's' + String(a.startedAt).slice(0, 40) : (a.__sid || null);
+const huntCur = a => huntBase(a.hunt, a.partySize);          // lang-72: the hunt the account is on, and its party size (the game's, else live.js's tag)
 function huntLogRecord(a) {                          // keeps (or updates) the session of an account that is running
   if (!a || !a.hunt || n0(a.minutes) < HUNT_MIN) return;
   let sid = huntSid(a);
   if (!sid) sid = a.__sid = 'l' + Date.now() + '-' + (++huntSidN);          // the game sent no start time: one id for as long as this session lasts here
   const box = huntLog.acc[a.idx + 1]; if (!box) return;
-  const old = box[sid], e = { h: String(a.hunt).slice(0, 80), m: n0(a.minutes), g: n0(a.goldH), x: n0(a.xpH), k: n0(a.killsH), q: old ? old.q : ++huntLog.q };
-  if (old && old.h === e.h && old.m === e.m && old.g === e.g && old.x === e.x && old.k === e.k) return;
+  const b = huntCur(a); if (!b.h) return;
+  const old = box[sid], e = { h: b.h.slice(0, 80), m: n0(a.minutes), g: n0(a.goldH), x: n0(a.xpH), k: n0(a.killsH), q: old ? old.q : ++huntLog.q, p: b.p };
+  if (old && old.h === e.h && old.m === e.m && old.g === e.g && old.x === e.x && old.k === e.k && old.p === e.p) return;
   box[sid] = e; huntLog.dirty = true;
   const ids = Object.keys(box);
   if (ids.length > HUNT_KEEP) ids.sort((x, y) => box[x].q - box[y].q).slice(0, ids.length - HUNT_KEEP).forEach(id => { delete box[id]; });       // the oldest go first
@@ -475,14 +483,28 @@ function huntLogSave(now) {                          // at most every 20 s while
 window.addEventListener('pagehide', () => huntLogSave(true));
 window.addEventListener('beforeunload', () => huntLogSave(true));
 // the hunts an account did before the session that runs now, each one the average of all its time (a long visit counts more than a short one)
+// lang-72: the same hunt done in a party and done alone are two different entries (their numbers are not alike)
 function huntStats(a) {
   const box = huntLog.acc[a.idx + 1] || {}, cur = huntSid(a), by = {};
   Object.keys(box).forEach(sid => {
     if (sid === cur) return;
-    const e = box[sid], s = by[e.h] || (by[e.h] = { name: e.h, m: 0, g: 0, x: 0, k: 0, n: 0, q: 0 });
+    const e = box[sid], key = e.h + '\u0001' + e.p, s = by[key] || (by[key] = { name: e.h, party: e.p, m: 0, g: 0, x: 0, k: 0, n: 0, q: 0 });
     s.m += e.m; s.g += e.g * e.m; s.x += e.x * e.m; s.k += e.k * e.m; s.n++; s.q = Math.max(s.q, e.q);
   });
-  return Object.keys(by).map(h => { const s = by[h]; return { name: s.name, minutes: s.m, goldH: s.g / s.m, xpH: s.x / s.m, killsH: s.k / s.m, visits: s.n, q: s.q }; });
+  return Object.keys(by).map(key => { const s = by[key]; return { key: 'b' + key, name: s.name, party: s.party, minutes: s.m, goldH: s.g / s.m, xpH: s.x / s.m, killsH: s.k / s.m, visits: s.n, q: s.q }; });
+}
+// lang-72: the last 5 visits of an account, newest first, each with its own numbers. A visit is one hunt in a row: when the game starts a new session on the
+// same hunt with the same party (a reconnect), the pieces are joined (weighted by their time); the same hunt later again is another visit.
+function huntVisits(a) {
+  const box = huntLog.acc[a.idx + 1] || {}, cur = huntSid(a), out = [];
+  const list = Object.keys(box).filter(sid => sid !== cur).map(sid => box[sid]).sort((x, y) => y.q - x.q);
+  for (const e of list) {
+    const v = out[out.length - 1];
+    if (v && v.name === e.h && v.party === e.p) { v.m += e.m; v.g += e.g * e.m; v.x += e.x * e.m; v.k += e.k * e.m; continue; }
+    if (out.length === HUNT_LAST) break;
+    out.push({ key: 'v' + e.q, name: e.h, party: e.p, m: e.m, g: e.g * e.m, x: e.x * e.m, k: e.k * e.m });
+  }
+  return out.map(v => ({ key: v.key, name: v.name, party: v.party, minutes: v.m, goldH: v.g / v.m, xpH: v.x / v.m, killsH: v.k / v.m }));
 }
 // the best hunts for one way of ranking: $ = gold/h, XP = xp/h, $+XP = both together, each against the best hunt of the account (so that millions of XP do not drown the gold)
 function huntRanked(list, mode) {
@@ -490,52 +512,54 @@ function huntRanked(list, mode) {
   const score = s => mode === 'xp' ? s.xpH : mode === 'gold' ? s.goldH : (maxG > 0 ? s.goldH / maxG : 0) + (maxX > 0 ? s.xpH / maxX : 0);
   return list.map(s => Object.assign({}, s, { score: score(s) })).sort((x, y) => (y.score - x.score) || (y.minutes - x.minutes) || x.name.localeCompare(y.name));
 }
-// the previous hunt of an account: the one this page saw end, or else the last one kept on this computer (after the app was started again)
-function huntPrev(a) {
-  if (a.prev) return a.prev;
-  const box = huntLog.acc[a.idx + 1] || {}, cur = huntSid(a);
-  let best = null; Object.keys(box).forEach(sid => { if (sid !== cur && (!best || box[sid].q > best.q)) best = box[sid]; });
-  return best ? { hunt: best.h, goldH: best.g, xpH: best.x, killsH: best.k, minutes: best.m } : null;
-}
-// what the comparison of an account shows: the hunt chosen in the list, or else the previous hunt, or else the best one
+// what the comparison of an account shows: the hunt chosen in the list, or else the previous hunt (the newest of the last 5)
+// lang-72: two lists, "Last 5" (the last visits, newest first, each with its own numbers) and "Best 5" (each hunt the average of all its time, ranked by $, XP or $+XP);
+// the switch between them is kept with the choices of the Summary (sumCfg.cmpView). A hunt done in a party says so ("party of N").
 let cmpOpen = null;                                   // the account whose list is open (null: closed)
-const cmpSel = {};                                    // per account: the name of the hunt chosen in the list (none: the previous hunt)
+const cmpSel = {};                                    // per account: { kind: 'last' | 'best', key } of the hunt chosen in the list (none: the previous hunt)
 function cmpPick(a) {
-  const prev = huntPrev(a), ranked = huntRanked(huntStats(a), sumCfg.rank), want = cmpSel[a.idx];
-  if (want) { const i = ranked.findIndex(s => s.name === want); if (i >= 0) return { kind: 'hunt', v: ranked[i], rank: i + 1 }; }
-  if (prev) return { kind: 'prev', v: prev };
-  return ranked.length ? { kind: 'hunt', v: ranked[0], rank: 1 } : null;
+  const visits = huntVisits(a), want = cmpSel[a.idx];
+  if (want && want.kind === 'best') { const ranked = huntRanked(huntStats(a), sumCfg.rank), i = ranked.findIndex(s => s.key === want.key); if (i >= 0) return { kind: 'best', v: ranked[i], rank: i + 1 }; }
+  if (want && want.kind === 'last') { const i = visits.findIndex(s => s.key === want.key); if (i >= 0) return { kind: 'last', v: visits[i], rank: i + 1 }; }
+  return visits.length ? { kind: 'last', v: visits[0], rank: 1 } : null;          // (no visit: nothing was kept, so there is no best hunt either)
 }
 const huntTime = m => { m = Math.round(n0(m)); return m < 60 ? t('{n} min', { n: fmt(m) }) : t('{h}h {m}m', { h: fmt(Math.floor(m / 60)), m: String(m % 60).padStart(2, '0') }); };
+const partyTag = s => (s.party > 1 ? ' &middot; <span class="pty">' + t('party of {n}', { n: s.party }) + '</span>' : '');
+const isHere = (a, s) => { const c = huntCur(a); return s.name === c.h && s.party === c.p; };
 function cmpMenuHtml(a) {
-  const pick = cmpPick(a), prev = huntPrev(a), ranked = huntRanked(huntStats(a), sumCfg.rank), mode = sumCfg.rank;
-  const val = s => mode === 'xp' ? '<span class="blue">' + fmt(s.xpH) + ' ' + t('XP/h') + '</span>'
-    : mode === 'gold' ? '<span class="' + signCls(s.goldH) + '">' + sgn(s.goldH) + '/h</span>'
+  const pick = cmpPick(a), view = sumCfg.cmpView, mode = sumCfg.rank;
+  const val = s => mode === 'xp' && view === 'best' ? '<span class="blue">' + fmt(s.xpH) + ' ' + t('XP/h') + '</span>'
+    : mode === 'gold' && view === 'best' ? '<span class="' + signCls(s.goldH) + '">' + sgn(s.goldH) + '/h</span>'
     : '<span class="' + signCls(s.goldH) + '">' + sgn(s.goldH) + '</span> <span class="dim">&middot;</span> <span class="blue">' + fmt(s.xpH) + ' XP</span>';
-  const modeBtn = (m, label) => '<button type="button" data-rank="' + m + '" role="radio" aria-checked="' + (mode === m) + '"' + (mode === m ? ' class="on"' : '') + '>' + label + '</button>';
-  let h = '<div class="cm-h">' + t('Rank by') + '</div><div class="cm-modes" role="radiogroup" aria-label="' + t('Rank by') + '">' + modeBtn('gold', '$') + modeBtn('xp', 'XP') + modeBtn('both', '$+XP') + '</div>';
-  if (prev) {
-    h += '<div class="cm-h">' + t('Previous hunt') + '</div>' +
-      '<button type="button" class="cm-item' + (pick && pick.kind === 'prev' ? ' sel' : '') + '" data-cmp="prev" role="option" aria-selected="' + !!(pick && pick.kind === 'prev') + '"><span class="rk"></span><span class="nm">' + esc(prev.hunt) + '</span><span class="val">' + val(prev) + '</span>' +
-      '<span class="sub">' + t('{n} min', { n: fmt(prev.minutes) }) + '</span></button>';
+  const radio = (attr, v, on, label) => '<button type="button" ' + attr + '="' + v + '" role="radio" aria-checked="' + on + '"' + (on ? ' class="on"' : '') + '>' + label + '</button>';
+  let h = '<div class="cm-modes cm-views" role="radiogroup" aria-label="' + t('Compare with') + '">' + radio('data-view', 'last', view === 'last', t('Last 5')) + radio('data-view', 'best', view === 'best', t('Best 5')) + '</div>';
+  let list;
+  if (view === 'best') {
+    h += '<div class="cm-h">' + t('Rank by') + '</div><div class="cm-modes" role="radiogroup" aria-label="' + t('Rank by') + '">' + radio('data-rank', 'gold', mode === 'gold', '$') + radio('data-rank', 'xp', mode === 'xp', 'XP') + radio('data-rank', 'both', mode === 'both', '$+XP') + '</div>';
+    h += '<div class="cm-h">' + (mode === 'xp' ? t('Best 5 by XP per hour') : mode === 'gold' ? t('Best 5 by gold per hour') : t('Best 5 by gold and XP together')) + '</div>';
+    list = huntRanked(huntStats(a), mode).slice(0, 5);
+  } else {
+    h += '<div class="cm-h">' + t('Last 5 hunts, newest first') + '</div>';
+    list = huntVisits(a);
   }
-  h += '<div class="cm-h">' + (mode === 'xp' ? t('Best 5 by XP per hour') : mode === 'gold' ? t('Best 5 by gold per hour') : t('Best 5 by gold and XP together')) + '</div>';
-  if (!ranked.length) h += '<div class="cm-empty">' + t('No other hunts yet. A hunt shows here after {n} minutes or more on it.', { n: HUNT_MIN }) + '</div>';
+  if (!list.length) h += '<div class="cm-empty">' + t('No other hunts yet. A hunt shows here after {n} minutes or more on it.', { n: HUNT_MIN }) + '</div>';
   let thin = false;
-  ranked.slice(0, 5).forEach((s, i) => {
-    const lo = s.minutes < HUNT_GOOD, on = pick && pick.kind === 'hunt' && pick.v.name === s.name; thin = thin || lo;
-    h += '<button type="button" class="cm-item' + (on ? ' sel' : '') + (lo ? ' thin' : '') + '" data-cmp="' + esc(s.name) + '" role="option" aria-selected="' + !!on + '"' +
+  list.forEach((s, i) => {
+    const lo = s.minutes < HUNT_GOOD, on = !!pick && pick.kind === view && pick.v.key === s.key; thin = thin || lo;
+    const more = view === 'best' ? ' &middot; ' + (s.visits === 1 ? t('1 visit') : t('{n} visits', { n: fmt(s.visits) })) : (i === 0 ? ' &middot; ' + t('previous hunt') : '');
+    h += '<button type="button" class="cm-item' + (on ? ' sel' : '') + (lo ? ' thin' : '') + '" data-kind="' + view + '" data-cmp="' + esc(s.key) + '" role="option" aria-selected="' + on + '"' +
       (lo ? ' title="' + t('Only {t} on this hunt so far: spend at least {n} min there for a reliable average', { t: huntTime(s.minutes), n: HUNT_GOOD }) + '"' : '') + '>' +
-      '<span class="rk">#' + (i + 1) + '</span><span class="nm">' + esc(s.name) + '</span><span class="val">' + val(s) + '</span>' +
-      '<span class="sub">' + huntTime(s.minutes) + (lo ? ' <span class="lo">\u25cb</span>' : '') + ' &middot; ' + (s.visits === 1 ? t('1 visit') : t('{n} visits', { n: fmt(s.visits) })) + (s.name === a.hunt ? ' &middot; <span class="here">' + t('here now') + '</span>' : '') + '</span></button>';
+      '<span class="rk">' + (view === 'best' ? '#' : '') + (i + 1) + '</span><span class="nm">' + esc(s.name) + '</span><span class="val">' + val(s) + '</span>' +
+      '<span class="sub">' + huntTime(s.minutes) + (lo ? ' <span class="lo">\u25cb</span>' : '') + more + partyTag(s) + (isHere(a, s) ? ' &middot; <span class="here">' + t('here now') + '</span>' : '') + '</span></button>';
   });
   if (thin) h += '<div class="cm-note"><span class="lo">\u25cb</span> ' + t('Under {n} min on this hunt: the average can still change a lot.', { n: HUNT_GOOD }) + '</div>';
   return h;
 }
 function cmpTipHtml() {
-  return '<p>' + t('Choose what this hunt is compared with: the previous hunt, or one of the 5 best hunts of this account, from best to worst.') + '</p>' +
+  return '<p>' + t('Choose what this hunt is compared with: one of the last 5 hunts of this account (newest first), or one of its 5 best hunts (best first).') + '</p>' +
     '<p>' + t('Rank by: <b>$</b> gold per hour, <b>XP</b> XP per hour, <b>$+XP</b> both together (each as a share of this account\u2019s best hunt, then added).') + '</p>' +
-    '<p>' + t('Each hunt is the average of all the time this account spent on it, kept on this computer.') + '</p>' +
+    '<p>' + t('In the last 5 each visit has its own numbers; in the best 5 each hunt is the average of all the time this account spent on it, kept on this computer.') + '</p>' +
+    '<p>' + t('A hunt done in a party is marked, and is kept apart from the same hunt done alone.') + '</p>' +
     '<p>' + t('For a reliable average spend at least {n} minutes on a hunt (in one visit or several); 1 hour or more is best. Hunts with less are marked \u25cb.', { n: HUNT_GOOD }) + '</p>';
 }
 // the list opens under the button (or above it when there is no room below) and stays where it is while the Summary is drawn again
@@ -593,10 +617,13 @@ document.addEventListener('click', e => {
   if (btn && e.detail === 0) { setCmpOpen(cmpOpen === null ? selected : null); if (cmpOpen !== null) { const f = document.querySelector('#cmpMenu .cm-item.sel') || document.querySelector('#cmpMenu .cm-item'); if (f) f.focus(); } return; }
   const rk = e.target.closest && e.target.closest('#cmpMenu [data-rank]');
   if (rk) { const m = rk.getAttribute('data-rank'); sumCfg.rank = m; saveSumCfg(); renderAll(); if (e.detail === 0) { const f = document.querySelector('#cmpMenu [data-rank="' + m + '"]'); if (f) f.focus(); } return; }
+  const vw = e.target.closest && e.target.closest('#cmpMenu [data-view]');          // lang-72: Last 5 / Best 5 (the list stays open)
+  if (vw) { const m = vw.getAttribute('data-view'); sumCfg.cmpView = m; saveSumCfg(); renderAll(); if (e.detail === 0) { const f = document.querySelector('#cmpMenu [data-view="' + m + '"]'); if (f) f.focus(); } return; }
   const it = e.target.closest && e.target.closest('#cmpMenu [data-cmp]');
   if (it && cmpOpen !== null) {
-    const v = it.getAttribute('data-cmp');
-    if (v === 'prev') delete cmpSel[cmpOpen]; else cmpSel[cmpOpen] = v;
+    const v = it.getAttribute('data-cmp'), kind = it.getAttribute('data-kind') === 'best' ? 'best' : 'last', first = huntVisits(accounts[cmpOpen])[0];
+    if (kind === 'last' && first && first.key === v) delete cmpSel[cmpOpen];          // the previous hunt: it follows the newest one
+    else cmpSel[cmpOpen] = { kind: kind, key: v };
     setCmpOpen(null); renderAll();
     const b = document.getElementById('cmpBtn'); if (b && e.detail === 0) b.focus();
   }
@@ -637,7 +664,7 @@ const sumCfg = (() => {
   let o = {}; try { o = JSON.parse(localStorage.getItem(SUMKEY)) || {}; } catch (e) {}
   const off = {}; if (o.off && typeof o.off === 'object') Object.keys(o.off).slice(0, 60).forEach(k => { if (o.off[k] === true) off[String(k).slice(0, 40)] = true; });
   const tab = (o.tab === 'sum' || (Number.isInteger(o.tab) && o.tab >= 0 && o.tab <= 3)) ? o.tab : 'sum';
-  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold' };
+  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold', cmpView: o.cmpView === 'best' ? 'best' : 'last' };          // (lang-72: cmpView, the list of the comparison)
 })();
 let sumOpen = false;                                   // is the panel of the settings open
 const saveSumCfg = () => { try { localStorage.setItem(SUMKEY, JSON.stringify(sumCfg)); } catch (e) {} };
@@ -890,10 +917,10 @@ function sideAccount(a) {
       return '<tr><td>' + label + '</td><td class="dim">' + (isGold ? sgn(pv) : fmt(pv)) + '</td><td>' + (isGold ? sgn(cv) : fmt(cv)) +
         (same ? ' <span class="dim">=</span>' : ' <span class="' + (up ? 'pos' : 'neg') + '">' + (up ? '\u25b2' : '\u25bc') + '</span>') + '</td></tr>';
     };
-    const v = pick.v, isPrev = pick.kind === 'prev';
-    cmp = '<div class="sec" style="--c:var(--purple)"><div class="sec-h">' + (isPrev ? t('Comparison (previous hunt)') : t('Comparison (best hunts)')) + '</div>' +
-      '<button type="button" class="cmp-dd' + (cmpOpen === a.idx ? ' on' : '') + (!isPrev && v.minutes < HUNT_GOOD ? ' thin' : '') + '" id="cmpBtn" aria-haspopup="listbox" aria-expanded="' + (cmpOpen === a.idx) + '" aria-describedby="cmpTip" aria-label="' + t('Compare with') + '">' +
-        '<span class="nm">' + (isPrev ? '' : '<span class="rk">#' + pick.rank + '</span> ') + esc(v.hunt || v.name) + ' &middot; ' + (isPrev ? t('{n} min', { n: fmt(v.minutes) }) : huntTime(v.minutes)) + (!isPrev && v.minutes < HUNT_GOOD ? ' <span class="lo">\u25cb</span>' : '') + '</span>' +
+    const v = pick.v, isPrev = pick.kind === 'last', lo = v.minutes < HUNT_GOOD;          // (lang-72: a visit of the last 5 is compared as "PREVIOUS", a hunt of the best 5 as "AVERAGE")
+    cmp = '<div class="sec" style="--c:var(--purple)"><div class="sec-h">' + (isPrev ? t('Comparison (last hunts)') : t('Comparison (best hunts)')) + '</div>' +
+      '<button type="button" class="cmp-dd' + (cmpOpen === a.idx ? ' on' : '') + (lo ? ' thin' : '') + '" id="cmpBtn" aria-haspopup="listbox" aria-expanded="' + (cmpOpen === a.idx) + '" aria-describedby="cmpTip" aria-label="' + t('Compare with') + '">' +
+        '<span class="nm"><span class="rk">' + (isPrev ? '' : '#') + pick.rank + '</span> ' + esc(v.name) + ' &middot; ' + huntTime(v.minutes) + partyTag(v) + (lo ? ' <span class="lo">\u25cb</span>' : '') + '</span>' +
         '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>' +
       '<table class="cmp"><thead><tr><th></th><th>' + (isPrev ? t('PREVIOUS') : t('AVERAGE')) + '</th><th>' + t('CURRENT') + '</th></tr></thead><tbody>' +
       row(t('Gold/h'), v.goldH, n0(a.goldH), true) + row(t('XP/h'), v.xpH, n0(a.xpH)) + row(t('Kills/h'), v.killsH, n0(a.killsH)) + '</tbody></table></div>';
