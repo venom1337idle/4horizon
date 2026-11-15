@@ -1,7 +1,7 @@
 // run-update-ui.js (lang-58): the version of the app in the top bar, the Update button (only when a newer release is out), and Accounts moved
 // from the top bar into Settings, under Game panels.
 const { chromium } = require('./pw');
-const { open } = require('./scen');
+const { open, feedAll } = require('./scen');
 let pass = 0, fail = 0; const ok = (l, c, x) => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (c ? '' : '   ' + String(JSON.stringify(x)).slice(0, 500))); c ? pass++ : fail++; };
 const STUB = avail => `window.__up = { avail: ${avail}, opened: 0 };
   __bridgeObject.updateGet = async () => ({ version: '1.0.2', latest: window.__up.avail ? '1.0.3' : '1.0.2', available: window.__up.avail, url: 'https://github.com/venom1337idle/4horizon/releases/tag/v1.0.3' });
@@ -64,10 +64,10 @@ const bar = p => p.evaluate(() => ({ ids: Array.from(document.querySelectorAll('
   // ---- lang-72: the word "Update" stays down to 1100 px (the other buttons lose theirs under 1700 px); below, only the gold arrow; the bar always fits
   const word = q => q.evaluate(() => { const bar = document.getElementById('bar'), u = document.getElementById('btnUpdate'), se = document.getElementById('btnSettings').getBoundingClientRect();
     return { word: getComputedStyle(u.querySelector('.bl')).display !== 'none', settingsWord: getComputedStyle(document.querySelector('#btnSettings .bl')).display !== 'none', fits: bar.scrollWidth <= bar.clientWidth + 1 && se.right <= innerWidth }; });
-  for (const [lang, w, shows] of [['en', 1600, true], ['en', 1100, true], ['en', 1099, false], ['en', 900, false], ['pt-BR', 1100, true], ['pt-BR', 1099, false]]) {
-    p = await open(b, { extraInit: STUB(true), lang, w, h: 900 }); await p.waitForTimeout(400);
-    const r = await word(p);
-    ok(lang + ' ' + w + ' px: ' + (shows ? 'the word shows (Settings has only its icon)' : 'only the gold arrow') + ', and the bar fits', r.word === shows && !r.settingsWord && r.fits, r);
+  for (const [lang, w, shows] of [['en', 1600, true], ['en', 1100, true], ['en', 1099, false], ['en', 900, false], ['pt-BR', 1100, true], ['pt-BR', 1099, false], ['en', 800, false], ['pt-BR', 800, false]]) {
+    p = await open(b, { extraInit: STUB(true), lang, w, h: 900 }); await feedAll(p); await p.waitForTimeout(400);
+    const r = await word(p), ver = await p.evaluate(() => getComputedStyle(document.getElementById('appVer')).display !== 'none');
+    ok(lang + ' ' + w + ' px: ' + (shows ? 'the word shows (Settings has only its icon)' : 'only the gold arrow') + ', and the bar fits' + (w < 900 ? ' (lang-72: under 900 px without the version text, the account buttons narrower)' : ''), r.word === shows && !r.settingsWord && r.fits && ver === (w >= 900), [r, ver]);
     await p.context().close();
   }
   await b.close(); console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

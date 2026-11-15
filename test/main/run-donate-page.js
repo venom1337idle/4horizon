@@ -160,6 +160,17 @@ const look = p => p.evaluate(() => { const b = document.getElementById('doar'), 
     const q7 = await ctx.newPage(); await q7.setContent('<body><div><h2>Diamond shop</h2><div><button>Boosts</button><button>Outfits</button><button id="tabd">Diamonds</button></div><button id="pay">Donate $5 with card</button></div>'); await q7.evaluate(DG.scriptFor(EN)); await q7.waitForTimeout(300);
     ok('English names are found too: the tab "Diamonds" and "Donate $5 with card"', (await shown(q7, 'tabd')) === false && (await shown(q7, 'pay')) === false);
     await q7.close();
+    // lang-72: labels in two lines (the game did this to "Comprar passe" on 2026-11-14): a second line under "+ Doar", a badge before the pay button, a count after the tab
+    const q8 = await ctx.newPage(); await q8.setContent('<body><div id="guild"><h2>Guilda</h2><button id="gdoar"><span>Doar</span><small>ouro da guilda</small></button></div><div id="market"><h2>Mercado</h2><button>Todos</button><button id="mdia"><span>Diamantes</span><b>5</b></button></div><div id="shop"><h2>Loja de Diamantes</h2><div id="box"><span>Seus diamantes</span><b>20</b><button id="doar"><span>+ Doar</span><small>Ganhe diamantes</small></button></div>' +
+      '<div><button>Boosts</button><button>Outfits</button><button id="tabd"><span>Diamantes</span><b>2</b></button></div>' +
+      '<button id="pay"><span>Doar R$ 33,25 com Pix</span><small>Pagamento seguro</small></button><button id="pay2"><small>Mais popular</small><span>Doar R$ 10,00</span></button><button id="sub"><span>Doar e ganhar diamantes</span><small>novo</small></button></div>' +
+      '<script>window.__n={};["doar","tabd","pay","pay2","sub","gdoar","mdia"].forEach(i=>document.getElementById(i).addEventListener("click",()=>{window.__n[i]=(window.__n[i]||0)+1;}));</script>');
+    await q8.evaluate(DG.scriptFor(EN)); await q8.waitForTimeout(300);
+    const two = await q8.evaluate(() => { const r = {}; ['doar', 'tabd', 'pay', 'pay2', 'sub', 'gdoar', 'mdia'].forEach(i => { const e = document.getElementById(i); e.click(); r[i] = { shown: getComputedStyle(e).display !== 'none', kind: e.getAttribute('data-4h-kind'), heard: window.__n[i] || 0 }; }); r.notes = document.querySelectorAll('[data-4h-note]').length; return r; });
+    ok('a label in two lines (lang-72): "+ Doar" with a second line, the tab "Diamantes" with a count, "Doar R$ ... com Pix" with a line under it and with a badge before it: all hidden, of their kind, and a press never reaches the game; one note (for "+ Doar")',
+      [['doar', 'donate'], ['tabd', 'tab'], ['pay', 'pay'], ['pay2', 'pay']].every(([i, k]) => !two[i].shown && two[i].kind === k && two[i].heard === 0) && two.notes === 1, two);
+    ok('...while "Doar e ganhar diamantes" (with a line "novo"), a guild\u2019s "Doar / ouro da guilda" and a market\u2019s "Diamantes 5" are left alone and work', ['sub', 'gdoar', 'mdia'].every(i => two[i].shown && !two[i].kind && two[i].heard === 1), two);
+    await q8.close();
   }
   // the whole way: the main process puts the script into a live page the way the app does, and a new language of the app changes the note of that page
   {

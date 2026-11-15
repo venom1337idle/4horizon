@@ -9,7 +9,8 @@
 //     (the link asks for a new window, which external.js sends to the browser). The note follows the language of the app.
 // lang-70, the Battle Pass ("Passe de Batalha"): its two buttons that are paid with real money, "Comprar passe" and "Dar o Passe para um amigo", are hidden and stopped in the same way,
 // only inside the Battle Pass window, and ONE note takes their place: "To buy or gift the Battle Pass, visit the official [webpage]" (a box, as wide as the buttons were).
-// lang-72: also when "Comprar passe" has a second line ("Combo por R$ 109,90", the game's button since 2026-11-14).
+// lang-72: also when "Comprar passe" has a second line ("Combo por R$ 109,90", the game's button since 2026-11-14); and, ready for the same change, every one of
+// these buttons is found when its label is in two lines (a second line under it, a badge before it, a count after the tab "Diamantes").
 // The rewards ("Resgatar", "Resgatar tudo") and the rest of the window work as before.
 // Only that one button is touched: another "Doar" of the game (a guild, for example) is not in the box of the diamonds and works as before.
 // How: a small script is put in each game page (when it loads) and watches the page. Nothing is clicked in the game. The script uses no style sheet and no markup text (so a strict
@@ -68,12 +69,14 @@ function guardInPage(cfg) {
   };
   const clickableOf = el => ((el && el.closest) ? (el.closest(CLICKABLE) || pointerAncestor(el)) : null);
   const textOf = c => plain(c.value || c.textContent || (c.getAttribute && c.getAttribute('aria-label')) || '');
-  const spacedOf = c => {
-    if (c.value || !c.childNodes || !c.childNodes.length) return textOf(c);
-    const bits = [], w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT); let n;
-    while ((n = w.nextNode())) bits.push(n.nodeValue);
-    return plain(bits.join(' '));
+  // lang-72: the pieces of a label, each on its own ("Comprar passe" / "Combo por R$ 109,90"; "+ Doar" / a second line; "Diamantes" / a count)
+  const linesOf = c => {
+    if (c.value || !c.childNodes || !c.childNodes.length) return [textOf(c)];
+    const out = [], w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) { const s = plain(n.nodeValue); if (s) out.push(s); }
+    return out.length ? out : [textOf(c)];
   };
+  const spacedOf = c => linesOf(c).join(' ');
   // the window of the diamond shop begins with its title
   function shopTitle(c) {
     let a = c;
@@ -112,14 +115,16 @@ function guardInPage(cfg) {
   // what this button is: 'donate' (+ Doar of the box), 'tab' (the tab Diamantes), 'pay' (Doar R$ ... com Pix), 'passbuy' / 'passgift' (the Battle Pass), or nothing
   function kindOf(c) {
     const t = textOf(c);
-    if (!t || t.length > 48) return null;
-    if (PAY.test(t)) return 'pay';
-    if (t.length <= 24 && WORD.test(t) && (diamondBox(c) || shopTitle(c))) return 'donate';
-    if (TAB.test(t) && (shopTitle(c) || shopTabs(c))) return 'tab';
-    // lang-72: the pieces of the label with a space between them ("Comprar passe" + "Combo por R$ 109,90" is not "comprar passecombo por...")
-    const p = lead(spacedOf(c));
-    if (PASS_BUY.test(p) && passWindow(c)) return 'passbuy';
-    if (PASS_GIFT.test(p) && passWindow(c)) return 'passgift';
+    if (!t || t.length > 64) return null;                    // (lang-72: 64, was 48: room for a second line under the label)
+    // lang-72: a label in two lines (a second line under it, a badge before it, a count after it): each line is looked at on its own too,
+    // and the pieces are joined with a space ("Comprar passe" + "Combo por R$ 109,90" is not "comprar passecombo por...")
+    const L = linesOf(c), any = rx => L.some(l => rx.test(l));
+    if (PAY.test(t) || any(PAY)) return 'pay';
+    if (((t.length <= 24 && WORD.test(t)) || any(WORD)) && (diamondBox(c) || shopTitle(c))) return 'donate';
+    if ((TAB.test(t) || TAB.test(L[0])) && (shopTitle(c) || shopTabs(c))) return 'tab';
+    const p = lead(spacedOf(c)), anyLead = rx => L.some(l => rx.test(lead(l)));
+    if ((PASS_BUY.test(p) || anyLead(PASS_BUY)) && passWindow(c)) return 'passbuy';
+    if ((PASS_GIFT.test(p) || anyLead(PASS_GIFT)) && passWindow(c)) return 'passgift';
     return null;
   }
   let C = cfg, blocked = 0, lastLine = 0;

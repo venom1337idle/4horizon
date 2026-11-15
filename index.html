@@ -47,6 +47,8 @@
   @media (max-width: 999px) { .brand img[alt="4horizon"] { display: none !important; } .brand .mark { display: block; } }          /* the inline style on the wordmark would win without !important */
   @media (max-width: 1699px) { #bar .tb .bl { display: none; } #bar .tb { padding: 0 9px; } }
   @media (max-width: 1329px) { #bar { gap: 5px; padding: 0 10px; } .sep { margin: 0 2px; } #btnLoginAll .bl { display: none; } .cta { padding: 0 11px; } .pill { max-width: 96px; padding: 0 9px; } }
+  /* lang-72: under 900 px the version text gives way (Diagnostics shows it) and the account buttons get a little narrower, so Settings still fits at 800 px */
+  @media (max-width: 899px) { #appVer { display: none; } .pill { max-width: 76px; } }
   .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
   .pill:not(.on) { opacity: .5; }
   .pill:not(.on) .dot { background: #4a5678; box-shadow: none; }

@@ -212,8 +212,13 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   for (const vw of ['last', 'best']) {
     await clickAt(p, '#cmpBtn'); if (vw === 'best') await clickAt(p, '#cmpMenu [data-view="best"]'); v = await view(p);
     ok('short window (560 px), ' + (vw === 'best' ? 'Best 5' : 'Last 5') + ': the list opens where there is room, stays inside the Summary panel and scrolls if needed, without covering the button', v.open && v.menuBox.top >= v.sideBox.top && v.menuBox.bottom <= v.sideBox.bottom && (v.menuBox.top >= v.btnBox.bottom || v.menuBox.bottom <= v.btnBox.top), v);
-    await clickAt(p, '#cmpBtn');          // (closed by its button: the keyboard is not inside the Summary yet in this window)
+    await p.keyboard.press('Escape'); await p.waitForTimeout(150);
+    ok('...opened with the mouse, Escape closes it at once (lang-72: the keyboard is put in the list; before, it was still outside the Summary)', !(await view(p)).open);
   }
+  await clickAt(p, '#cmpBtn'); await p.keyboard.press('ArrowDown'); await p.waitForTimeout(100);
+  const fk = await D(p).evaluate(() => [document.activeElement === document.querySelector('#cmpMenu .cm-item'), document.activeElement.className]);
+  ok('...and the arrow keys move in it at once (to the first hunt of the list)', fk[0], fk);
+  await p.keyboard.press('Escape'); await p.waitForTimeout(150);
   ok('no JavaScript errors (short window)', p.errors.length === 0, p.errors);
   await p.context().close();
 

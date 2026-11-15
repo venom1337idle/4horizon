@@ -175,7 +175,7 @@
   #cmpMenu .cm-item .val { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   #cmpMenu .cm-item .sub { grid-column: 2 / 4; color: var(--dim); font-size: 11px; }
   #cmpMenu .cm-item .here { color: var(--teal); }
-  #cmpMenu .cm-views { margin: 8px 12px 4px; } .cmp-dd .pty, #cmpMenu .pty { color: var(--blue); }          /* lang-72: Last 5 / Best 5, and "party of N" */
+  #cmpMenu:focus { outline: none; } #cmpMenu .cm-views { margin: 8px 12px 4px; } .cmp-dd .pty, #cmpMenu .pty { color: var(--blue); }          /* lang-72: Last 5 / Best 5, and "party of N" */
   #cmpMenu .cm-empty, #cmpMenu .cm-note { margin: 2px 12px; color: var(--dim); font-size: 11px; line-height: 1.45; }
   #cmpMenu .cm-note { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
   #cmpTip { position: fixed; z-index: 60; max-width: 300px; padding: 9px 11px; background: #0b1224; border: 1px solid var(--line2); border-radius: var(--r-sm); box-shadow: 0 10px 26px rgba(0, 0, 0, .55);
@@ -347,7 +347,7 @@
   <aside id="side">
     <div class="side-head"><span>SUMMARY</span><span class="grow"></span><button class="icon-btn hidden" id="btnSumBar" title="Hide the top bar (Ctrl+B)" aria-label="Hide the top bar" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M12 7l7 10H5z"/></svg></button><button class="icon-btn" id="btnSumLock" title="Lock the Summary on what it shows now, so it does not follow the expanded screen" aria-label="Lock the Summary" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button><button class="icon-btn" id="btnSumSettings" title="Summary settings" aria-label="Summary settings"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
     <div id="sumSettings" class="hidden" role="dialog" aria-label="Summary settings"></div>
-    <div id="cmpMenu" class="hidden" role="listbox" aria-label="Compare with"></div>
+    <div id="cmpMenu" class="hidden" role="listbox" aria-label="Compare with" tabindex="-1"></div>
     <div id="cmpTip" class="hidden" role="tooltip"></div>
     <div id="tabs"></div>
     <div id="sideBody"></div>
@@ -608,7 +608,11 @@ document.addEventListener('focusout', e => { if (e.target.id === 'cmpBtn') hideC
 document.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
   const btn = e.target.closest && e.target.closest('#cmpBtn');
-  if (btn) { e.preventDefault(); cmpTipQuiet = true; setCmpOpen(cmpOpen === null ? selected : null); return; }
+  if (btn) {
+    e.preventDefault(); cmpTipQuiet = true; setCmpOpen(cmpOpen === null ? selected : null);
+    if (cmpOpen !== null) { const m = document.getElementById('cmpMenu'); try { m.focus({ preventScroll: true }); } catch (x) {} }          // lang-72: the keyboard is in the list at once (Escape, the arrows), also when it was opened with the mouse
+    return;
+  }
   if (cmpOpen !== null && !document.getElementById('cmpMenu').contains(e.target)) setCmpOpen(null);
   hideCmpTip();
 });
