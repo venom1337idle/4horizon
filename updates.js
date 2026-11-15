@@ -1,10 +1,12 @@
-// updates.js: is there a newer 4horizon? (lang-58)
+// updates.js: is there a newer 4horizon? (lang-58, lang-72)
 //
-// Once shortly after the start, then every 6 hours, the app asks GitHub which release of venom1337idle/4horizon is the latest published one
+// Once shortly after the start, then every hour, and when the window comes back (focused again, or shown from the tray: at most once every
+// 10 minutes), the app asks GitHub which release of venom1337idle/4horizon is the latest published one
 // (https://api.github.com/repos/venom1337idle/4horizon/releases/latest: drafts are never answered). If its version is newer than this one, the window
 // shows an "Update" button; pressing it opens that release's page in the browser, where the new installer is downloaded and run, as before.
 // Nothing is downloaded or installed by the app itself, and nothing is sent but the request (like any web request, GitHub sees the IP address).
 // If GitHub cannot be reached, nothing happens: the button simply does not show.
+// lang-72: when an answer comes, the window is told at once ('update:changed'), so the button shows about 20 s after the start, not up to 10 min later.
 
 let electron = null;
 try { electron = require('electron'); } catch (e) {}
@@ -13,7 +15,7 @@ const https = require('https');
 const REPO = 'venom1337idle/4horizon';
 const API = 'https://api.github.com/repos/' + REPO + '/releases/latest';
 const PAGE = 'https://github.com/' + REPO + '/releases/';
-const FIRST_MS = 20000, EVERY_MS = 6 * 3600e3, TIMEOUT_MS = 10000;
+const FIRST_MS = 20000, EVERY_MS = 3600e3, AGAIN_MS = 10 * 60e3, TIMEOUT_MS = 10000;          // (AGAIN_MS: the least time between two checks when the window comes back)
 
 const state = { latest: null, url: null, checkedAt: 0, error: '', checks: 0 };
 let now = () => Date.now();
@@ -36,8 +38,9 @@ function newer(a, b) {                                                   // is v
 }
 const okUrl = u => typeof u === 'string' && u.startsWith(PAGE) && !/[\s"'<>]/.test(u);
 
+let busy = false;
 async function check() {
-  state.checks++;
+  state.checks++; busy = true;
   try {
     const r = await fetchLatest();
     if (!r || typeof r !== 'object' || r.draft || r.prerelease || !parts(r.tag_name)) throw new Error('no published release');
@@ -45,8 +48,22 @@ async function check() {
     state.url = okUrl(r.html_url) ? r.html_url : PAGE + 'latest';
     state.error = '';
   } catch (e) { state.error = String(e && e.message || e).slice(0, 80); }
+  busy = false;
   state.checkedAt = now();
+  tell();
   return info();
+}
+
+// lang-72: the window reads the answer as soon as it is there (it asks with update:get, as before)
+function tell() {
+  try { for (const w of electron.BrowserWindow.getAllWindows()) { if (w && !w.isDestroyed() && w.webContents && !w.webContents.isDestroyed()) w.webContents.send('update:changed'); } } catch (e) {}
+}
+
+// lang-72: the window came back: ask again, but not before the first check, not twice at once, and at most once every 10 minutes
+// (GitHub answers only 60 questions an hour from one address without a login)
+function checkSoon() {
+  if (busy || !state.checkedAt || now() - state.checkedAt < AGAIN_MS) return false;
+  check(); return true;
 }
 
 // what the window shows: this version, and whether a newer one is out
@@ -70,7 +87,8 @@ function init() {
   electron.ipcMain.handle('update:open', e => (ours(e) ? open() : null));
   const start = () => { timers.push(setTimeout(check, FIRST_MS)); timers.push(setInterval(check, EVERY_MS)); };
   try { if (electron.app.isReady && electron.app.isReady()) start(); else electron.app.whenReady().then(start); } catch (e) {}
+  try { electron.app.on('browser-window-focus', () => checkSoon()); } catch (e) {}          // lang-72: focused again, or shown from the tray
 }
 
-module.exports = { init, check, info, open, newer, REPO, API,
+module.exports = { init, check, checkSoon, info, open, newer, REPO, API, EVERY_MS, AGAIN_MS,
   _setFetch: f => { fetchLatest = f; }, _setNow: f => { now = f; }, _reset: () => { state.latest = null; state.url = null; state.checkedAt = 0; state.error = ''; state.checks = 0; } };

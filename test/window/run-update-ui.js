@@ -54,5 +54,21 @@ const bar = p => p.evaluate(() => ({ ids: Array.from(document.querySelectorAll('
   const pt = await p.evaluate(() => ({ up: document.querySelector('#btnUpdate .bl').textContent, acc: document.getElementById('btnAccounts').closest('.srow').querySelector('b').textContent, btn: document.getElementById('btnAccounts').textContent.trim() }));
   ok('in Portuguese: "Atualizar", "Contas", "Abrir contas", and the tooltip', pt.up === 'Atualizar' && pt.acc === 'Contas' && pt.btn === 'Abrir contas' && /^A versão 1\.0\.3 saiu/.test(s.upTitle), [pt, s.upTitle]);
   await p.context().close();
+  // ---- lang-72: told by the main process as soon as GitHub answers (no focus, no 10-minute wait)
+  p = await open(b, { extraInit: STUB(false) + `\n  __bridgeObject.onUpdate = cb => { window.__up.cb = cb; };` }); await p.waitForTimeout(400);
+  ok('the window listens for "GitHub answered" (onUpdate)', await p.evaluate(() => typeof window.__up.cb === 'function'));
+  await p.evaluate(() => { window.__up.avail = true; window.__up.cb(); }); await p.waitForTimeout(300);
+  ok('...told: the Update button shows at once, without the window being focused', (await bar(p)).upShown);
+  ok('no JavaScript errors (told)', p.errors.length === 0, p.errors);
+  await p.context().close();
+  // ---- lang-72: the word "Update" stays down to 1100 px (the other buttons lose theirs under 1700 px); below, only the gold arrow; the bar always fits
+  const word = q => q.evaluate(() => { const bar = document.getElementById('bar'), u = document.getElementById('btnUpdate'), se = document.getElementById('btnSettings').getBoundingClientRect();
+    return { word: getComputedStyle(u.querySelector('.bl')).display !== 'none', settingsWord: getComputedStyle(document.querySelector('#btnSettings .bl')).display !== 'none', fits: bar.scrollWidth <= bar.clientWidth + 1 && se.right <= innerWidth }; });
+  for (const [lang, w, shows] of [['en', 1600, true], ['en', 1100, true], ['en', 1099, false], ['en', 900, false], ['pt-BR', 1100, true], ['pt-BR', 1099, false]]) {
+    p = await open(b, { extraInit: STUB(true), lang, w, h: 900 }); await p.waitForTimeout(400);
+    const r = await word(p);
+    ok(lang + ' ' + w + ' px: ' + (shows ? 'the word shows (Settings has only its icon)' : 'only the gold arrow') + ', and the bar fits', r.word === shows && !r.settingsWord && r.fits, r);
+    await p.context().close();
+  }
   await b.close(); console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAILED ' + e.message + '\n' + e.stack); process.exit(1); });

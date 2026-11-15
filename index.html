@@ -222,6 +222,8 @@
   #appVer { color: var(--dim2, #7f8bb0); font-size: 12px; font-variant-numeric: tabular-nums; padding: 0 4px; white-space: nowrap; }
   #btnUpdate { border-color: var(--gold, #ffd86b); color: var(--gold, #ffd86b); }
   #btnUpdate svg { stroke: currentColor; }
+  /* lang-72: the Update button keeps its word down to 1100 px (the other buttons lose theirs under 1700 px); below 1100 px it is only the gold arrow, so the bar still fits */
+  @media (min-width: 1100px) { #bar #btnUpdate .bl { display: inline; } }
   /* lang-70: Light mode (Settings, for slower PCs): no animations and no fades in 4horizon's own window (the game screens get the game's own reduced motion, light.js) */
   body.light *, body.light *::before, body.light *::after { animation: none !important; transition: none !important; }
 </style>
@@ -628,6 +630,7 @@
       toast(r && r.ok ? t('The page of the new version opens in your browser: download the installer there and run it.') : t('The page of the new version could not be opened.'), r && r.ok ? '' : 'warn');
     };
     readUpdate(); setInterval(readUpdate, 10 * 60e3); window.addEventListener('focus', readUpdate);
+    if (api.onUpdate) api.onUpdate(readUpdate);                 // lang-72: the main process tells as soon as GitHub has answered (about 20 s after the start)
     // lang-55: the window always starts with the game screens shown. The main process may still think economy mode is on (the window was loaded
     // again while it was on, after a change of Settings › Game panels): it is told, so that the games are not left muted and the minutes are not
     // counted as economy minutes while the screens are shown.
@@ -923,7 +926,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-71';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-72';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 

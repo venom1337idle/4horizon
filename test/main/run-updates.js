@@ -43,10 +43,32 @@ const answer = r => U._setFetch(() => (r instanceof Error ? Promise.reject(r) : 
   U.init();
   const H = electron._handlers, WIN = { sender: electron._WINDOW }, PANEL = { sender: { id: 'panel' } };
   ok('update:get and update:open answer the app window, never a game panel', H['update:get'](WIN) && H['update:get'](WIN).version === v && H['update:get'](PANEL) === null && H['update:open'](PANEL) === null);
+  // ---- lang-72: the window is told at once; every hour; again when the window comes back (at most once every 10 minutes)
+  const sent = [], dead = [], mkWin = (gone, list) => ({ isDestroyed: () => gone, webContents: { isDestroyed: () => false, send: c => list.push(c) } });
+  const oldAll = electron.BrowserWindow.getAllWindows; electron.BrowserWindow.getAllWindows = () => [mkWin(false, sent), mkWin(true, dead)];
+  let t = 1e12; U._setNow(() => t);
+  U._reset(); answer({ tag_name: 'v9.9.9', html_url: 'https://github.com/venom1337idle/4horizon/releases/tag/v9.9.9' }); await U.check();
+  ok('GitHub answered: the window is told at once ("update:changed"), a closed window is not', sent.length === 1 && sent[0] === 'update:changed' && dead.length === 0, [sent, dead]);
+  U._reset(); answer(new Error('offline')); await U.check();
+  ok('...also when the check failed (the window reads what is known)', sent.length === 2);
+  ok('checked every hour (was every 6 hours), again at least 10 minutes apart', U.EVERY_MS === 3600e3 && U.AGAIN_MS === 600e3, [U.EVERY_MS, U.AGAIN_MS]);
+  const focus = (electron._app['browser-window-focus'] || [])[0];
+  ok('the app listens for its window coming back (focused, or shown from the tray)', typeof focus === 'function');
+  U._reset(); let asked = 0; U._setFetch(() => { asked++; return Promise.resolve({ tag_name: 'v9.9.9' }); });
+  focus(); await new Promise(r => setTimeout(r, 20));
+  ok('...before the first check (20 s after the start): GitHub is not asked', asked === 0, asked);
+  await U.check(); asked = 0; t += 5 * 60e3; focus(); await new Promise(r => setTimeout(r, 20));
+  ok('...5 minutes after a check: not asked again', asked === 0, asked);
+  t += 6 * 60e3; focus(); focus(); await new Promise(r => setTimeout(r, 20));
+  ok('...11 minutes after: asked once (twice focused at once: still once)', asked === 1, asked);
+  let hold; U._setFetch(() => { asked++; return new Promise(r => { hold = r; }); });
+  t += 11 * 60e3; asked = 0; focus(); t += 11 * 60e3; focus(); hold({ tag_name: 'v9.9.9' }); await new Promise(r => setTimeout(r, 20));
+  ok('...never two questions at the same time', asked === 1, asked);
+  electron.BrowserWindow.getAllWindows = oldAll; U._setNow(() => Date.now());
   // ---- the report
   const D = require('./diag-core');
   const rep = o => D.analyse({ main: { meta: {}, updates: o }, ui: {} }).report;
-  ok('report: UPDATES, this version and the latest, "a NEWER version is out" when there is one', /UPDATES \(GitHub is asked for the latest release shortly after the start and every 6 hours\)\n  this version 1\.0\.2 · latest release 1\.0\.3 · a NEWER version is out \(the Update button shows\) · checked 5 s ago/.test(rep({ version: '1.0.2', latest: '1.0.3', available: true, checkedSec: 5 })));
+  ok('report: UPDATES, this version and the latest, "a NEWER version is out" when there is one', /UPDATES \(GitHub is asked for the latest release shortly after the start, every hour, and when the window comes back\)\n  this version 1\.0\.2 · latest release 1\.0\.3 · a NEWER version is out \(the Update button shows\) · checked 5 s ago/.test(rep({ version: '1.0.2', latest: '1.0.3', available: true, checkedSec: 5 })));
   ok('...up to date; not checked yet; a failed check with its reason', /latest release 1\.0\.2 · up to date/.test(rep({ version: '1.0.2', latest: '1.0.2', available: false, checkedSec: 60 })) && /latest release not known yet · up to date · checked not yet/.test(rep({ version: '1.0.2', latest: null, available: false, checkedSec: null })) && /last check failed: no answer in 10 s/.test(rep({ version: '1.0.2', latest: null, available: false, checkedSec: 30, error: 'no answer in 10 s' })));
   ok('an older app without updates.js: no UPDATES section', rep(undefined).indexOf('UPDATES') < 0);
   const dsrc = require('fs').readFileSync('diag.js', 'utf8');

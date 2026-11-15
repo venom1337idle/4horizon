@@ -13,7 +13,7 @@ const crypto = require('crypto');
 const electron = require('electron');
 const { app, ipcMain } = electron;
 
-const BUILD = 'lang-71';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
+const BUILD = 'lang-72';          // changes with each update of the app: the Diagnostics window shows it, so what is RUNNING can be told from what is on the disk
 const T0 = Date.now();
 const APP_DIR = __dirname;
 const MAX_ERRORS = 40, MAX_LOGS = 150, MAX_TYPES = 80, MAX_FIELDS = 120;
@@ -325,6 +325,8 @@ const FEATURES = [
   ['preload.js', 'settings backup bridge', 'settingsImport'],
   ['preload.js', 'Check the game bridge', 'diagSelfTest'],
   ['preload.js', 'update button bridge', 'updateGet'],
+  ['updates.js', 'the window is told as soon as GitHub answers, checked every hour and when the window comes back (lang-72)', 'update:changed'],
+  ['preload.js', 'update button told at once (lang-72)', 'onUpdate'],
   ['index.html', 'economy mode button', 'id="btnEco"'],
   ['gamenav.js', 'Centro, Market, Mochila, Hunts and Back to last hunt buttons', 'nav:hunt'],
   ['external.js', 'links open in the default browser', 'setWindowOpenHandler'],

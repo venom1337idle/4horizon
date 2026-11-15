@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('bridge', {
   economySet: (on) => ipcRenderer.invoke('economy:set', on),
   updateGet: () => ipcRenderer.invoke('update:get'),          // lang-58: this version, and whether a newer release is out
   updateOpen: () => ipcRenderer.invoke('update:open'),        // ...its page in the browser
+  onUpdate: (callback) => ipcRenderer.on('update:changed', () => callback()),          // lang-72: GitHub answered: read it again now
   navFavs: (n) => ipcRenderer.invoke('nav:favs', n),
   navFavGo: (n, item) => ipcRenderer.invoke('nav:favgo', n, item),
   diagProbe: () => ipcRenderer.invoke('diag:probe-login'),
