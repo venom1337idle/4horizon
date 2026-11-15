@@ -11,7 +11,7 @@ const PASS = o => { o = Object.assign({ title: 'Passe de Batalha', buy: 'Comprar
     <div class="tabs"><button class="tab" id="t1">Temporada</button><button class="tab" id="t2">Recompensas exclusivas</button><button class="tab">Como funciona</button></div>
     <div class="season"><h3>Temporada 1</h3><p>Faltam 50 PP para o nível 16</p>
       <div class="side" id="side" style="width:280px"><div class="card" id="prem">Passe Premium <b>✓ Ativo</b></div><div class="card" id="deluxe" style="cursor:pointer">Passe Premium Deluxe <b>R$ 79,90</b></div>
-        ${o.hasBuy ? (o.buyDiv ? `<div id="buy" style="cursor:pointer;padding:10px;background:#e3c06b;color:#000"><span>${o.buy}</span></div>` : `<button id="buy" class="gold" style="width:100%">${o.buy}</button>`) : ''}
+        ${o.hasBuy ? (o.buyDiv ? `<div id="buy" style="cursor:pointer;padding:10px;background:#e3c06b;color:#000"><span>${o.buy}</span></div>` : o.combo ? `<button id="buy" class="gold" style="width:100%"><span>${o.buy}</span><small>${o.combo}</small></button>` : `<button id="buy" class="gold" style="width:100%">${o.buy}</button>`) : ''}
         <button id="gift" style="width:100%"><span>\u{1F381}</span> <span>${o.gift}</span></button></div></div>
     <div class="rewards"><span>Grátis</span><span>Premium</span><button id="claim">Resgatar tudo</button><div class="r">Ultra Ball ×200</div></div></div>`; };
 const PAGE = o => `<!doctype html><meta charset=utf-8><body style="margin:0;background:#111;color:#eee;font:14px sans-serif">
@@ -56,6 +56,11 @@ const look = p => p.evaluate(() => { const st = id => { const b = document.getEl
   ok('only the gift button (no "Comprar passe", e.g. the pass was bought): it is hidden and the note is just before it', L.buy === null && L.gift.hidden && L.notes === 1 && L.next === 'gift', L);
   await p.evaluate(h => window.__redraw(h), PASS({ buyDiv: true })); await p.waitForTimeout(450); L = await look(p);
   ok('"Comprar passe" drawn as a box with a hand cursor (not a <button>): found and hidden all the same', L.buy.hidden && L.buy.kind === 'passbuy' && L.notes === 1 && (await press(p, 'buy')) === 0, L);
+  // lang-72: the game's button since 2026-11-14 has two lines, "Comprar passe" and "Combo por R$ 109,90" (their texts are glued: "Comprar passeCombo por...")
+  await p.evaluate(h => window.__redraw(h), PASS({ combo: 'Combo por R$ 109,90' })); await p.waitForTimeout(450); L = await look(p);
+  ok('"Comprar passe" with a second line "Combo por R$ 109,90" (lang-72): hidden, stopped, and the ONE note is where it was', L.buy.hidden && L.buy.kind === 'passbuy' && L.gift.hidden && L.notes === 1 && L.next === 'buy' && (await press(p, 'buy')) === 0, L);
+  await p.evaluate(h => window.__redraw(h), PASS({ title: 'Battle Pass', buy: 'Buy pass', combo: 'Combo for R$ 109.90', gift: 'Gift the Pass to a friend' })); await p.waitForTimeout(450); L = await look(p);
+  ok('...the same in English ("Buy pass" / "Combo for R$ 109.90")', L.buy.hidden && L.buy.kind === 'passbuy' && L.notes === 1 && (await press(p, 'buy')) === 0, L);
   await p.evaluate(() => { document.getElementById('root').innerHTML = ''; }); await p.waitForTimeout(450); L = await look(p);
   ok('the window is closed: no note is left anywhere', L.allNotes === 0, L);
   await p.evaluate(h => window.__redraw(h), PASS({ title: 'Battle Pass', buy: 'Buy pass', gift: 'Gift the Pass to a friend' })); await p.waitForTimeout(450); L = await look(p);

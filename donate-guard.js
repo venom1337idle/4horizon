@@ -9,6 +9,7 @@
 //     (the link asks for a new window, which external.js sends to the browser). The note follows the language of the app.
 // lang-70, the Battle Pass ("Passe de Batalha"): its two buttons that are paid with real money, "Comprar passe" and "Dar o Passe para um amigo", are hidden and stopped in the same way,
 // only inside the Battle Pass window, and ONE note takes their place: "To buy or gift the Battle Pass, visit the official [webpage]" (a box, as wide as the buttons were).
+// lang-72: also when "Comprar passe" has a second line ("Combo por R$ 109,90", the game's button since 2026-11-14).
 // The rewards ("Resgatar", "Resgatar tudo") and the rest of the window work as before.
 // Only that one button is touched: another "Doar" of the game (a guild, for example) is not in the box of the diamonds and works as before.
 // How: a small script is put in each game page (when it loads) and watches the page. Nothing is clicked in the game. The script uses no style sheet and no markup text (so a strict
@@ -67,6 +68,12 @@ function guardInPage(cfg) {
   };
   const clickableOf = el => ((el && el.closest) ? (el.closest(CLICKABLE) || pointerAncestor(el)) : null);
   const textOf = c => plain(c.value || c.textContent || (c.getAttribute && c.getAttribute('aria-label')) || '');
+  const spacedOf = c => {
+    if (c.value || !c.childNodes || !c.childNodes.length) return textOf(c);
+    const bits = [], w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) bits.push(n.nodeValue);
+    return plain(bits.join(' '));
+  };
   // the window of the diamond shop begins with its title
   function shopTitle(c) {
     let a = c;
@@ -109,7 +116,8 @@ function guardInPage(cfg) {
     if (PAY.test(t)) return 'pay';
     if (t.length <= 24 && WORD.test(t) && (diamondBox(c) || shopTitle(c))) return 'donate';
     if (TAB.test(t) && (shopTitle(c) || shopTabs(c))) return 'tab';
-    const p = lead(t);
+    // lang-72: the pieces of the label with a space between them ("Comprar passe" + "Combo por R$ 109,90" is not "comprar passecombo por...")
+    const p = lead(spacedOf(c));
     if (PASS_BUY.test(p) && passWindow(c)) return 'passbuy';
     if (PASS_GIFT.test(p) && passWindow(c)) return 'passgift';
     return null;
