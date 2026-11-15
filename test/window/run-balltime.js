@@ -17,7 +17,7 @@ const WHITE = 'rgb(255, 255, 255)', YELLOW = 'rgb(255, 216, 77)', RED = 'rgb(255
   const c1 = await card(fr, 0);
   ok('every card has the line; an account that sent nothing yet: "⏱ Auto-catch ball: —" in grey', c1 && c1.txt === '\u23f1 Auto-catch ball: \u2014' && /\bna\b/.test(c1.cls), c1);
   const lines = await fr.evaluate(() => Array.from(document.querySelectorAll('.acard')).map(c => c.querySelectorAll('.ln').length));
-  ok('the four cards have 4 lines under the name now (earnings, balls, shiny and potions, time left): 5 lines in all', JSON.stringify(lines) === '[4,4,4,4]', lines);
+  ok('the four cards have 5 lines under the name now (earnings, balls, shiny and potions, time left, best catch: lang-72): 6 lines in all', JSON.stringify(lines) === '[5,5,5,5]', lines);
 
   // the first count of the game: the pace is not known yet
   let c = await set(2, { autoBall: 'ultra-ball', autoBalls: 13000, startedAt: 2, elapsedMs: 2 * H, active: true, ballsByType: { 'ultra-ball': 500, 'luxury-ball': 3 } });

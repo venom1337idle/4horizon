@@ -30,6 +30,19 @@ def today_row_out(text):       # lang-71: the Today row of the Overview: from "T
             for j in range(i + 2, min(len(ls), i + 40)):
                 if ls[j] == 'Hunted': return '\n'.join(ls[:i] + ls[j + 2:])
     return text
+def best_card_out(text):       # lang-72: the best catch, the new last line of each card of the all-accounts Summary (after the \u23f1 line; tested by run-summary.js): "Best catch", then "\u2014" or (\u2726) the name, the tier, the IV
+    L = text.split('\n'); out = []; i = 0
+    while i < len(L):
+        if L[i] == 'Best catch' and i > 0 and L[i - 1].startswith('\u23f1'):
+            j = i + 1
+            if j < len(L) and L[j] == '\u2014': j += 1
+            else:
+                if j < len(L) and L[j] == '\u2726': j += 1
+                j += 1                                                            # the name
+                while j < len(L) and j < i + 6 and _re.match(r'^(.*\u00d7[\d.]+|\d+/\d+)$', L[j]): j += 1
+            i = j; continue
+        out.append(L[i]); i += 1
+    return '\n'.join(out)
 def drop_one(items, block):
     items = list(items)
     for x in block:
@@ -116,6 +129,8 @@ for k in g:
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not _re.match(r'^title: .+ · Lv \S+ · HP ', x)]; b = [x for x in b if not _re.match(r'^(title|aria-label): .+ · \d+%( · .*)?$', x)]; b = [x for x in b if not _re.match(r'^title: (Shiny captured|Great catch|Valuable drop|Evolved|New hunt unlocked|Egg hatched): ', x)]          # lang-40: the tooltips of the team
         if part == 'options' and k.startswith('dash:'): b = drop_one(b, CAP_SORT)
         if part == 'options' and k.startswith('win:'): b = drop_one(b, ['1', '2', '3', '4'])          # lang-49: Settings › Game panels (1 to 4)
+        if part == 'text' and k.startswith('dash:'): b = best_card_out(b)          # lang-72: the best catch of each card (before lastcatch_row, which looks for the first "Best catch")
+        if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not x.startswith('title: Best catch (')]          # ...and its tooltip
         if part == 'text' and k.startswith('dash:'): a = lastcatch_row(a); b = lastcatch_row(b)
         if part == 'text' and k.startswith('dash:'): b = today_row_out(b)          # lang-71: the Today row of the Overview (tested by run-today-row.js)
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not (x.startswith('title: This session: ') or all(_re.match(r'^[^:\n]+: .+$', l) or l.startswith('The shinies encountered') for l in x[len('title: '):].split('\n')) and '\n' in x)]          # lang-71: its tooltips (each account's share) and the shiny line of the cards

@@ -38,7 +38,7 @@ const side = fr => fr.evaluate(() => { const b = document.getElementById('sideBo
     return { tabs: g('#tabs', 'borderImageSource'), strip: g('.strip', 'borderImageSource'), head: g('.sec-h', 'borderImageSource'), card: g('.acard + .acard', 'borderImageSource'), cardW: g('.acard + .acard', 'borderTopWidth'), vsep: g('.duo .col:last-child', 'backgroundImage', '::before'), secBorder: g('.sec', 'borderBottomWidth') }; });
   ok('the information is separated by thin fading lines (under the tabs and the three numbers, between the accounts, between Supplies and Assets), made like the line under the titles, and not by hard lines', /linear-gradient/.test(fades.tabs) && /linear-gradient/.test(fades.strip) && /linear-gradient/.test(fades.card) && fades.cardW === '1px' && /linear-gradient/.test(fades.vsep) && fades.secBorder === '0px', fades);
   const cards = await fr.evaluate(() => Array.from(document.querySelectorAll('.acard')).map(c => { const cs = getComputedStyle(c); return { lines: c.querySelectorAll('.ln').length, bg: cs.backgroundImage + '|' + cs.backgroundColor, bw: cs.borderLeftWidth, txt: c.innerText.replace(/\s+/g, ' ') }; }));
-  ok('the four account cards are not boxes any more (no tile, no frame) and have 5 lines: name with money, what it earns, its balls, its shiny captures and potions, the time its auto-catch ball lasts (lang-70)', cards.length === 4 && cards.every(c => c.lines === 4 && /^none\|rgba\(0, 0, 0, 0\)$/.test(c.bg) && c.bw === '0px' && !/shiny|at shinies/i.test(c.txt)), cards);
+  ok('the four account cards are not boxes any more (no tile, no frame) and have 6 lines: name with money, what it earns, its balls, its shiny captures and potions, the time its auto-catch ball lasts (lang-70), its best catch (lang-72)', cards.length === 4 && cards.every(c => c.lines === 5 && /^none\|rgba\(0, 0, 0, 0\)$/.test(c.bg) && c.bw === '0px' && !/shiny|at shinies/i.test(c.txt)), cards);
   ok('...the balls have a line of their own, then the shiny captures and potions, and the last line is the time left of the auto-catch ball', cards.every(c => /\d+ cap.*\d+ balls.*✦ \d+ cap.*\d+ potions.*⏱ /.test(c.txt)), cards[1] && cards[1].txt);
   await p.context().close();
 
@@ -50,8 +50,8 @@ const side = fr => fr.evaluate(() => { const b = document.getElementById('sideBo
     ok('all four accounts show without scrolling in ' + name + ' (the Summary is ' + S.h + ' px tall' + (S.cls ? ', "' + S.cls.replace(/\s+/g, ' ') + '"' : '') + ')', S.cards === 4 && S.over <= 1 && S.lastBottom <= S.h + 1, S);
     await p.context().close();
   }
-  // it is tighter only when it has to be
-  p = await open(b, { w: 1500, h: 1080 }); await feedAll(p); await p.evaluate(() => document.getElementById('btnPanel').click()); await p.waitForTimeout(500); fr = p.dash(); await sel(fr, 'sum'); await p.waitForTimeout(150);
+  // it is tighter only when it has to be (lang-72: 1200 px, the cards have the best catch now and 1080 has only a few pixels to spare, too few for the taller fonts of Linux)
+  p = await open(b, { w: 1500, h: 1200 }); await feedAll(p); await p.evaluate(() => document.getElementById('btnPanel').click()); await p.waitForTimeout(500); fr = p.dash(); await sel(fr, 'sum'); await p.waitForTimeout(150);
   await p.s(2, { shinyThrown: 3, shinyCaught: 1, throws: 120, throwsMatched: 119, dexShinyBalls: 21, dexShinySpecies: 1, dexOpened: 3, shinyThrownBy: { 'luxury-ball': 3 } });
   await p.s(3, { shinyThrown: 0, shinyCaught: 0, throws: 50, throwsMatched: 50, dexShinyBalls: 0, dexShinySpecies: 0, dexOpened: 0, shinyThrownBy: {} });
   await p.waitForTimeout(400); await sel(fr, 'sum'); await p.waitForTimeout(150);
