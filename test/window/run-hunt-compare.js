@@ -21,7 +21,7 @@ const view = p => D(p).evaluate(() => {
   return { has: !!btn, title: sec ? sec.querySelector('.sec-h').textContent : '', btn: btn ? btn.textContent.replace(/\s+/g, ' ').trim() : '', expanded: btn ? btn.getAttribute('aria-expanded') : null, thinBtn: btn ? btn.classList.contains('thin') : null,
     head: sec ? Array.from(sec.querySelectorAll('th')).map(x => x.textContent) : [], rows: sec ? Array.from(sec.querySelectorAll('tbody tr')).map(tr => Array.from(tr.children).map(td => td.textContent.trim())) : [],
     open: !menu.classList.contains('hidden'), items: items, names: items.map(i => i.nm), modes: Array.from(menu.querySelectorAll('[data-rank]')).map(b => b.textContent + (b.classList.contains('on') ? '*' : '')),
-    views: Array.from(menu.querySelectorAll('[data-view]')).map(b => b.textContent + (b.classList.contains('on') ? '*' : '')),
+    views: Array.from(menu.querySelectorAll('[data-cmpview]')).map(b => b.textContent + (b.classList.contains('on') ? '*' : '')),
     heads: Array.from(menu.querySelectorAll('.cm-h')).map(h => h.textContent), note: (menu.querySelector('.cm-note') || {}).textContent || '', empty: (menu.querySelector('.cm-empty') || {}).textContent || '',
     menuBox: { top: Math.round(mr.top), bottom: Math.round(mr.bottom), left: Math.round(mr.left), right: Math.round(mr.right) }, sideBox: { top: Math.round(side.top), bottom: Math.round(side.bottom), left: Math.round(side.left), right: Math.round(side.right) },
     btnBox: br ? { top: Math.round(br.top), bottom: Math.round(br.bottom), left: Math.round(br.left), right: Math.round(br.right) } : null, menuScroll: menu.scrollHeight > menu.clientHeight + 1, saved: localStorage.getItem('4h.summary') };
@@ -79,7 +79,7 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   ok('...a visit under 30 min (E, 10 min) is marked ○, says why on hover, and the note under the list explains the mark', v.items[2].thin && /○/.test(v.items[2].sub) && /Only 10 min on this hunt so far/.test(v.items[2].title) && /Under 30 min on this hunt: the average can still change a lot\./.test(v.note), v);
   ok('...the list is inside the Summary panel and does not cover the button', v.menuBox.left >= v.sideBox.left && v.menuBox.right <= v.sideBox.right && v.menuBox.top >= v.sideBox.top && v.menuBox.bottom <= v.sideBox.bottom && (v.menuBox.top >= v.btnBox.bottom || v.menuBox.bottom <= v.btnBox.top), [v.menuBox, v.sideBox, v.btnBox]);
   // ---- Best 5: $ first
-  await clickAt(p, '#cmpMenu [data-view="best"]'); v = await view(p);
+  await clickAt(p, '#cmpMenu [data-cmpview="best"]'); v = await view(p);
   ok('"Best 5": the list stays open, "Rank by" $ / XP / $+XP ($ chosen at first), then the 5 best by gold per hour', v.open && v.views.join() === 'Last 5,Best 5*' && v.modes.join() === '$*,XP,$+XP' && v.heads.join('|') === 'Rank by|Best 5 by gold per hour', v);
   ok('...best 5 by $/h, best first: E (900K), B (300K), C (200K), A (140K: 20 min at 100K and 40 min at 160K, weighted by time), G (120K); F (50K) is 6th, not shown', v.names.join() === 'Hunt E,Hunt B,Hunt C,Hunt A,Hunt G' && v.items[0].val === '+900K/h' && v.items[3].val === '+140K/h' && v.items.map(i => i.rk).join() === '#1,#2,#3,#4,#5' && v.items.every(i => i.kind === 'best'), v.items);
   ok('...each with its time and visits: A "1h 00m · 2 visits", B "40 min · 1 visit"', v.items[3].sub === '1h 00m · 2 visits' && v.items[1].sub === '40 min · 1 visit', v.items.map(i => i.sub));
@@ -105,12 +105,12 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   ok('...it stays chosen when new numbers come (and the arrows follow them)', v.btn === '#3 Hunt A · 1h 00m' && JSON.stringify(v.rows) === JSON.stringify([['Gold/h', '+140K', '+130K ▼'], ['XP/h', '1.2M', '1M ▼'], ['Kills/h', '513', '500 ▼']]), v.rows);
   await clickAt(p, '#cmpBtn'); await clickAt(p, '#cmpMenu [data-rank="gold"]'); v = await view(p);
   ok('...changing the ranking keeps the hunt chosen, with its new place (A is #4 by $)', v.open && v.btn === '#4 Hunt A · 1h 00m' && v.items.find(i => i.nm === 'Hunt A').sel, v);
-  await clickAt(p, '#cmpMenu [data-view="last"]'); v = await view(p);
+  await clickAt(p, '#cmpMenu [data-cmpview="last"]'); v = await view(p);
   ok('...in "Last 5" a hunt of the best 5 that is chosen is not marked there (a visit is another thing)', v.open && v.items.every(i => !i.sel), v.items);
-  await clickAt(p, '#cmpMenu [data-view="best"]');
+  await clickAt(p, '#cmpMenu [data-cmpview="best"]');
   await clickItem(p, 'Hunt E'); v = await view(p);
   ok('choosing a hunt under 30 min (E): the button carries the mark ○', v.btn === '#1 Hunt E · 10 min ○' && v.thinBtn, v.btn);
-  await clickAt(p, '#cmpBtn'); await clickAt(p, '#cmpMenu [data-view="last"]'); await clickItem(p, 'Hunt F'); v = await view(p);
+  await clickAt(p, '#cmpBtn'); await clickAt(p, '#cmpMenu [data-cmpview="last"]'); await clickItem(p, 'Hunt F'); v = await view(p);
   ok('choosing a visit of the last 5 (F, 2nd): "Comparison (last hunts)", "2 Hunt F · 45 min", "PREVIOUS", its own numbers', !v.open && v.title === 'Comparison (last hunts)' && v.btn === '2 Hunt F · 45 min' && v.head[1] === 'PREVIOUS' && v.rows[0][1] === '+50K', v);
   await clickAt(p, '#cmpBtn'); await clickItem(p, 'Hunt G'); v = await view(p);
   ok('choosing the first one (the previous hunt) goes back to the previous hunt', !v.open && v.title === 'Comparison (last hunts)' && v.btn === '1 Hunt G · 35 min' && v.head[1] === 'PREVIOUS', v);
@@ -131,7 +131,7 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   await pickTab(p, 0);
   // ---- the keyboard
   await D(p).evaluate(() => document.getElementById('cmpBtn').focus()); await p.keyboard.press('Enter'); await p.waitForTimeout(250);
-  const focused = () => D(p).evaluate(() => { const e = document.activeElement; return e && e.querySelector ? (e.querySelector('.nm') || {}).textContent || e.getAttribute('data-view') || e.id : null; });
+  const focused = () => D(p).evaluate(() => { const e = document.activeElement; return e && e.querySelector ? (e.querySelector('.nm') || {}).textContent || e.getAttribute('data-cmpview') || e.id : null; });
   let f = [await D(p).evaluate(() => !document.getElementById('cmpMenu').classList.contains('hidden')), await focused()];
   ok('keyboard: Enter on the button opens the list and puts the focus on the hunt shown (the previous hunt, G)', f[0] && f[1] === 'Hunt G', f);
   await p.keyboard.press('ArrowDown'); await p.keyboard.press('ArrowDown'); await p.waitForTimeout(100);
@@ -148,9 +148,9 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   ok('when the hunt H ends (a new session starts) it is kept with its last numbers and is now the previous hunt, first of the last 5 (8 min, marked ○): H, G, F, E, A', v.names.join() === 'Hunt H,Hunt G,Hunt F,Hunt E,Hunt A' && v.items[0].val === '+130K · 1M XP' && v.items[0].sub === '8 min ○ · previous hunt' && v.items[0].thin, v.items);
   ok('...the visit chosen before (E) stays chosen, now 4th', v.items[3].nm === 'Hunt E' && v.items[3].sel && v.btn === '4 Hunt E · 10 min ○', [v.btn, v.items.map(i => i.sel)]);
   ok('...a hunt that is also the one running now says so ("here now": A)', v.items.filter(i => /here now/.test(i.sub)).map(i => i.nm).join() === 'Hunt A', v.items.map(i => i.sub));
-  await clickAt(p, '#cmpMenu [data-view="best"]'); v = await view(p);
+  await clickAt(p, '#cmpMenu [data-cmpview="best"]'); v = await view(p);
   ok('...also in the best 5 (#5 by $: H, 130K, just under A; "here now": A)', v.items.some(i => i.nm === 'Hunt H' && i.val === '+130K/h' && i.rk === '#5' && i.thin) && v.items.filter(i => /here now/.test(i.sub)).map(i => i.nm).join() === 'Hunt A', v.items);
-  await clickAt(p, '#cmpMenu [data-view="last"]'); await p.keyboard.press('Escape');
+  await clickAt(p, '#cmpMenu [data-cmpview="last"]'); await p.keyboard.press('Escape');
   // ---- kept on this computer
   const before = await view(p);
   await D(p).evaluate(() => location.reload()); await p.waitForTimeout(2000); await pickTab(p, 0); await p.waitForTimeout(300);
@@ -188,9 +188,9 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   for (const s of [[201, 'Hunt P', 30, 100000, 900000, 500, 1], [202, 'Hunt P', 40, 60000, 700000, 300, 3], [203, 'Hunt P', 20, 90000, 1000000, 330, 3], [204, 'Hunt Q', 30, 80000, 600000, 400, 1], [205, 'Hunt R', 5, 70000, 500000, 350, 1]]) await sess(p, 2, ...s);
   await p.waitForTimeout(1400); await pickTab(p, 1); await clickAt(p, '#cmpBtn'); v = await view(p);
   ok('party: the last visits are Q, then P in a party of 3 (its two pieces, a reconnect, are ONE visit: 1h 00m, +70K weighted by time), then P alone, apart', v.names.join() === 'Hunt Q,Hunt P,Hunt P' && v.items[1].sub === '1h 00m · party of 3' && v.items[1].val === '+70K · 800K XP' && v.items[2].sub === '30 min' && v.items[2].val === '+100K · 900K XP', v.items);
-  await clickAt(p, '#cmpMenu [data-view="best"]'); v = await view(p);
+  await clickAt(p, '#cmpMenu [data-cmpview="best"]'); v = await view(p);
   ok('...in the best 5 the hunt in a party and the same hunt alone are two entries, the party one marked: P (100K, alone), Q (80K), P (70K, party of 3)', v.names.join() === 'Hunt P,Hunt Q,Hunt P' && v.items[0].sub === '30 min · 1 visit' && v.items[2].sub === '1h 00m · 2 visits · party of 3', v.items);
-  await clickItem(p, 'Hunt Q'); await clickAt(p, '#cmpBtn'); await clickAt(p, '#cmpMenu [data-view="last"]'); v = await view(p);
+  await clickItem(p, 'Hunt Q'); await clickAt(p, '#cmpBtn'); await clickAt(p, '#cmpMenu [data-cmpview="last"]'); v = await view(p);
   const pIdx = v.items.findIndex(i => /party of 3/.test(i.sub));
   await D(p).evaluate(i => document.querySelectorAll('#cmpMenu .cm-item')[i].click(), pIdx); await p.waitForTimeout(250); v = await view(p);
   ok('...chosen, the button says it too: "2 Hunt P · 1h 00m · party of 3"', v.btn === '2 Hunt P · 1h 00m · party of 3', v.btn);
@@ -204,13 +204,30 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   ok('no JavaScript errors (party)', p.errors.length === 0, p.errors);
   await p.context().close();
 
+  // ---- lang-72: with the Overview on screen (Panel and Simple), the switch Last 5 / Best 5 never hides the Overview (its buttons once shared the Overview tab's data-view)
+  p = await open(b, { w: 1700, h: 1000 });
+  await panelOn(p); await p.evaluate(() => { if (!ui.simple) document.getElementById('btnSimple').click(); }); await p.waitForTimeout(300);
+  await feed(p); await pickTab(p, 0);
+  const ov = () => D(p).evaluate(() => ({ shown: !document.getElementById('view-overview').classList.contains('hidden') && document.getElementById('view-overview').getBoundingClientRect().height > 100, tabOn: document.querySelector('#topTabs .vt').classList.contains('on') }));
+  ok('the Overview is on screen next to the Summary', (await ov()).shown, await ov());
+  await clickAt(p, '#cmpBtn'); await clickAt(p, '#cmpMenu [data-cmpview="best"]'); let o1 = await ov(); v = await view(p);
+  ok('...pressing "Best 5" switches the list and the Overview stays on screen, its tab still lit', v.open && v.views.join() === 'Last 5,Best 5*' && o1.shown && o1.tabOn, [o1, v.views]);
+  await clickAt(p, '#cmpMenu [data-cmpview="last"]'); o1 = await ov(); v = await view(p);
+  ok('...and so does pressing "Last 5"', v.views.join() === 'Last 5*,Best 5' && o1.shown && o1.tabOn, [o1, v.views]);
+  await clickItem(p, 'Hunt F'); o1 = await ov();
+  ok('...and choosing a hunt in the list', o1.shown && o1.tabOn, o1);
+  await D(p).evaluate(() => document.querySelector('#topTabs .vt').click()); o1 = await ov();
+  ok('...the Overview tab itself still works (pressed: the Overview stays)', o1.shown && o1.tabOn, o1);
+  ok('no JavaScript errors (Overview)', p.errors.length === 0, p.errors);
+  await p.context().close();
+
   // ---- a short window: the list fits in the Summary and scrolls
   p = await open(b, { w: 1300, h: 560 });
   await panelOn(p); await p.waitForTimeout(300);
   await feed(p); await pickTab(p, 0);
   await D(p).evaluate(() => { const e = document.getElementById('cmpBtn'); if (e) e.scrollIntoView({ block: 'end' }); }); await p.waitForTimeout(200);
   for (const vw of ['last', 'best']) {
-    await clickAt(p, '#cmpBtn'); if (vw === 'best') await clickAt(p, '#cmpMenu [data-view="best"]'); v = await view(p);
+    await clickAt(p, '#cmpBtn'); if (vw === 'best') await clickAt(p, '#cmpMenu [data-cmpview="best"]'); v = await view(p);
     ok('short window (560 px), ' + (vw === 'best' ? 'Best 5' : 'Last 5') + ': the list opens where there is room, stays inside the Summary panel and scrolls if needed, without covering the button', v.open && v.menuBox.top >= v.sideBox.top && v.menuBox.bottom <= v.sideBox.bottom && (v.menuBox.top >= v.btnBox.bottom || v.menuBox.bottom <= v.btnBox.top), v);
     await p.keyboard.press('Escape'); await p.waitForTimeout(150);
     ok('...opened with the mouse, Escape closes it at once (lang-72: the keyboard is put in the list; before, it was still outside the Summary)', !(await view(p)).open);
@@ -232,7 +249,7 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   ok('...the explanation ("Escolha com o que esta hunt é comparada ... grupo ... pelo menos 30 minutos ... 1 hora ou mais é o ideal")', T.shown && /^Escolha com o que esta hunt é comparada: uma das 5 últimas hunts/.test(T.text) && /feita em grupo fica marcada/.test(T.text) && /pelo menos 30 minutos numa hunt/.test(T.text) && /1 hora ou mais é o ideal/.test(T.text), T.text);
   await clickAt(p, '#cmpBtn'); v = await view(p);
   ok('...the list: "Últimas 5" / "5 melhores", "Últimas 5 hunts, da mais recente", "35 min · hunt anterior", the note', v.views.join() === 'Últimas 5*,5 melhores' && v.heads.join('|') === 'Últimas 5 hunts, da mais recente' && v.items[0].sub === '35 min · hunt anterior' && /^○ Menos de 30 min nesta hunt/.test(v.note), v);
-  await clickAt(p, '#cmpMenu [data-view="best"]'); v = await view(p);
+  await clickAt(p, '#cmpMenu [data-cmpview="best"]'); v = await view(p);
   ok('...the best 5: "Ordenar por", "5 melhores por gold por hora", "1h 00m · 2 visitas"', v.heads.join('|') === 'Ordenar por|5 melhores por gold por hora' && v.items[3].sub === '1h 00m · 2 visitas', v);
   await clickItem(p, 'Hunt A'); v = await view(p);
   ok('...the title and the column: "Comparação (melhores hunts)", "MÉDIA"', v.title === 'Comparação (melhores hunts)' && v.head[1] === 'MÉDIA', v);

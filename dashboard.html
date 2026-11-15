@@ -532,7 +532,7 @@ function cmpMenuHtml(a) {
     : mode === 'gold' && view === 'best' ? '<span class="' + signCls(s.goldH) + '">' + sgn(s.goldH) + '/h</span>'
     : '<span class="' + signCls(s.goldH) + '">' + sgn(s.goldH) + '</span> <span class="dim">&middot;</span> <span class="blue">' + fmt(s.xpH) + ' XP</span>';
   const radio = (attr, v, on, label) => '<button type="button" ' + attr + '="' + v + '" role="radio" aria-checked="' + on + '"' + (on ? ' class="on"' : '') + '>' + label + '</button>';
-  let h = '<div class="cm-modes cm-views" role="radiogroup" aria-label="' + t('Compare with') + '">' + radio('data-view', 'last', view === 'last', t('Last 5')) + radio('data-view', 'best', view === 'best', t('Best 5')) + '</div>';
+  let h = '<div class="cm-modes cm-views" role="radiogroup" aria-label="' + t('Compare with') + '">' + radio('data-cmpview', 'last', view === 'last', t('Last 5')) + radio('data-cmpview', 'best', view === 'best', t('Best 5')) + '</div>';
   let list;
   if (view === 'best') {
     h += '<div class="cm-h">' + t('Rank by') + '</div><div class="cm-modes" role="radiogroup" aria-label="' + t('Rank by') + '">' + radio('data-rank', 'gold', mode === 'gold', '$') + radio('data-rank', 'xp', mode === 'xp', 'XP') + radio('data-rank', 'both', mode === 'both', '$+XP') + '</div>';
@@ -621,8 +621,8 @@ document.addEventListener('click', e => {
   if (btn && e.detail === 0) { setCmpOpen(cmpOpen === null ? selected : null); if (cmpOpen !== null) { const f = document.querySelector('#cmpMenu .cm-item.sel') || document.querySelector('#cmpMenu .cm-item'); if (f) f.focus(); } return; }
   const rk = e.target.closest && e.target.closest('#cmpMenu [data-rank]');
   if (rk) { const m = rk.getAttribute('data-rank'); sumCfg.rank = m; saveSumCfg(); renderAll(); if (e.detail === 0) { const f = document.querySelector('#cmpMenu [data-rank="' + m + '"]'); if (f) f.focus(); } return; }
-  const vw = e.target.closest && e.target.closest('#cmpMenu [data-view]');          // lang-72: Last 5 / Best 5 (the list stays open)
-  if (vw) { const m = vw.getAttribute('data-view'); sumCfg.cmpView = m; saveSumCfg(); renderAll(); if (e.detail === 0) { const f = document.querySelector('#cmpMenu [data-view="' + m + '"]'); if (f) f.focus(); } return; }
+  const vw = e.target.closest && e.target.closest('#cmpMenu [data-cmpview]');          // lang-72: Last 5 / Best 5 (the list stays open)
+  if (vw) { const m = vw.getAttribute('data-cmpview'); sumCfg.cmpView = m; saveSumCfg(); renderAll(); if (e.detail === 0) { const f = document.querySelector('#cmpMenu [data-cmpview="' + m + '"]'); if (f) f.focus(); } return; }
   const it = e.target.closest && e.target.closest('#cmpMenu [data-cmp]');
   if (it && cmpOpen !== null) {
     const v = it.getAttribute('data-cmp'), kind = it.getAttribute('data-kind') === 'best' ? 'best' : 'last', first = huntVisits(accounts[cmpOpen])[0];
@@ -1398,7 +1398,7 @@ document.addEventListener('click', e => {
     if (sortState.key === k) sortState.dir = -sortState.dir; else { sortState.key = k; sortState.dir = (k === 'name' || k === 'pokemon' || k === 'hunt') ? 1 : -1; }
     drawTable(); return;
   }
-  const vt = e.target.closest && e.target.closest('[data-view]');
+  const vt = e.target.closest && e.target.closest('#topTabs [data-view]');          // (lang-72: only the tabs above the Overview; any other button with data-view hid the Overview)
   if (vt) {
     const v = vt.getAttribute('data-view');
     document.querySelectorAll('#topTabs .vt').forEach(b => b.classList.toggle('on', b === vt));
