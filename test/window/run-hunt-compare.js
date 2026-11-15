@@ -217,7 +217,8 @@ const panelOn = p => p.evaluate(() => { if (!ui.panel) document.getElementById('
   await clickItem(p, 'Hunt F'); o1 = await ov();
   ok('...and choosing a hunt in the list', o1.shown && o1.tabOn, o1);
   await D(p).evaluate(() => document.querySelector('#topTabs .vt').click()); o1 = await ov();
-  ok('...the Overview tab itself still works (pressed: the Overview stays)', o1.shown && o1.tabOn, o1);
+  await D(p).evaluate(() => document.querySelector('#topTabs .vt').click()); const o2 = await ov();
+  ok('...the Overview button itself still works (lang-72: pressed it folds the Overview away, pressed again it is back)', !o1.tabOn && o2.shown && o2.tabOn, [o1, o2]);
   ok('no JavaScript errors (Overview)', p.errors.length === 0, p.errors);
   await p.context().close();
 

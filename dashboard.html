@@ -211,24 +211,24 @@
   /* lang-71: the triangle of the top bar: gold while the bar is hidden, and a gold dot when a newer version is out (its Update button is in the hidden bar) */
   #btnSumBar { position: relative; } #btnSumBar.on { color: var(--gold); border-color: var(--gold); }
   #btnSumBar.dot::after { content: ''; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px rgba(227, 192, 107, .8); }
-  #sumSettings { position: absolute; top: 48px; left: 10px; right: 10px; z-index: 40; max-height: calc(100% - 62px); overflow-y: auto; padding: 10px 14px 12px; background: #0e1730; border: 1px solid var(--gold); border-radius: var(--r); box-shadow: 0 14px 34px rgba(0, 0, 0, .6); }
-  #sumSettings .ss-scope { font-size: 11px; color: var(--dim); margin: 0 0 4px; }
-  #sumSettings .ss-h { font: 700 10.5px/1 var(--serif); letter-spacing: .16em; color: var(--dim); text-transform: uppercase; margin: 12px 0 5px; padding-bottom: 5px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
-  #sumSettings .ss-row { display: flex; align-items: center; gap: 9px; padding: 4px 2px; font-size: 13px; cursor: pointer; color: var(--text, #e6ebf7); }
-  #sumSettings .ss-row:hover { background: rgba(255, 255, 255, .04); }
-  #sumSettings .ss-row .n { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
-  #sumSettings .ss-row.off .nm { color: var(--dim); }
-  #sumSettings .ss-row.zero .nm { color: #9aa6c4; }
-  #sumSettings .ss-row .nm .gone { font-size: 11px; color: var(--dim2, #6f7b99); }
-  #sumSettings .ss-cb { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; flex: none; margin: 0; border-radius: 3px; background: #e9edf5; border: 1px solid #9aa6bf; position: relative; cursor: pointer; }
-  #sumSettings .ss-cb:checked { background: #3fb86b; border-color: #3fb86b; }
-  #sumSettings .ss-cb:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
-  #sumSettings .ss-cb:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  #sumSettings select, #sumSettings input[type=number] { background: #0b1224; color: var(--text, #e6ebf7); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 8px; font: inherit; font-size: 12.5px; }
-  #sumSettings .ss-line { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 3px 2px; flex-wrap: wrap; }
-  #sumSettings input[type=number] { width: 92px; }
-  #sumSettings .ss-note { margin-top: 10px; font-size: 11px; line-height: 1.45; color: var(--dim); }
-  #sumSettings .ss-empty { font-size: 12px; color: var(--dim); padding: 4px 2px; }
+  :is(#sumSettings, #ovSettings) { position: absolute; top: 48px; left: 10px; right: 10px; z-index: 40; max-height: calc(100% - 62px); overflow-y: auto; padding: 10px 14px 12px; background: #0e1730; border: 1px solid var(--gold); border-radius: var(--r); box-shadow: 0 14px 34px rgba(0, 0, 0, .6); }
+  :is(#sumSettings, #ovSettings) .ss-scope { font-size: 11px; color: var(--dim); margin: 0 0 4px; }
+  :is(#sumSettings, #ovSettings) .ss-h { font: 700 10.5px/1 var(--serif); letter-spacing: .16em; color: var(--dim); text-transform: uppercase; margin: 12px 0 5px; padding-bottom: 5px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 80%) 1; }
+  :is(#sumSettings, #ovSettings) .ss-row { display: flex; align-items: center; gap: 9px; padding: 4px 2px; font-size: 13px; cursor: pointer; color: var(--text, #e6ebf7); }
+  :is(#sumSettings, #ovSettings) .ss-row:hover { background: rgba(255, 255, 255, .04); }
+  :is(#sumSettings, #ovSettings) .ss-row .n { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+  :is(#sumSettings, #ovSettings) .ss-row.off .nm { color: var(--dim); }
+  :is(#sumSettings, #ovSettings) .ss-row.zero .nm { color: #9aa6c4; }
+  :is(#sumSettings, #ovSettings) .ss-row .nm .gone { font-size: 11px; color: var(--dim2, #6f7b99); }
+  :is(#sumSettings, #ovSettings) .ss-cb { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; flex: none; margin: 0; border-radius: 3px; background: #e9edf5; border: 1px solid #9aa6bf; position: relative; cursor: pointer; }
+  :is(#sumSettings, #ovSettings) .ss-cb:checked { background: #3fb86b; border-color: #3fb86b; }
+  :is(#sumSettings, #ovSettings) .ss-cb:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  :is(#sumSettings, #ovSettings) .ss-cb:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  :is(#sumSettings, #ovSettings) select, :is(#sumSettings, #ovSettings) input[type=number] { background: #0b1224; color: var(--text, #e6ebf7); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 5px 8px; font: inherit; font-size: 12.5px; }
+  :is(#sumSettings, #ovSettings) .ss-line { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 3px 2px; flex-wrap: wrap; }
+  :is(#sumSettings, #ovSettings) input[type=number] { width: 92px; }
+  :is(#sumSettings, #ovSettings) .ss-note { margin-top: 10px; font-size: 11px; line-height: 1.45; color: var(--dim); }
+  :is(#sumSettings, #ovSettings) .ss-empty { font-size: 12px; color: var(--dim); padding: 4px 2px; }
   .acard .ln.balls { gap: 2px 6px; font-size: 11px; }
   .acard .ln.balls b { color: #fff; font-weight: 700; }
   .acard .ln.best { flex-wrap: nowrap; gap: 6px; white-space: nowrap; margin-top: 1px; line-height: 15px; font-size: 11.5px; } body.tightest .acard { padding: 1px 6px; } .acard .ln.best .bv { min-width: 0; overflow: hidden; text-overflow: ellipsis; }          /* lang-72: the best catch, always one line */
@@ -238,7 +238,12 @@
   .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 
   /* ---------- main column ---------- */
-  #mainCol { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #mainCol { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }          /* (relative: lang-72, the panel of the Overview's gear opens over it) */
+  /* lang-72: the gear beside "Overview" and what it opens (the same look as the Summary's), the parts it hides, and the line when everything is hidden */
+  #btnOvSettings { height: 32px; } #btnOvSettings.on { color: var(--gold); border-color: var(--gold); }
+  #ovSettings { top: 54px; left: 18px; right: auto; width: 290px; max-height: calc(100% - 68px); }
+  .ov-off { display: none !important; }
+  #ovEmpty { padding: 30px 6px; color: var(--dim); font-size: 13px; text-align: center; }
   #topTabs { display: flex; gap: 8px; padding: 14px 18px 0; align-items: center; }
   #topTabs .vt { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); color: var(--dim); padding: 7px 16px; border-radius: var(--r-sm); cursor: pointer;
                  font-family: var(--serif); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
@@ -355,14 +360,17 @@
 
   <section id="mainCol">
     <div id="topTabs">
-      <button class="vt on" data-view="overview">Overview</button>
+      <button class="vt on" data-view="overview" title="Hide the Overview, or show it again" aria-pressed="true">Overview</button>
+      <button class="icon-btn" id="btnOvSettings" title="Overview settings" aria-label="Overview settings" aria-expanded="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       <span class="sp"></span><span class="live" id="liveNote"></span>
     </div>
+    <div id="ovSettings" class="hidden" role="dialog" aria-label="Overview settings"></div>          <!-- lang-72: what the Overview shows (the gear beside "Overview") -->
     <div id="mainScroll">
       <div id="view-overview">
+        <div id="ovEmpty" class="hidden"></div>          <!-- lang-72: "Everything is hidden: use the gear to show it again" (filled when shown) -->
         <div id="todayRow" class="hidden"></div>
         <div class="kpis" id="kpis"></div>
-        <div class="card">
+        <div class="card" id="tableCard">
           <div class="h"><span>Per account &middot; click a header to sort, a row to open it in the summary</span><span class="grow"></span>
             <label style="letter-spacing:0;text-transform:none">Best catch:
               <select id="bestMode"><option value="iv">IV</option><option value="quality">Quality</option></select></label>
@@ -374,7 +382,7 @@
           <div class="eggs" id="eggGrid"></div>
         </div>
         <div class="split">
-        <div class="card">
+        <div class="card" id="capCard">
           <div class="h"><span>Latest captures &middot; all accounts</span></div>
           <div class="caps">
             <select id="capAcc"><option value="all">all</option></select>
@@ -664,11 +672,15 @@ const n0 = v => (typeof v === 'number' && isFinite(v)) ? v : 0;
 const gemImg = '<img class="gem" src="gem.png" alt="">';
 // the choices of the Summary (kept on this computer): the kinds of balls and potions that are NOT counted, the type of best catch, and from which price a drop is highlighted
 const SUMKEY = '4h.summary';
+// lang-72: the parts of the Overview, in their order on screen, that its gear can hide (key, element, name in the list)
+const OV_PARTS = [{ key: 'today', id: 'todayRow', name: () => t('Today (daily totals)') }, { key: 'live', id: 'kpis', name: () => t('Live totals (per hour)') }, { key: 'table', id: 'tableCard', name: () => t('Per account') },
+  { key: 'eggs', id: 'eggCard', name: () => t('Incubators') }, { key: 'caps', id: 'capCard', name: () => t('Latest captures') }, { key: 'high', id: 'todayCard', name: () => t('Today\u2019s highlights') }];
 const sumCfg = (() => {
   let o = {}; try { o = JSON.parse(localStorage.getItem(SUMKEY)) || {}; } catch (e) {}
   const off = {}; if (o.off && typeof o.off === 'object') Object.keys(o.off).slice(0, 60).forEach(k => { if (o.off[k] === true) off[String(k).slice(0, 40)] = true; });
   const tab = (o.tab === 'sum' || (Number.isInteger(o.tab) && o.tab >= 0 && o.tab <= 3)) ? o.tab : 'sum';
-  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold', cmpView: o.cmpView === 'best' ? 'best' : 'last' };          // (lang-72: cmpView, the list of the comparison)
+  const ovOff = {}; if (o.ovOff && typeof o.ovOff === 'object') OV_PARTS.forEach(p => { if (o.ovOff[p.key] === true) ovOff[p.key] = true; });          // lang-72: the parts of the Overview that are hidden
+  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold', cmpView: o.cmpView === 'best' ? 'best' : 'last', ovOff: ovOff, ovFold: o.ovFold === true };          // (lang-72: cmpView, the list of the comparison)
 })();
 let sumOpen = false;                                   // is the panel of the settings open
 const saveSumCfg = () => { try { localStorage.setItem(SUMKEY, JSON.stringify(sumCfg)); } catch (e) {} };
@@ -1000,7 +1012,10 @@ function drawKpis() {
     [active + ' / ' + (seen || accounts.length), 'pos', t('Active accounts')]
   ];
   document.getElementById('kpis').innerHTML = k.map(x => '<div class="kpi"><div class="v ' + x[1] + '">' + x[0] + '</div><div class="l">' + x[2] + '</div></div>').join('');
-  document.getElementById('liveNote').textContent = seen ? '' : t('Waiting for the game panels to send data\u2026');
+  drawLiveNote();
+}
+function drawLiveNote() {                                // (lang-72: also when the live totals are hidden by the Overview's gear)
+  document.getElementById('liveNote').textContent = accounts.some(a => a.live) ? '' : t('Waiting for the game panels to send data\u2026');
 }
 
 // lang-71: the Today row of the Overview: today's totals of every account (the daily history of the main process, sent by the window every 30 s: "today-totals").
@@ -1381,12 +1396,39 @@ function renderAll() {
   drawTabs();
   drawLock(); drawBar();
   drawSide();
-  drawKpis();
-  try { drawTodayRow(); } catch (e) { diagNote('today row: ' + (e && e.message)); }
-  drawTable();
-  drawEggs();
-  drawCaptures();
-  drawToday();
+  // lang-72: a part of the Overview that its gear hides is not drawn either (what is kept goes on, see keepRecords); it is drawn at once when it is shown again
+  if (ovDraw('live')) drawKpis(); else drawLiveNote();
+  if (ovDraw('today')) { try { drawTodayRow(); } catch (e) { diagNote('today row: ' + (e && e.message)); } }
+  if (ovDraw('table')) drawTable();
+  if (ovDraw('eggs')) drawEggs();
+  if (ovDraw('caps')) drawCaptures();
+  if (ovDraw('high')) drawToday();
+  applyOv();
+}
+// lang-72: the gear beside "Overview": the parts it shows, and one line when nothing is left on screen (the incubators count only while an account is breeding).
+// The "Overview" button folds the whole Overview away and unfolds it (sumCfg.ovFold, kept): the gear's choices are not touched, they are what comes back.
+function ovShow(k) { return !sumCfg.ovOff[k]; }          // (functions: renderAll may run before the lines below)
+function ovDraw(k) { return !sumCfg.ovFold && ovShow(k); }
+function applyOv() {
+  let any = false;
+  OV_PARTS.forEach(p => { const el = document.getElementById(p.id); if (!el) return; el.classList.toggle('ov-off', !ovDraw(p.key)); if (ovDraw(p.key) && !el.classList.contains('hidden')) any = true; });
+  const e = document.getElementById('ovEmpty'); e.classList.toggle('hidden', any);
+  if (!any) { const s = sumCfg.ovFold ? t('Hidden: press Overview to show it again') : t('Everything is hidden: use the gear to show it again'); if (e.textContent !== s) e.textContent = s; }
+  const b = document.querySelector('#topTabs .vt'); if (b) { b.classList.toggle('on', !sumCfg.ovFold); b.setAttribute('aria-pressed', String(!sumCfg.ovFold)); }
+}
+var ovOpen = false;                                      // (var: the Summary's gear closes this panel, and may run first)
+function drawOvSettings() {
+  document.getElementById('ovSettings').innerHTML = '<div class="ss-h">' + t('Show in the Overview') + '</div>' +
+    OV_PARTS.map(p => '<label class="ss-row' + (ovShow(p.key) ? '' : ' off') + '"><input type="checkbox" class="ss-cb" data-ov="' + p.key + '"' + (ovShow(p.key) ? ' checked' : '') + '><span class="nm">' + esc(p.name()) + '</span></label>').join('') +
+    '<div class="ss-note">' + t('Only the Overview uses these choices. The incubators show only while an account is breeding.') + '</div>';
+}
+function setOvOpen(v) {
+  ovOpen = !!v;
+  if (ovOpen && sumOpen) setSumOpen(false);
+  const b = document.getElementById('btnOvSettings');
+  document.getElementById('ovSettings').classList.toggle('hidden', !ovOpen);
+  b.classList.toggle('on', ovOpen); b.setAttribute('aria-expanded', String(ovOpen));
+  if (ovOpen) drawOvSettings();
 }
 
 document.addEventListener('click', e => {
@@ -1398,12 +1440,9 @@ document.addEventListener('click', e => {
     if (sortState.key === k) sortState.dir = -sortState.dir; else { sortState.key = k; sortState.dir = (k === 'name' || k === 'pokemon' || k === 'hunt') ? 1 : -1; }
     drawTable(); return;
   }
-  const vt = e.target.closest && e.target.closest('#topTabs [data-view]');          // (lang-72: only the tabs above the Overview; any other button with data-view hid the Overview)
-  if (vt) {
-    const v = vt.getAttribute('data-view');
-    document.querySelectorAll('#topTabs .vt').forEach(b => b.classList.toggle('on', b === vt));
-    ['overview'].forEach(x => document.getElementById('view-' + x).classList.toggle('hidden', x !== v));
-  }
+  // lang-72: the "Overview" button folds the Overview away or unfolds it (only this button: another button with data-view once hid the Overview by mistake)
+  const vt = e.target.closest && e.target.closest('#topTabs [data-view="overview"]');
+  if (vt) { sumCfg.ovFold = !sumCfg.ovFold; saveSumCfg(); renderAll(); }
 });
 // ---------------------------------------------------------------------------------------------------------------
 // the settings of the Summary (the gear): the kinds of balls and potions that are added up, the type of best catch, the price from which a drop is highlighted
@@ -1439,6 +1478,7 @@ function drawSumSettings() {
 }
 function setSumOpen(v) {
   sumOpen = !!v;
+  if (sumOpen && ovOpen) setOvOpen(false);          // (lang-72: one panel of settings at a time)
   document.getElementById('sumSettings').classList.toggle('hidden', !sumOpen);
   document.getElementById('btnSumSettings').classList.toggle('on', sumOpen);
   if (sumOpen) drawSumSettings();
@@ -1491,6 +1531,17 @@ document.getElementById('sumSettings').addEventListener('change', e => {
   }
 });
 document.getElementById('bestMode').onchange = e => setBestMode(e.target.value, true);
+// lang-72: the Overview's gear: opened and closed like the Summary's (a click outside, Escape); a box ticked or unticked shows or hides that part at once, and is kept
+document.getElementById('btnOvSettings').onclick = e => { e.stopPropagation(); setOvOpen(!ovOpen); };
+document.addEventListener('click', e => { if (ovOpen && !document.getElementById('ovSettings').contains(e.target) && !document.getElementById('btnOvSettings').contains(e.target)) setOvOpen(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ovOpen) { setOvOpen(false); document.getElementById('btnOvSettings').focus(); } });
+document.getElementById('ovSettings').addEventListener('change', e => {
+  const el = e.target, k = el.getAttribute && el.getAttribute('data-ov');
+  if (!k || !OV_PARTS.some(p => p.key === k)) return;
+  if (el.checked) delete sumCfg.ovOff[k]; else sumCfg.ovOff[k] = true;
+  const row = el.closest('.ss-row'); if (row) row.classList.toggle('off', !el.checked);
+  saveSumCfg(); renderAll();
+});
 setTimeout(() => { if (sumCfg.best !== bestMode) setBestMode(sumCfg.best, false); }, 0);          // (after live.js has added its third option)
 document.getElementById('capAcc').onchange = e => { capFilter.acc = e.target.value; drawCaptures(); };
 document.getElementById('capSearch').oninput = e => { capFilter.text = e.target.value.trim().toLowerCase(); drawCaptures(); };

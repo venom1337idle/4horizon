@@ -131,6 +131,7 @@ for k in g:
         if part == 'options' and k.startswith('win:'): b = drop_one(b, ['1', '2', '3', '4'])          # lang-49: Settings › Game panels (1 to 4)
         if part == 'text' and k.startswith('dash:'): b = best_card_out(b)          # lang-72: the best catch of each card (before lastcatch_row, which looks for the first "Best catch")
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not x.startswith('title: Best catch (')]          # ...and its tooltip
+        if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if x not in ('aria-label: Overview settings', 'title: Overview settings', 'title: Hide the Overview, or show it again')]          # lang-72: the gear beside "Overview" (tested by run-overview-settings.js)
         if part == 'text' and k.startswith('dash:'): a = lastcatch_row(a); b = lastcatch_row(b)
         if part == 'text' and k.startswith('dash:'): b = today_row_out(b)          # lang-71: the Today row of the Overview (tested by run-today-row.js)
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not (x.startswith('title: This session: ') or all(_re.match(r'^[^:\n]+: .+$', l) or l.startswith('The shinies encountered') for l in x[len('title: '):].split('\n')) and '\n' in x)]          # lang-71: its tooltips (each account's share) and the shiny line of the cards
