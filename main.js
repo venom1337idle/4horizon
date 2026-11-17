@@ -1,5 +1,8 @@
 const { app, BrowserWindow, Tray, Menu, session } = require('electron');
-app.setAppUserModelId('4horizon');      // its own identity for Windows: its own taskbar button and icon, and "4horizon" on the notifications
+// lang-73: on a Mac (people running it from the source with npm start: there is no Mac installer) the Windows-only calls below are skipped,
+// the app keeps a small menu (copy and paste need it there) and the Dock icon brings the window back
+const isMac = process.platform === 'darwin';
+if (!isMac && typeof app.setAppUserModelId === 'function') app.setAppUserModelId('4horizon');      // its own identity for Windows: its own taskbar button and icon, and "4horizon" on the notifications
 
 // GPU acceleration (Settings › Disable GPU acceleration): must be switched off BEFORE the app is ready, so gpu.js reads settings.json itself
 // (settings.js is not started yet). Users with visual glitches (artifacts on hover/screenshot) can turn it off. It never throws.
@@ -47,7 +50,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     }
   });
-  win.setIcon(path.join(__dirname, 'icon.ico'));      // the green bulb, also on the taskbar button
+  if (typeof win.setIcon === 'function' && !isMac) win.setIcon(path.join(__dirname, 'icon.ico'));      // the green bulb, also on the taskbar button (lang-73: setIcon is Windows and Linux only: on a Mac it stopped the app at the start)
 
   // lang-71: Ctrl+B shows or hides the top bar, and F11 turns full screen on and off, wherever the keyboard is (the window, the Summary, a game screen).
   // Only these two keys are taken from the page. (F11 came with Electron's own menu, which is removed: see app.whenReady below.)
@@ -115,13 +118,16 @@ function createTray() {
 app.whenReady().then(() => {
   // lang-71: no File / Edit / View / Window menu. Its shortcuts went with it (Ctrl+R reloaded all four games at once, Ctrl+Shift+I, Ctrl+W, the zoom of the whole window);
   // F11 is kept by barKey above. Copy, paste, cut and select all in the game's fields are the browser's own and work without it.
-  try { Menu.setApplicationMenu(null); } catch (e) {}
+  // lang-73: on a Mac, Cmd+C / Cmd+V / Cmd+X / Cmd+A and Cmd+Q only work through the menu, so a Mac keeps the app menu and Edit (nothing else)
+  try { if (isMac) Menu.setApplicationMenu(Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }])); else Menu.setApplicationMenu(null); } catch (e) {}
   loadSpecies();
   createWindow();
   createTray();
 });
 
 app.on('before-quit', () => { isQuitting = true; });
+// lang-73: a Mac: a click on the Dock icon brings the window back (closing it only hides it, as on Windows)
+app.on('activate', () => { if (win && !win.isDestroyed()) { win.show(); win.focus(); } });
 
 
 
