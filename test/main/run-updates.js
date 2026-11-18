@@ -33,9 +33,28 @@ const answer = r => U._setFetch(() => (r instanceof Error ? Promise.reject(r) : 
   ok('...nor one with quotes or spaces in it', (await U.check()).url === 'https://github.com/venom1337idle/4horizon/releases/latest');
   ok('the address asked is GitHub\u2019s latest release of venom1337idle/4horizon', U.API === 'https://api.github.com/repos/venom1337idle/4horizon/releases/latest');
   // ---- opening the page
+  U._setPlatform(() => 'win32');
   U._reset(); answer({ tag_name: 'v9.9.9', html_url: 'https://github.com/venom1337idle/4horizon/releases/tag/v9.9.9' }); await U.check();
   let r = U.open();
-  ok('Update pressed: the release page opens in the browser', r.ok === true && opened[opened.length - 1] === 'https://github.com/venom1337idle/4horizon/releases/tag/v9.9.9', [r, opened]);
+  ok('Update pressed (no installer in the answer): the release page opens in the browser, and only it', r.ok === true && r.installer === false && opened[opened.length - 1] === 'https://github.com/venom1337idle/4horizon/releases/tag/v9.9.9' && U.info().installer === false && U.info().installerFound === false, [r, opened]);
+  // ---- lang-73: the installer's own link (Windows): the page, then the installer
+  const EXE = 'https://github.com/venom1337idle/4horizon/releases/download/v9.9.9/4horizon-Setup-9.9.9.exe', PG = 'https://github.com/venom1337idle/4horizon/releases/tag/v9.9.9';
+  const REL = assets => ({ tag_name: 'v9.9.9', html_url: PG, assets: assets });
+  const GOOD = [{ name: '4horizon-Setup-9.9.9.exe.blockmap', browser_download_url: EXE + '.blockmap' }, { name: 'latest.yml', browser_download_url: 'https://github.com/venom1337idle/4horizon/releases/download/v9.9.9/latest.yml' }, { name: '4horizon-Setup-9.9.9.exe', browser_download_url: EXE }];
+  U._reset(); answer(REL(GOOD)); await U.check(); let n0 = opened.length; r = U.open();
+  ok('with the installer in the answer (among the blockmap and latest.yml): Update opens the page, THEN the installer link (the browser downloads it)', r.ok === true && r.installer === true && opened.length === n0 + 2 && opened[n0] === PG && opened[n0 + 1] === EXE && U.info().installer === true && U.info().installerFound === true, [r, opened.slice(n0)]);
+  ok('installerOf: only the asset named exactly "4horizon-Setup-<version>.exe"', U.installerOf(REL(GOOD), '9.9.9') === EXE && U.installerOf(REL(GOOD), '9.9.8') === null && U.installerOf(REL([{ name: '4horizon-Setup-9.9.9.exe.blockmap', browser_download_url: EXE + '.blockmap' }]), '9.9.9') === null && U.installerOf(REL([{ name: '4horizon-setup-9.9.9.EXE', browser_download_url: EXE }]), '9.9.9') === null);
+  ok('...and only from this repository\u2019s releases/download/ address (another site, another repository, a page address, odd characters: never)', [
+    'https://evil.example/4horizon-Setup-9.9.9.exe', 'https://github.com/someone/4horizon/releases/download/v9.9.9/4horizon-Setup-9.9.9.exe', 'https://github.com/venom1337idle/4horizon/releases/tag/v9.9.9/4horizon-Setup-9.9.9.exe',
+    'https://github.com/venom1337idle/4horizon/releases/download/v9.9.9/4horizon-Setup-9.9.9.exe"', 'https://github.com/venom1337idle/4horizon/releases/download/v9.9.9/x/../4horizon-Setup-9.9.9.exe', 42, null
+  ].every(u => U.installerOf(REL([{ name: '4horizon-Setup-9.9.9.exe', browser_download_url: u }]), '9.9.9') === null) && U.installerOf(REL([{ name: '4horizon-Setup-9.9.9.exe', browser_download_url: 'https://github.com/venom1337idle/4horizon/releases/download/v9.9.9/other.exe' }]), '9.9.9') === null && U.installerOf(REL('nope'), '9.9.9') === null && U.installerOf(REL(null), '9.9.9') === null);
+  U._setPlatform(() => 'darwin'); U._reset(); answer(REL(GOOD)); await U.check(); n0 = opened.length; r = U.open();
+  ok('on a Mac (and Linux) the page only, even with the installer found: there is no installer for them', r.ok === true && r.installer === false && opened.length === n0 + 1 && opened[n0] === PG && U.info().installer === false && U.info().installerFound === true, [r, opened.slice(n0)]);
+  U._setPlatform(() => 'linux'); ok('...Linux too', (U.open(), U.info().installer === false));
+  U._setPlatform(() => 'win32');
+  const realOpen = electron.shell.openExternal; let calls = 0; electron.shell.openExternal = u => { calls++; if (calls === 2) throw new Error('no browser'); opened.push(u); return Promise.resolve(); };
+  U._reset(); answer(REL(GOOD)); await U.check(); r = U.open(); electron.shell.openExternal = realOpen;
+  ok('if the second opening (the installer) fails, the page still counts as opened, without the installer', r.ok === true && r.installer === false, r);
   U._reset(); answer({ tag_name: 'v0.0.1' }); await U.check(); const before = opened.length;
   r = U.open();
   ok('...with no newer version, nothing opens', r.ok === false && opened.length === before, r);
@@ -71,6 +90,11 @@ const answer = r => U._setFetch(() => (r instanceof Error ? Promise.reject(r) : 
   ok('report: UPDATES, this version and the latest, "a NEWER version is out" when there is one', /UPDATES \(GitHub is asked for the latest release shortly after the start, every hour, and when the window comes back\)\n  this version 1\.0\.2 · latest release 1\.0\.3 · a NEWER version is out \(the Update button shows\) · checked 5 s ago/.test(rep({ version: '1.0.2', latest: '1.0.3', available: true, checkedSec: 5 })));
   ok('...up to date; not checked yet; a failed check with its reason', /latest release 1\.0\.2 · up to date/.test(rep({ version: '1.0.2', latest: '1.0.2', available: false, checkedSec: 60 })) && /latest release not known yet · up to date · checked not yet/.test(rep({ version: '1.0.2', latest: null, available: false, checkedSec: null })) && /last check failed: no answer in 10 s/.test(rep({ version: '1.0.2', latest: null, available: false, checkedSec: 30, error: 'no answer in 10 s' })));
   ok('an older app without updates.js: no UPDATES section', rep(undefined).indexOf('UPDATES') < 0);
+  ok('report (lang-73): "installer link: found · the Update button also downloads it" (Windows), "not used here (not Windows)", "not found · the Update button opens the page only"; nothing before the first answer',
+    /installer link: found · the Update button also downloads it/.test(rep({ version: '1.0.2', latest: '1.0.3', available: true, checkedSec: 5, installer: true, installerFound: true })) &&
+    /installer link: found · not used here \(not Windows\)/.test(rep({ version: '1.0.2', latest: '1.0.3', available: true, checkedSec: 5, installer: false, installerFound: true })) &&
+    /installer link: not found · the Update button opens the page only/.test(rep({ version: '1.0.2', latest: '1.0.3', available: true, checkedSec: 5, installer: false, installerFound: false })) &&
+    !/installer link/.test(rep({ version: '1.0.2', latest: null, available: false, checkedSec: null, installer: false, installerFound: false })) && !/installer link/.test(rep({ version: '1.0.2', latest: '1.0.2', available: false, checkedSec: 5 })));
   const dsrc = require('fs').readFileSync('diag.js', 'utf8');
   ok('diag.js starts it and its self-check knows it (and the bridge in preload.js)', /require\('\.\/updates'\)\.init\(\)/.test(dsrc) && /\['updates\.js', 'checks GitHub/.test(dsrc) && /\['preload\.js', 'update button bridge', 'updateGet'\]/.test(dsrc) && /updateGet: \(\) => ipcRenderer\.invoke\('update:get'\)/.test(require('fs').readFileSync('preload.js', 'utf8')));
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

@@ -31,6 +31,9 @@ EXACT = {
   'Version {v} is out: opens its page, to download the new installer': 'A versão {v} saiu: abre a página dela, para baixar o instalador novo',
   'The page of the new version opens in your browser: download the installer there and run it.': 'A página da versão nova abre no seu navegador: baixe o instalador lá e abra.',
   'The page of the new version could not be opened.': 'Não foi possível abrir a página da versão nova.',
+  # lang-73: on Windows the Update button also starts the installer's download
+  'Version {v} is out: opens its page and downloads the new installer': 'A versão {v} saiu: abre a página dela e baixa o instalador novo',
+  'The page of the new version opens in your browser and the installer is downloading there: run it when it is done.': 'A página da versão nova abre no seu navegador e o instalador está baixando lá: abra quando terminar.',
   # lang-49: the number of game panels
   'Game panels': 'Painéis do jogo',
   'How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).': 'Quantas contas você joga ao mesmo tempo. Os painéis que não estão em uso nem são carregados. Mudar isso recarrega a janela (você continua conectado).',

@@ -3,9 +3,9 @@
 const { chromium } = require('./pw');
 const { open, feedAll } = require('./scen');
 let pass = 0, fail = 0; const ok = (l, c, x) => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (c ? '' : '   ' + String(JSON.stringify(x)).slice(0, 500))); c ? pass++ : fail++; };
-const STUB = avail => `window.__up = { avail: ${avail}, opened: 0 };
-  __bridgeObject.updateGet = async () => ({ version: '1.0.2', latest: window.__up.avail ? '1.0.3' : '1.0.2', available: window.__up.avail, url: 'https://github.com/venom1337idle/4horizon/releases/tag/v1.0.3' });
-  __bridgeObject.updateOpen = async () => { window.__up.opened++; return { ok: true }; };
+const STUB = (avail, installer) => `window.__up = { avail: ${avail}, installer: ${!!installer}, opened: 0 };
+  __bridgeObject.updateGet = async () => ({ version: '1.0.2', latest: window.__up.avail ? '1.0.3' : '1.0.2', available: window.__up.avail, installer: window.__up.installer, installerFound: window.__up.installer, url: 'https://github.com/venom1337idle/4horizon/releases/tag/v1.0.3' });
+  __bridgeObject.updateOpen = async () => { window.__up.opened++; return { ok: true, installer: window.__up.installer }; };
   __bridgeObject.accountsGet = async () => ({ encryption: true, autoLogin: false, rows: [1, 2, 3, 4].map(n => ({ n, name: 'trainer' + n, user: 'u' + n, hasPassword: true })) });`;
 const bar = p => p.evaluate(() => ({ ids: Array.from(document.querySelectorAll('#bar > button, #bar > span[id]')).map(x => x.id), ver: document.getElementById('appVer').textContent, upShown: getComputedStyle(document.getElementById('btnUpdate')).display !== 'none', upTitle: document.getElementById('btnUpdate').title, accInBar: !!document.querySelector('#bar #btnAccounts') }));
 
@@ -42,6 +42,19 @@ const bar = p => p.evaluate(() => ({ ids: Array.from(document.querySelectorAll('
   await p.evaluate(() => { window.__up.avail = false; window.dispatchEvent(new Event('focus')); }); await p.waitForTimeout(300);
   ok('when the app is up to date again (after updating), the button goes away', !(await bar(p)).upShown);
   ok('no JavaScript errors (update)', p.errors.length === 0, p.errors);
+  await p.context().close();
+  // ---- lang-73: on Windows the press also starts the installer's download: the tooltip and the message say so
+  p = await open(b, { extraInit: STUB(true, true) }); await p.waitForTimeout(400); s = await bar(p);
+  ok('with the installer link (Windows): the tooltip "Version 1.0.3 is out: opens its page and downloads the new installer"', s.upShown && s.upTitle === 'Version 1.0.3 is out: opens its page and downloads the new installer', s.upTitle);
+  await p.click('#btnUpdate'); await p.waitForTimeout(300);
+  const toastI = await p.evaluate(() => document.getElementById('toast').textContent);
+  ok('...pressed: "The page of the new version opens in your browser and the installer is downloading there: run it when it is done."', (await p.evaluate(() => window.__up.opened)) === 1 && toastI === 'The page of the new version opens in your browser and the installer is downloading there: run it when it is done.', toastI);
+  ok('no JavaScript errors (installer)', p.errors.length === 0, p.errors);
+  await p.context().close();
+  p = await open(b, { extraInit: STUB(true, true), lang: 'pt-BR' }); await p.waitForTimeout(400); s = await bar(p);
+  await p.click('#btnUpdate'); await p.waitForTimeout(300);
+  const toastP = await p.evaluate(() => document.getElementById('toast').textContent);
+  ok('...in Portuguese: "A versão 1.0.3 saiu: abre a página dela e baixa o instalador novo" and "...o instalador está baixando lá: abra quando terminar."', s.upTitle === 'A versão 1.0.3 saiu: abre a página dela e baixa o instalador novo' && toastP === 'A página da versão nova abre no seu navegador e o instalador está baixando lá: abra quando terminar.', [s.upTitle, toastP]);
   await p.context().close();
   // ---- an app without the bridge (older main process): no version, no button, no error
   p = await open(b, {}); await p.waitForTimeout(400); s = await bar(p);

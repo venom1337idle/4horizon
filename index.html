@@ -589,7 +589,7 @@
       document.getElementById('appVer').textContent = u.version ? 'v' + u.version : '';
       const b = document.getElementById('btnUpdate');
       b.classList.toggle('hidden', !u.available);
-      if (u.available) b.title = t('Version {v} is out: opens its page, to download the new installer', { v: u.latest });
+      if (u.available) b.title = u.installer ? t('Version {v} is out: opens its page and downloads the new installer', { v: u.latest }) : t('Version {v} is out: opens its page, to download the new installer', { v: u.latest });          // (lang-73: on Windows the installer\u2019s download starts too)
       sendBar();
     }
     // ---------- lang-67: Settings › Settings backup ----------
@@ -629,7 +629,7 @@
     };
     document.getElementById('btnUpdate').onclick = async () => {
       let r = null; try { r = api.updateOpen ? await api.updateOpen() : null; } catch (e) { r = null; }
-      toast(r && r.ok ? t('The page of the new version opens in your browser: download the installer there and run it.') : t('The page of the new version could not be opened.'), r && r.ok ? '' : 'warn');
+      toast(r && r.ok ? (r.installer ? t('The page of the new version opens in your browser and the installer is downloading there: run it when it is done.') : t('The page of the new version opens in your browser: download the installer there and run it.')) : t('The page of the new version could not be opened.'), r && r.ok ? '' : 'warn');
     };
     readUpdate(); setInterval(readUpdate, 10 * 60e3); window.addEventListener('focus', readUpdate);
     if (api.onUpdate) api.onUpdate(readUpdate);                 // lang-72: the main process tells as soon as GitHub has answered (about 20 s after the start)
