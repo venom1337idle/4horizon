@@ -251,7 +251,7 @@ async function probe(n, wc, opts) {
 // Closing the window only hides the app in the tray, so an update copied over the old files does nothing until the app is quit from the tray and started
 // again. These are the files whose version matters. Their fingerprints are taken when the app starts, and compared later.
 const WATCHED = ['main.js', 'preload.js', 'ws-reader.js', 'accounts.js', 'diag.js', 'diag-core.js', 'team.js', 'tidy.js', 'notify.js', 'history.js', 'schema.js', 'live.js',
-                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js', 'updates.js', 'selftest.js', 'backup.js', 'gpu.js', 'perf.js', 'light.js', 'shinyall.js', 'streamer.js'];
+                 'index.html', 'dashboard.html', 'history-ui.js', 'analyzer.js', 'external.js', 'donate-guard.js', 'gamenav.js', 'supplies.js', 'theme.js', 'theme.css', 'hunt-data.js', 'combat.js', 'i18n.js', 'i18n-pt.js', 'settings.js', 'economy.js', 'missions.js', 'lockdown.js', 'datadir.js', 'vault.js', 'updates.js', 'selftest.js', 'backup.js', 'gpu.js', 'perf.js', 'light.js', 'shinyall.js', 'streamer.js', 'clean.js'];
 const fingerprint = name => { try { const full = path.join(APP_DIR, name); if (!fs.existsSync(full)) return null; return crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex').slice(0, 16); } catch (e) { return null; } };
 let startPrints = null;
 function takePrints() { startPrints = {}; WATCHED.forEach(n => { startPrints[n] = fingerprint(n); }); }
@@ -328,6 +328,10 @@ const FEATURES = [
   ['updates.js', 'the window is told as soon as GitHub answers, checked every hour and when the window comes back (lang-72)', 'update:changed'],
   ['preload.js', 'update button told at once (lang-72)', 'onUpdate'],
   ['index.html', 'economy mode button', 'id="btnEco"'],
+  ['index.html', 'Settings › Grid, and the strip of mini screens beside an expanded screen (lang-73)', 'id="miniSel"'],
+  ['selftest.js', 'Check the game finds the boxes of the screen, for the clean mini screens (lang-73)', 'auto helper'],
+  ['clean.js', 'the clean mini screens: the game\'s boxes hidden while a screen is a mini (lang-73)', 'clean:set'],
+  ['preload.js', 'clean mini screens bridge (lang-73)', 'cleanSet'],
   ['gamenav.js', 'Centro, Market, Mochila, Hunts and Back to last hunt buttons', 'nav:hunt'],
   ['external.js', 'links open in the default browser', 'setWindowOpenHandler'],
   ['donate-guard.js', 'the + Doar button, the Diamantes tab and the pay button of the diamond shop are blocked', 'guardInPage'],
@@ -500,6 +504,7 @@ function collect() {
   try { out.updates = require('./updates').info(); } catch (e) { out.updates = undefined; }          // this version, the latest release, when it was checked
   try { out.shinyAll = require('./shinyall').info(); } catch (e) { out.shinyAll = undefined; }          // lang-71: the shinies of all time (Perfil): which accounts have them, how old, counted since
   try { out.streamer = require('./streamer').info(); } catch (e) { out.streamer = undefined; }          // lang-71: Streamer mode
+  try { out.clean = require('./clean').info(); } catch (e) { out.clean = undefined; }          // lang-73: the clean mini screens (which panels are minis, and have their rules)
   try { out.light = require('./light').info(); } catch (e) { out.light = undefined; }          // lang-70: Light mode, and whether each panel got reduced motion
   try { out.gpu = require('./gpu').info(); } catch (e) { out.gpu = undefined; }          // 1.0.7: the graphics cards (maker, name, driver), the one in use, acceleration on or off
   try { out.perf = require('./perf').info(); } catch (e) { out.perf = undefined; }        // 1.0.7: CPU and memory over the last 24 hours (now, average, highest, stretches of high CPU, warnings)
@@ -523,6 +528,7 @@ function init() {
   try { require('./lockdown').init(); } catch (e) { error('lockdown', e); }          // first: the game panels get no permission and no other settings than the safe ones
   try { require('./settings').init(); } catch (e) { error('settings', e); }          // the language, and the answers to the window about it
   try { require('./streamer').init(); } catch (e) { error('streamer', e); }          // lang-71: Settings › Streamer mode (streamer:get / streamer:set), e-mails hidden in the game panels
+  try { require('./clean').init(); } catch (e) { error('clean', e); }          // lang-73: the clean mini screens (clean:set)
   try { require('./light').init(); } catch (e) { error('light', e); }                  // lang-70: Settings › Light mode (light:get / light:set), reduced motion in the game panels
   try { require('./gpu').init(); } catch (e) { error('gpu', e); }                    // 1.0.7: Settings › Disable GPU acceleration (gpu:get / gpu:set), and the graphics cards for the report
   try { require('./external').init(); } catch (e) { error('external', e); }

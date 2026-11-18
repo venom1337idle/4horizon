@@ -39,8 +39,27 @@ const HUNTS = `<div id="hp" style="position:fixed;left:22px;top:117px;width:1068
   ok('panel 4: a signed-out page is said to be signed out; its missing toolbar is not counted as a problem', P(4).signedIn === false && !info.problems.some(x => x.n === 4), [P(4), info.problems]);
   ok('panel 5: a page that does not answer: said so (after the time limit), no crash', (P(5).timeout || P(5).error) && info.problems.some(x => x.n === 5 && /did not answer/.test(x.what)));
   ok('the summary for the window: 5 panels, the Hunts panel was seen, 2 problems', s.huntsSeen === true && s.problems === 2, s);
+  // lang-73: the boxes of the game's screen (for the clean mini screens): the outermost box around a word that is only in it, described for the report
+  const SCREEN = page(menu(ALL) + GO_MARKET +
+    '<div id="card" class="player-card hud" style="position:fixed;left:14px;top:50px;width:300px;height:420px;background:#123"><div class="top"><b>VENOM</b> <span>Nv. 665</span></div><div class="team"><div class="team-h"><span>EQUIPE 4/6</span> <span>Poder 53.183</span></div><div class="mon">Exeggutor</div></div></div>' +
+    '<div id="huntbox" class="hunt-info" style="position:fixed;right:14px;top:50px;width:290px;height:100px;background:#132"><div><span>Covil dos Trapinch</span> <span>Nv. 300</span></div><div><button>0,5×</button> <button>ABATES</button></div></div>' +
+    '<div id="chat" class="chat-panel" style="position:fixed;left:14px;bottom:14px;width:670px;height:280px;background:#213"><div class="tabs"><button>GERAL</button><button>DÚVIDAS</button></div><div class="log"><p>18:11 Itachi: Magikarp</p></div><div class="send"><input type="text" placeholder="Falar em Geral..."><button>Enviar</button></div></div>' +
+    '<div id="helper" class="auto-helper" style="position:fixed;right:14px;bottom:14px;width:310px;height:130px;background:#321"><div><span>AUTO HELPER</span></div><div><span>2.226</span> <span>29.578</span></div><div><span>Auto-Catch ligado</span> <button>Configurar</button></div></div>');
+  const p6 = await mk(SCREEN);
+  const r6 = await ST.run([{ n: 6, wc: { executeJavaScript: code => p6.evaluate(code) } }]); const B = ST.info().panels[0].boxes;
+  ok('the boxes of the screen are found from a word that is only in each: the player card (EQUIPE), the icon bar (Perfil), the hunt box (ABATES), the chat (its "Falar em…" box), the Auto Helper', B && ['team', 'bar', 'hunt', 'chat', 'helper'].every(k => Array.isArray(B[k]) && B[k].length >= 1), B);
+  ok('...each described by its outermost box: tag, id, classes, size, position ("div#card.player-card.hud 300x420@14,50 fixed"), then the box around it, then where the word was', /^div#card\.player-card\.hud 300x420@14,50 fixed$/.test(B.team[0]) && /^div#chat\.chat-panel 670x280@/.test(B.chat[0]) && /^div#helper\.auto-helper 310x130@/.test(B.helper[0]) && /^div#huntbox\.hunt-info 290x100@/.test(B.hunt[0]) && /^from span /.test(B.team[B.team.length - 1]) && /^from input /.test(B.chat[B.chat.length - 1]), B);
+  ok('...the climb stops before the whole page (never the body) and before a box that would hold another of them', [B.team, B.chat, B.helper, B.hunt, B.bar].every(c => !/^body/.test(c[0]) && !/1108x893/.test(c[0])), B);
+  const rep6 = D6 => D6.analyse({ main: { meta: {}, selftest: ST.info() }, ui: {} }).report;
+  const sec6 = (D => { const r = rep6(D); return r.slice(r.indexOf('GAME CHECK'), r.indexOf('\n\n', r.indexOf('GAME CHECK'))); })(require('./diag-core'));
+  ok('report: "boxes of the screen (for the clean mini screens): player card found · icon bar found · hunt box found · chat found · Auto Helper found", then one line per box with its chain', /boxes of the screen \(for the clean mini screens\): player card found · icon bar found · hunt box found · chat found · Auto Helper found/.test(sec6) && /\n        player card: div#card\.player-card\.hud 300x420@14,50 fixed ← /.test(sec6) && /\n        chat: div#chat\.chat-panel 670x280@/.test(sec6), sec6);
+  const p7 = await mk(page(menu(ALL)));
+  await ST.run([{ n: 7, wc: { executeJavaScript: code => p7.evaluate(code) } }]); const B7 = ST.info().panels[0].boxes, s7 = rep6(require('./diag-core'));
+  ok('a page without them (signed in, no chat, no card): "NOT FOUND" for each, nothing breaks, and it is not counted as a problem', B7 && !B7.team && !B7.chat && !B7.helper && !B7.hunt && B7.bar && /player card NOT FOUND · icon bar found · hunt box NOT FOUND · chat NOT FOUND · Auto Helper NOT FOUND/.test(s7) && ST.info().problems.length === 0, [B7, ST.info().problems]);
   const clicks = await Promise.all([1, 2, 3, 4].map(n => pages[n].evaluate(() => window.__clicks)));
-  ok('NOTHING was pressed or typed in any page', clicks.every(c => c === 0), clicks);
+  const clicks6 = await p6.evaluate(() => window.__clicks);
+  ok('NOTHING was pressed or typed in any page (the boxes probe reads only too)', clicks.every(c => c === 0) && clicks6 === 0, [clicks, clicks6]);
+  await ST.run(guests);          // (the results of the 5 panels again, for the report checks below)
   // the report
   const D = require('./diag-core');
   const rep = D.analyse({ main: { meta: {}, selftest: info }, ui: {} }).report, sec = rep.slice(rep.indexOf('GAME CHECK'), rep.indexOf('\n\n', rep.indexOf('GAME CHECK')));

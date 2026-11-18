@@ -129,6 +129,7 @@ for k in g:
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not _re.match(r'^title: .+ · Lv \S+ · HP ', x)]; b = [x for x in b if not _re.match(r'^(title|aria-label): .+ · \d+%( · .*)?$', x)]; b = [x for x in b if not _re.match(r'^title: (Shiny captured|Great catch|Valuable drop|Evolved|New hunt unlocked|Egg hatched): ', x)]          # lang-40: the tooltips of the team
         if part == 'options' and k.startswith('dash:'): b = drop_one(b, CAP_SORT)
         if part == 'options' and k.startswith('win:'): b = drop_one(b, ['1', '2', '3', '4'])          # lang-49: Settings › Game panels (1 to 4)
+        if part == 'options' and k.startswith('win:'): b = drop_one(b, ['On the right', 'Along the bottom', 'Across the bottom', 'Its own quarter'])          # lang-73: Settings › Grid (tested by run-grid.js)
         if part == 'text' and k.startswith('dash:'): b = best_card_out(b)          # lang-72: the best catch of each card (before lastcatch_row, which looks for the first "Best catch")
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if not x.startswith('title: Best catch (')]          # ...and its tooltip
         if part == 'attrs' and k.startswith('dash:'): b = [x for x in b if x not in ('aria-label: Overview settings', 'title: Overview settings', 'title: Hide the Overview, or show it again')]          # lang-72: the gear beside "Overview" (tested by run-overview-settings.js)

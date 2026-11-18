@@ -466,10 +466,25 @@
         if (p.error || p.timeout) { P('  ' + lab(Number(p.n)) + ': the page did not answer'); return; }
         const tb = p.toolbar || {};
         P('  ' + lab(Number(p.n)) + ': ' + (p.signedIn ? 'signed in' : 'SIGNED OUT') + ' \u00b7 toolbar: Hunts ' + icon(tb.hunts) + ', An\u00e1lise ' + icon(tb.analise) + ', Centro ' + icon(tb.centro) + ', Mochila ' + icon(tb.mochila) + ' \u00b7 "Ir ao Market" ' + (tb.market === 'hidden' ? 'yes (hidden)' : icon(tb.market)) + ' \u00b7 Hunt Analyzer ' + (p.analyzer === 'open' ? 'open' : 'closed'));
+        const bx = p.boxes;                                                 // lang-73: the boxes a clean mini screen will hide (where they are in the page)
+        if (bx && typeof bx === 'object') {
+          const names = { team: 'player card', bar: 'icon bar', hunt: 'hunt box', chat: 'chat', helper: 'Auto Helper' };
+          P('      boxes of the screen (for the clean mini screens): ' + Object.keys(names).map(k => names[k] + ' ' + (Array.isArray(bx[k]) && bx[k].length ? 'found' : 'NOT FOUND')).join(' \u00b7 ') + (bx.error ? ' \u00b7 error: ' + String(bx.error).slice(0, 60) : ''));
+          Object.keys(names).forEach(k => { if (Array.isArray(bx[k]) && bx[k].length) P('        ' + names[k] + ': ' + bx[k].slice(0, 3).map(s => String(s).slice(0, 120)).join(' \u2190 ')); });
+          if (typeof bx.barStyle === 'string' && bx.barStyle) P('        icon bar position: ' + bx.barStyle.slice(0, 200));
+        }
         const h = p.hunts;
         if (h) P('      Hunts panel open: search box yes \u00b7 region tabs ' + (h.regions && h.regions.length ? h.regions.join(', ') : 'NONE') + ' \u00b7 "Todos" ' + (h.todos ? 'yes' : 'NO') + ' \u00b7 "Todos os n\u00edveis" ' + (h.levels ? 'yes' : 'NO') + (h.weak ? ' \u00b7 "Fraco contra": ' + String(h.weak).slice(0, 20) : '') + ' \u00b7 cards ' + (Number(h.cards) || 0) + ' \u00b7 Ca\u00e7ar button ' + (h.cacar === 'found' ? 'yes' : 'none (no hunt chosen)'));
       });
       if (!pn.some(p => p.hunts)) P('  (no Hunts panel was open: open it on one account before "Check the game" to have it checked too)');
+      P();
+    }
+    if (main && main.clean && typeof main.clean === 'object') {          // lang-73: the clean mini screens
+      const C = main.clean, pn = Array.isArray(C.panels) ? C.panels : [], minis = Array.isArray(C.minis) ? C.minis : [];
+      P('CLEAN MINI SCREENS (while a game screen is a mini screen beside an expanded one, the game\u2019s boxes are hidden in it: the player card, the icon bar, the hunt box, the chat, the Auto Helper; nothing of the game is touched)');
+      const wantK = p => (p.mini ? 'mini' : p.big ? 'big' : null), isK = p => (p.kind || (p.clean ? 'mini' : null)), bad = pn.some(p => wantK(p) !== isK(p));
+      P('  minis now: ' + (minis.length ? minis.map(n => lab(Number(n))).join(', ') : 'none') + ' \u00b7 clean expanded screen: ' + (C.big ? lab(Number(C.big)) : 'none') + ' \u00b7 ' + pn.map(p => lab(Number(p.n)) + ' ' + (isK(p) === 'mini' ? 'clean (mini)' : isK(p) === 'big' ? 'clean (expanded: chat, hunt box and Auto Helper hidden)' : 'whole') + (wantK(p) !== isK(p) ? ' (!)' : '')).join(', ') + ' \u00b7 rules put in ' + (Number(C.applied) || 0) + ' times, taken out ' + (Number(C.removed) || 0) + (C.error ? ' \u00b7 last error: ' + String(C.error).slice(0, 60) : ''));
+      if (bad) P('  (!) a screen without the rules it should have, or one that kept them: the page may be loading; if it stays, "Check the game" shows whether the boxes still have their names');
       P();
     }
     if (main && main.updates && typeof main.updates === 'object') {

@@ -97,6 +97,19 @@
   .phead button:hover { background: rgba(255, 255, 255, .15); color: #fff; }
   .phead svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .panel webview { display: flex; flex: 1 1 auto; min-height: 0; width: 100%; background: #05080f; }
+  /* lang-73: the strip of mini screens beside an expanded screen (Settings › Grid › Mini: right or bottom). A mini is a monitor: a see-through shield over its screen takes every
+     click (the game never gets one) and expands it; its header keeps only the name, the status and the zoom of the minis. The arrow (.st) in the expanded header opens and closes the strip. */
+  .panel { position: relative; isolation: isolate; }          /* (isolate: the shield and the header of a mini are stacked inside their panel only, never above the Overview or a dialog) */
+  .panel .shield { display: none; }
+  .panel.mini .shield { display: block; position: absolute; inset: 0; z-index: 2; cursor: pointer; background: transparent; }
+  .panel.mini .shield:hover { background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 2px var(--c, var(--gold)); }
+  .panel.mini .phead { height: 30px; gap: 6px; padding: 0 6px; }
+  .panel.mini .phead .emb { width: 20px; height: 20px; font-size: 10px; }
+  .panel.mini .pname { font-size: 12px; } .panel.mini .chip { font-size: 11px; }
+  .panel.mini .pnav, .panel.mini .pback, .panel.mini .rl, .panel.mini .ex, .panel.mini .st, .panel.mini .lvl { display: none !important; }
+  .panel.mini .phead { position: relative; z-index: 3; }          /* the header (its zoom buttons) stays pressable above the shield; a click on the rest of it expands the mini too */
+  .phead .st.on, .phead .cl.on { background: rgba(227, 192, 107, .22); color: var(--gold); }
+  .panel.mini .cl { display: none !important; }
 
   /* ---------- small message at the bottom ---------- */
   #toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); max-width: 80vw; padding: 10px 18px; border-radius: 12px;
@@ -264,12 +277,13 @@
           <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
           <span class="grow"></span>
           <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
-          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="grow"></span><button class="cl hidden" title="Hide the chat, the hunt box and the Auto Helper of this screen" aria-label="Clean screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-2.3 3.4"/><path d="M6.6 6.6C4.3 8 2.7 10.3 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 4.4-1"/></svg></button><button class="st hidden" title="Show the other screens as mini screens beside this one" aria-label="Mini screens" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="12" height="16" rx="2"/><rect x="17.5" y="4" width="4" height="4" rx="1"/><rect x="17.5" y="10" width="4" height="4" rx="1"/><rect x="17.5" y="16" width="4" height="4" rx="1"/></svg></button><span class="lvl hidden"></span>
           <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
           <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
           <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
         </div>
         <webview id="p1" data-src="https://pokehorizonidle.com" partition="persist:conta1" allowpopups></webview>
+        <div class="shield"></div>
       </div>
       <div class="panel" id="panel2" data-n="2" style="--c:#34c39a">
         <div class="phead">
@@ -278,12 +292,13 @@
           <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
           <span class="grow"></span>
           <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
-          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="grow"></span><button class="cl hidden" title="Hide the chat, the hunt box and the Auto Helper of this screen" aria-label="Clean screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-2.3 3.4"/><path d="M6.6 6.6C4.3 8 2.7 10.3 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 4.4-1"/></svg></button><button class="st hidden" title="Show the other screens as mini screens beside this one" aria-label="Mini screens" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="12" height="16" rx="2"/><rect x="17.5" y="4" width="4" height="4" rx="1"/><rect x="17.5" y="10" width="4" height="4" rx="1"/><rect x="17.5" y="16" width="4" height="4" rx="1"/></svg></button><span class="lvl hidden"></span>
           <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
           <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
           <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
         </div>
         <webview id="p2" data-src="https://pokehorizonidle.com" partition="persist:conta2" allowpopups></webview>
+        <div class="shield"></div>
       </div>
       <div class="panel" id="panel3" data-n="3" style="--c:#e7694a">
         <div class="phead">
@@ -292,12 +307,13 @@
           <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
           <span class="grow"></span>
           <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
-          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="grow"></span><button class="cl hidden" title="Hide the chat, the hunt box and the Auto Helper of this screen" aria-label="Clean screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-2.3 3.4"/><path d="M6.6 6.6C4.3 8 2.7 10.3 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 4.4-1"/></svg></button><button class="st hidden" title="Show the other screens as mini screens beside this one" aria-label="Mini screens" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="12" height="16" rx="2"/><rect x="17.5" y="4" width="4" height="4" rx="1"/><rect x="17.5" y="10" width="4" height="4" rx="1"/><rect x="17.5" y="16" width="4" height="4" rx="1"/></svg></button><span class="lvl hidden"></span>
           <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
           <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
           <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
         </div>
         <webview id="p3" data-src="https://pokehorizonidle.com" partition="persist:conta3" allowpopups></webview>
+        <div class="shield"></div>
       </div>
       <div class="panel" id="panel4" data-n="4" style="--c:#cc79a7">
         <div class="phead">
@@ -306,12 +322,13 @@
           <button class="pback hidden" data-nav="hunt" title="Back to last hunt" aria-label="Back to last hunt"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span class="pbt">Back to last hunt</span></button>
           <span class="grow"></span>
           <span class="pnav"><button class="pn" data-nav="center" title="Centro: back to the city" aria-label="Center"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></button><button class="pn" data-nav="market" title="Market: goes to Centro and then to the Market" aria-label="Market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M5 12v8h14v-8"/></svg></button><button class="pn" data-nav="bag" title="Mochila: opens the backpack" aria-label="Backpack"><svg viewBox="0 0 24 24"><path d="M8 6a4 4 0 0 1 8 0"/><rect x="5" y="6" width="14" height="15" rx="3"/><path d="M5 12h14"/><path d="M10 15h4"/></svg></button><button class="pn" data-nav="hunts" title="Hunts: opens the Hunts panel of the game" aria-label="Hunts"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/></svg></button></span>
-          <span class="grow"></span><span class="lvl hidden"></span>
+          <span class="grow"></span><button class="cl hidden" title="Hide the chat, the hunt box and the Auto Helper of this screen" aria-label="Clean screen" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c5 0 9 4.5 10 7a13 13 0 0 1-2.3 3.4"/><path d="M6.6 6.6C4.3 8 2.7 10.3 2 12c1 2.5 5 7 10 7a9.6 9.6 0 0 0 4.4-1"/></svg></button><button class="st hidden" title="Show the other screens as mini screens beside this one" aria-label="Mini screens" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="12" height="16" rx="2"/><rect x="17.5" y="4" width="4" height="4" rx="1"/><rect x="17.5" y="10" width="4" height="4" rx="1"/><rect x="17.5" y="16" width="4" height="4" rx="1"/></svg></button><span class="lvl hidden"></span>
           <span class="zoom"><button class="zm" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zv" title="Click to go back to 100%">100%</span><button class="zp" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
           <button class="rl" title="Reload this panel"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
           <button class="ex" title="Expand: show only this panel"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
         </div>
         <webview id="p4" data-src="https://pokehorizonidle.com" partition="persist:conta4" allowpopups></webview>
+        <div class="shield"></div>
       </div>
     </div>
     <iframe id="dash" src="dashboard.html"></iframe>
@@ -395,6 +412,15 @@
       <div class="srow hidden" id="sStreamRow">
         <div><b>Streamer mode</b><span class="sd">For streaming 4horizon (OBS: Window Capture) while you use other apps. The game screens keep moving when other windows cover 4horizon (not when it is minimized: Windows cannot capture a minimized window), and the e-mails of the logins are hidden on screen. It uses about as much CPU as a visible window, and economy mode is not available while it is on. Restart 4horizon after changing it.</span></div>
         <div class="ctl"><label class="tick"><input type="checkbox" id="sStream"> Use streamer mode</label></div>
+      </div>
+      <div class="shead"><span>Grid</span></div>
+      <div class="srow">
+        <div><b>Mini screens</b><span class="sd">When a screen is expanded, the arrow in its header shows the other screens as mini screens: in a strip on the right, or along the bottom. A click on a mini screen expands it.</span></div>
+        <div class="ctl"><select id="miniSel"><option value="right">On the right</option><option value="bottom">Along the bottom</option></select></div>
+      </div>
+      <div class="srow">
+        <div><b>Fit</b><span class="sd">In a 2 × 2 grid with three screens: the third screen keeps its own quarter, or stretches across the whole bottom.</span></div>
+        <div class="ctl"><select id="fitSel"><option value="wide">Across the bottom</option><option value="quarter">Its own quarter</option></select></div>
       </div>
       <div class="shead"><span>Notifications</span><span class="saved" id="nSaved">Saved</span></div>
       <div class="srow">
@@ -483,6 +509,12 @@
     };
     const ui = { simple: !!store.get('simple', false), panel: !!store.get('panel', false), hidden: store.get('hidden', []), solo: null, nobar: store.get('nobar', false) === true };   // solo = the panel that is expanded
     const zooms = store.get('zoom', {});          // zoom of each panel, kept between runs
+    // lang-73: Settings › Grid. fit: where the 3rd screen goes in a 2x2 with 3 screens (its own quarter,
+    // or across the bottom); mini: where the other screens go beside an expanded one (a strip on the right, or along the bottom). strip: is that strip on (the arrow
+    // in the expanded header; remembered). miniZoom: the zoom of every mini screen (one for all; the −/+ of a mini header change it), apart from each screen's own zoom.
+    const pick = (k, list, d) => { const v = store.get(k, d); return list.indexOf(v) >= 0 ? v : d; };
+    const gridCfg = { fit: pick('fit', ['quarter', 'wide'], 'wide'), mini: pick('mini', ['right', 'bottom'], 'right'), strip: store.get('strip', false) === true, clean: store.get('clean', false) === true };          // (clean: the chat, the hunt box and the Auto Helper hidden on the expanded screen; the arrow's neighbour)
+    let miniZoom = (() => { const v = Number(store.get('miniZoom', 1.5)); return v >= 0.5 && v <= 3 ? v : 1.5; })();
     // ---------- how many game panels are in use (Settings › Game panels, 1 to 4, kept in the window storage; 4 at first) ----------
     // A panel not in use gets no address, so its game page is never loaded; its pill, its account in the Summary and its row in Accounts are not shown.
     const PANELS = (() => { const v = Math.floor(Number(store.get('panels', 4))); return v >= 1 && v <= 4 ? v : 4; })();
@@ -507,7 +539,10 @@
     const uiNote = msg => { uiErrors.push({ t: Date.now(), msg: String(msg).slice(0, 300) }); if (uiErrors.length > 30) uiErrors.shift(); };
     window.addEventListener('error', e => uiNote((e.message || 'error') + (e.filename ? ' (' + String(e.filename).split('/').pop() + ':' + e.lineno + ')' : '')));
     window.addEventListener('unhandledrejection', e => uiNote('unhandled rejection: ' + (e.reason && e.reason.message || e.reason)));
-    const isShown = n => inUse(n) && (ui.solo ? ui.solo === n : ui.hidden.indexOf(n) < 0);
+    const isOn = n => inUse(n) && ui.hidden.indexOf(n) < 0;                                              // in use and not hidden by its pill
+    const minis = () => (ui.solo && gridCfg.strip ? [1, 2, 3, 4].filter(n => n !== ui.solo && isOn(n)) : []);          // lang-73: the mini screens beside the expanded one
+    const isMini = n => minis().indexOf(n) >= 0;
+    const isShown = n => inUse(n) && (ui.solo ? (ui.solo === n || isMini(n)) : ui.hidden.indexOf(n) < 0);
     function renderPills() {
       const box = document.getElementById('accBtns');
       let html = '';
@@ -520,17 +555,41 @@
     }
     function updateGrid() {
       let visible = 0;
-      const shownPanels = [];
+      const shownPanels = [], mini = minis();
       for (let n = 1; n <= 4; n++) {
-        const shown = isShown(n), el = document.getElementById('panel' + n);
+        const shown = isShown(n), el = document.getElementById('panel' + n), m = mini.indexOf(n) >= 0;
         el.style.display = shown ? '' : 'none';
-        el.style.gridColumn = '';
+        el.style.gridColumn = ''; el.style.gridRow = '';
+        if (el.classList.contains('mini') !== m) { el.classList.toggle('mini', m); applyPanelZoom(n); }          // (lang-73: a screen that becomes a mini, or stops being one, gets the right zoom)
         if (shown) { visible++; shownPanels.push(el); }
+      }
+      grid.className = '';
+      if (ui.solo && mini.length) {                                                      // lang-73: the expanded screen with the strip of the other screens: on the right, or along the bottom
+        const big = document.getElementById('panel' + ui.solo);
+        grid.classList.add(gridCfg.mini === 'bottom' ? 'strip-bottom' : 'strip-right');
+        if (gridCfg.mini === 'bottom') { grid.style.gridTemplateColumns = 'repeat(' + mini.length + ', 1fr)'; grid.style.gridTemplateRows = 'minmax(0, 1fr) clamp(160px, 28%, 320px)'; big.style.gridColumn = '1 / -1'; big.style.gridRow = '1'; mini.forEach(n => { document.getElementById('panel' + n).style.gridRow = '2'; }); }
+        else { grid.style.gridTemplateColumns = 'minmax(0, 1fr) clamp(240px, 26%, 420px)'; grid.style.gridTemplateRows = 'repeat(' + mini.length + ', 1fr)'; big.style.gridRow = '1 / -1'; big.style.gridColumn = '1'; mini.forEach(n => { document.getElementById('panel' + n).style.gridColumn = '2'; }); }
+        return;
       }
       grid.style.gridTemplateColumns = 'repeat(' + (visible <= 1 ? 1 : 2) + ', 1fr)';
       grid.style.gridTemplateRows = 'repeat(' + (visible <= 2 ? 1 : 2) + ', 1fr)';
-      if (visible === 3) shownPanels[2].style.gridColumn = '1 / -1';        // three screens: two on top and the third across the whole bottom, so no quarter of the window stays empty
+      if (visible === 3 && gridCfg.fit !== 'quarter') shownPanels[2].style.gridColumn = '1 / -1';        // three screens: two on top and the third across the whole bottom (Settings › Grid › Fit; "quarter" leaves it its own quarter, lang-73)
     }
+    // lang-73: the zoom a screen gets: a mini has the minis' zoom, any other its own
+    function applyPanelZoom(n) {
+      const f = isMini(n) ? miniZoom : (zooms[n] || 1);
+      try { document.getElementById('p' + n).setZoomFactor(f); } catch (e) {}
+    }
+    // lang-73: the main process hides the game's boxes in the panels that are minis (clean.js); told whenever the list changes
+    let cleanSent = '|';                                   // (nothing to tell at the start: no mini, no clean expanded screen)
+    function sendClean() {
+      const list = minis(), big = (ui.solo && gridCfg.clean && isOn(ui.solo)) ? ui.solo : null, key = list.join(',') + '|' + (big || '');
+      if (key === cleanSent || !api.cleanSet) return;
+      cleanSent = key;
+      try { Promise.resolve(api.cleanSet({ minis: list, big: big })).catch(() => {}); } catch (e) {}
+    }
+    function setStrip(on) { gridCfg.strip = on === true; store.set('strip', gridCfg.strip); applyUI(); }
+    function setGridCfg(k, v) { gridCfg[k] = v; store.set(k, v); applyUI(); }
 
     // ---------- Simple (dashboard or game screens) and Panel (the Summary) ----------
     // the Summary follows the screen that is expanded: when a screen is expanded (or another one is chosen in the top bar) and the Summary panel is shown (the Panel button), the Summary is asked to show that account.
@@ -555,7 +614,7 @@
       if (ui.nobar && !(ui.panel || ui.simple || eco.on)) ui.nobar = false;
       document.body.classList.toggle('nobar', ui.nobar);
       store.set('simple', ui.simple); store.set('panel', ui.panel); store.set('hidden', ui.hidden); store.set('nobar', ui.nobar);
-      renderPills(); updateGrid(); sendLayout(); followSummary(); sendBar();
+      renderPills(); updateGrid(); sendLayout(); followSummary(); sendBar(); sendClean();
     }
     // lang-71: the triangle of the Summary: is the bar hidden, and is a newer version out (then the triangle has a gold dot, as the Update button is in the bar)
     function sendBar() {
@@ -601,9 +660,10 @@
       try { dash.contentWindow.postMessage(Object.assign({ type: type, id: id }, payload || {}), '*'); } catch (e) { res(null); }
       setTimeout(() => { removeEventListener('message', on); res(null); }, 1500);
     });
-    const WIN_KEYS = ['simple', 'panel', 'panels', 'zoom', 'hidden', 'diagHide'];
+    const WIN_KEYS = ['simple', 'panel', 'panels', 'zoom', 'hidden', 'diagHide', 'mini', 'fit', 'strip', 'clean', 'miniZoom'];          // (lang-73: Settings › Grid, the strip, the clean expanded screen and the minis' zoom)
     const okWin = {
       simple: v => typeof v === 'boolean', panel: v => typeof v === 'boolean', diagHide: v => typeof v === 'boolean',
+      mini: v => v === 'right' || v === 'bottom', fit: v => v === 'wide' || v === 'quarter', strip: v => typeof v === 'boolean', clean: v => typeof v === 'boolean', miniZoom: v => typeof v === 'number' && v >= 0.5 && v <= 3,
       panels: v => Number.isInteger(v) && v >= 1 && v <= 4,
       hidden: v => Array.isArray(v) && v.length <= 4 && v.every(n => Number.isInteger(n) && n >= 1 && n <= 4),
       zoom: v => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).every(k => /^[1-4]$/.test(k) && typeof v[k] === 'number' && v[k] >= 0.25 && v[k] <= 3)
@@ -773,28 +833,45 @@
         const showBack = !!(memo && (memo.name || memo.id) && idleSince[n] && performance.now() - idleSince[n] >= BACK_AFTER_MS);
         bk.classList.toggle('hidden', !showBack);
         if (showBack) bk.title = t('Back to last hunt') + ': ' + (memo.name || memo.id);
-        el.querySelector('.zv').textContent = Math.round((zooms[n] || 1) * 100) + '%';
+        const mini = isMini(n);
+        el.querySelector('.zv').textContent = Math.round((mini ? miniZoom : (zooms[n] || 1)) * 100) + '%';          // (lang-73: a mini shows the minis' zoom)
+        el.querySelector('.zv').title = mini ? t('The zoom of the mini screens. Click to go back to 150%') : t('Click to go back to 100%');
         const ex = el.querySelector('.ex');
         const solo = ui.solo === n;
         ex.title = solo ? t('Back to all panels') : t('Expand: show only this panel');
         if (ex.dataset.solo !== String(solo)) { ex.dataset.solo = String(solo); ex.innerHTML = solo ? SVG_RESTORE : SVG_EXPAND; }
+        // lang-73: the strip arrow, only in the expanded header, and only when there is another screen to show
+        const st = el.querySelector('.st'), others = [1, 2, 3, 4].some(k => k !== n && isOn(k));
+        st.classList.toggle('hidden', !(solo && others)); st.classList.toggle('on', gridCfg.strip);
+        st.title = gridCfg.strip ? t('Hide the other screens') : t('Show the other screens as mini screens beside this one');
+        st.setAttribute('aria-pressed', String(gridCfg.strip));
+        // lang-73: the clean button beside it: the chat, the hunt box and the Auto Helper of the expanded screen hidden (the player card and the icon bar stay)
+        const cl = el.querySelector('.cl');
+        cl.classList.toggle('hidden', !solo); cl.classList.toggle('on', gridCfg.clean);
+        cl.title = gridCfg.clean ? t('Show the chat, the hunt box and the Auto Helper of this screen again') : t('Hide the chat, the hunt box and the Auto Helper of this screen');
+        cl.setAttribute('aria-pressed', String(gridCfg.clean));
+        el.querySelector('.shield').title = mini ? t('Click to expand this screen (the game does not get the click)') : '';
       }
     }
     function setZoom(n, f) {
       f = Math.min(3, Math.max(0.5, Math.round(f * 10) / 10));
+      if (isMini(n)) { miniZoom = f; store.set('miniZoom', f); minis().forEach(applyPanelZoom); renderHeads(); return; }          // lang-73: the minis share one zoom
       zooms[n] = f; store.set('zoom', zooms);
-      try { document.getElementById('p' + n).setZoomFactor(f); } catch (e) {}      // only works once the page has loaded: it is applied again then
+      applyPanelZoom(n);                                                         // only works once the page has loaded: it is applied again then
       renderHeads();
     }
     for (let n = 1; n <= 4; n++) {
-      document.getElementById('p' + n).addEventListener('dom-ready', () => { if (zooms[n]) { try { document.getElementById('p' + n).setZoomFactor(zooms[n]); } catch (e) {} } });
+      document.getElementById('p' + n).addEventListener('dom-ready', () => applyPanelZoom(n));
     }
     grid.addEventListener('click', e => {
       const panel = e.target.closest && e.target.closest('.panel'); if (!panel) return;
-      const n = Number(panel.dataset.n), w = document.getElementById('p' + n);
-      if (e.target.closest('.zm')) setZoom(n, (zooms[n] || 1) - 0.1);
-      else if (e.target.closest('.zp')) setZoom(n, (zooms[n] || 1) + 0.1);
-      else if (e.target.closest('.zv')) setZoom(n, 1);
+      const n = Number(panel.dataset.n), w = document.getElementById('p' + n), mini = isMini(n);
+      if (e.target.closest('.zm')) setZoom(n, (mini ? miniZoom : (zooms[n] || 1)) - 0.1);
+      else if (e.target.closest('.zp')) setZoom(n, (mini ? miniZoom : (zooms[n] || 1)) + 0.1);
+      else if (e.target.closest('.zv')) setZoom(n, mini ? 1.5 : 1);
+      else if (mini) { ui.solo = n; applyUI(); }                                   // lang-73: a mini is a monitor: a click anywhere on it (its header, its screen) expands it; the one that was expanded becomes a mini
+      else if (e.target.closest('.st')) setStrip(!gridCfg.strip);
+      else if (e.target.closest('.cl')) { gridCfg.clean = !gridCfg.clean; store.set('clean', gridCfg.clean); applyUI(); }
       else if (e.target.closest('.rl')) { try { w.reload(); } catch (err) {} }
       else if (e.target.closest('.pn')) { const b = e.target.closest('.pn'); navGo(n, b.dataset.nav, b); }
       else if (e.target.closest('.pback')) goLastHunt(n, e.target.closest('.pback'));
@@ -804,6 +881,7 @@
       const head = e.target.closest && e.target.closest('.phead');
       if (!head || e.target.closest('button') || e.target.closest('.zoom')) return;
       const n = Number(head.parentElement.dataset.n);
+      if (isMini(n)) return;                                                     // (a mini expands on its first click already)
       ui.solo = (ui.solo === n) ? null : n; applyUI();
     });
     setInterval(renderHeads, 15000);
@@ -1044,7 +1122,10 @@
       toast(t('{n} game panels: the window is loading again\u2026', { n: v }));
       setTimeout(() => location.reload(), 700);
     };
-    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); loadGpu(); loadLight(); loadStreamer(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
+    // lang-73: Settings › Grid (kept in the window storage, applied at once)
+    [['miniSel', 'mini'], ['fitSel', 'fit']].forEach(([id, k]) => { const s = document.getElementById(id); s.onchange = () => setGridCfg(k, s.value); });
+    const loadGrid = () => { document.getElementById('miniSel').value = gridCfg.mini; document.getElementById('fitSel').value = gridCfg.fit; };
+    document.getElementById('btnSettings').onclick = () => { langSel.value = I18N.getLang(); panelsSel.value = String(PANELS); loadGrid(); settingsModal.classList.remove('hidden'); loadNotif(); loadStartup(); loadGpu(); loadLight(); loadStreamer(); try { if (window.HistoryUI) window.HistoryUI.refresh(); } catch (e) {} langSel.focus(); };
     document.getElementById('setClose').onclick = closeSettings;
     settingsModal.addEventListener('mousedown', e => { if (e.target === settingsModal) closeSettings(); });
     // ---------- Settings: the notifications (the main process keeps them in notify-settings.json and checks every value; this only shows them and asks for changes) ----------

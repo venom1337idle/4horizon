@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('bridge', {
   updateGet: () => ipcRenderer.invoke('update:get'),          // lang-58: this version, and whether a newer release is out
   updateOpen: () => ipcRenderer.invoke('update:open'),        // ...its page in the browser
   onUpdate: (callback) => ipcRenderer.on('update:changed', () => callback()),          // lang-72: GitHub answered: read it again now
+  cleanSet: (minis) => ipcRenderer.invoke('clean:set', minis),          // lang-73: which panels are mini screens now (their game's boxes are hidden there)
   navFavs: (n) => ipcRenderer.invoke('nav:favs', n),
   navFavGo: (n, item) => ipcRenderer.invoke('nav:favgo', n, item),
   diagProbe: () => ipcRenderer.invoke('diag:probe-login'),

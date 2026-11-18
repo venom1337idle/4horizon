@@ -55,7 +55,32 @@ function selfTestInPage() {
       weak: weak, cards: Math.min(cards, 999), cacar: inBox.some(x => (x.t === 'cacar' || x.t === 'cacando') && pointer(x.el)) ? 'found' : 'none'
     };
   }
-  return { signedIn: signedIn, toolbar: toolbar, analyzer: analyzer, hunts: hunts };
+  // lang-73: the boxes of the game's screen that a clean mini screen will hide (the player card with the team, the icon bar, the hunt box, the chat, the Auto Helper):
+  // for each one, the outermost box around a word that is only in it, described by its tag, id and classes, and its size. This is what the hiding rules will be written from
+  // (the report shows it; nothing is hidden yet). Reads only.
+  const boxes = {};
+  try {
+    const ANCHORS = { team: x => /^equipe\b/.test(x.t), bar: x => x.t === 'perfil' && x.el.getBoundingClientRect().top < topLimit, hunt: x => x.t === 'abates', chat: null, helper: x => x.t === 'auto helper' };
+    const chatInput = Array.prototype.find.call(document.querySelectorAll('input,textarea'), i => shown(i) && /^falar em|^chat|^say|^talk/.test(plain(i.placeholder || '')));
+    const chatTab = (texts.find(x => (x.t === 'geral' || x.t === 'general') && shown(x.el) && x.el.getBoundingClientRect().top > innerHeight * 0.5) || {}).el;          // the chat collapsed to its tabs (popup tidy does that at login)
+    const anchorEl = {}; Object.keys(ANCHORS).forEach(k => { const hit = k === 'chat' ? (chatInput || chatTab) : (texts.find(x => ANCHORS[k](x) && shown(x.el)) || {}).el; if (hit) anchorEl[k] = hit; });
+    const desc = el => { const r = el.getBoundingClientRect(), cls = Array.prototype.slice.call(el.classList, 0, 4).join('.'); return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (cls ? '.' + cls : '') + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '@' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + getComputedStyle(el).position; };
+    Object.keys(anchorEl).forEach(k => {
+      let box = anchorEl[k];
+      for (let i = 0; i < 14 && box.parentElement && box.parentElement !== document.body; i++) {
+        const up = box.parentElement, r = up.getBoundingClientRect();
+        if (r.width > innerWidth * 0.8 || r.height > innerHeight * 0.6) break;                                      // the page itself, or the map: too big to be the box
+        if (Object.keys(anchorEl).some(o => o !== k && up.contains(anchorEl[o]))) break;                           // it would hold another box too
+        box = up;
+      }
+      const chain = [desc(box)]; if (box.parentElement && box.parentElement !== document.body) chain.push(desc(box.parentElement)); if (box !== anchorEl[k]) chain.push('from ' + desc(anchorEl[k]));
+      boxes[k] = chain.map(s => s.slice(0, 120));
+    });
+    // the icon bar's own position (the clean expanded screen widens it: left, right, width, max-width, margins, transform as the game set them; inner = its content / its width)
+    const tw = document.querySelector('.hud .toolbar-wrap');
+    if (tw) { const s = getComputedStyle(tw); boxes.barStyle = ['left ' + s.left, 'right ' + s.right, 'width ' + s.width, 'max-width ' + s.maxWidth, 'margin ' + s.marginLeft + ' ' + s.marginRight, 'transform ' + s.transform, 'inner ' + Math.round(tw.scrollWidth) + '/' + Math.round(tw.clientWidth)].join(' \u00b7 ').slice(0, 200); }
+  } catch (e) { boxes.error = String(e && e.message || e).slice(0, 60); }
+  return { signedIn: signedIn, toolbar: toolbar, analyzer: analyzer, hunts: hunts, boxes: boxes };
 }
 
 const withTimeout = (p, ms) => Promise.race([p, new Promise(res => setTimeout(() => res({ timeout: true }), ms))]);

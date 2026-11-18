@@ -19,9 +19,9 @@ const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeede
   await p.mouse.move(5, 5); await p.waitForTimeout(100);
   ok('nothing is shown when Settings opens', !(await tipState(p)).shown);
   const vis = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .sd')).filter(e => e.offsetParent !== null).length);
-  ok('the descriptions are not written under the settings (none of the 21 is visible)', vis === 0 && (await p.locator('#settingsModal .sd').count()) === 21, vis);
+  ok('the descriptions are not written under the settings (none of the 23 is visible)', vis === 0 && (await p.locator('#settingsModal .sd').count()) === 23, vis);
   const infos = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .info')).map(e => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), glyph: getComputedStyle(e, '::before').content, vis: !!e.offsetParent }; }));
-  ok('every setting that has a description has its own small "i": 21 of them (lang-41: Minimize to tray; lang-49: Game panels; lang-58: Accounts; lang-67: Settings backup; 1.0.6: Disable GPU acceleration; lang-70: Great catch, 2nd rule, Light mode; lang-71: Streamer mode), all visible and 17 x 17 px', infos.length === 21 && infos.every(i => i.vis && i.w === 17 && i.h === 17 && i.glyph === '"i"'), infos.slice(0, 2));
+  ok('every setting that has a description has its own small "i": 23 of them (lang-41: Minimize to tray; lang-49: Game panels; lang-58: Accounts; lang-67: Settings backup; 1.0.6: Disable GPU acceleration; lang-70: Great catch, 2nd rule, Light mode; lang-71: Streamer mode; lang-73: Mini screens, Fit), all visible and 17 x 17 px', infos.length === 23 && infos.every(i => i.vis && i.w === 17 && i.h === 17 && i.glyph === '"i"'), infos.slice(0, 2));
 
   // the bug: the tooltip must not show for anything else in the settings
   const tr = await p.locator('#settingsModal .srow', { has: p.locator('#langSel') }).first().boundingBox();
