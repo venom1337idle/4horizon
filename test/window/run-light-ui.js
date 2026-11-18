@@ -49,13 +49,13 @@ const STUB = on => `window.__light = { on: ${on ? 'true' : 'false'}, calls: [] }
   // ---- 2. Settings › Light mode
   let p = await open(b, { extraInit: STUB(false), w: 1400, h: 900 }); await feedAll(p);
   await p.click('#btnSettings'); await p.waitForTimeout(250);
-  const row = await p.evaluate(() => { const r = document.getElementById('sLightRow'); return { shown: !r.classList.contains('hidden') && r.getBoundingClientRect().height > 0, title: r.querySelector('b').firstChild.textContent.trim(), tick: document.getElementById('sLight').closest('label').textContent.trim(), checked: document.getElementById('sLight').checked, tip: r.querySelector('.sd').textContent }; });
-  ok('Settings has "Light mode" with "Use light mode", unticked at first; its explanation says what changes and what does not', row.shown && row.title === 'Light mode' && row.tick === 'Use light mode' && !row.checked && /slower PCs/.test(row.tip) && /do not change/.test(row.tip), row);
-  const order = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .srow > div:first-child > b')).map(x => x.firstChild.textContent.trim()));
-  ok('...right under "Disable GPU acceleration"', order.indexOf('Light mode') === order.indexOf('Disable GPU acceleration') + 1, order);
-  const fade0 = await p.evaluate(() => getComputedStyle(document.querySelector('#settingsModal .shead .saved')).transitionDuration);
+  const row = await p.evaluate(() => { const r = document.getElementById('sLightRow'); return { shown: !r.classList.contains('hidden') && r.getBoundingClientRect().height > 0, title: (r.querySelector('label[for]') || r.querySelector('b')).firstChild.textContent.trim(), tick: r.querySelector('label[for=sLight]').firstChild.textContent.trim(), checked: document.getElementById('sLight').checked, tip: r.querySelector('.sd').textContent }; });
+  ok('Settings has "Light mode" (lang-74: a switch in the Display card), off at first; its explanation says what changes and what does not', row.shown && row.title === 'Light mode' && row.tick === 'Light mode' && !row.checked && /slower PCs/.test(row.tip) && /do not change/.test(row.tip), row);
+  const order = await p.evaluate(() => Array.from(document.querySelectorAll('#cDisplay .srow.sw label[for]')).map(x => x.firstChild.textContent.trim()));
+  ok('...the first switch of the Display card, above "Disable GPU acceleration"', order.indexOf('Light mode') === 0 && order.indexOf('Disable GPU acceleration') === order.length - 1, order);
+  const fade0 = await p.evaluate(() => getComputedStyle(document.querySelector('#settingsModal .saved')).transitionDuration);
   await p.check('#sLight'); await p.waitForTimeout(200);
-  const st = await p.evaluate(() => ({ calls: window.__light.calls, body: document.body.classList.contains('light'), fade: getComputedStyle(document.querySelector('#settingsModal .shead .saved')).transitionDuration }));
+  const st = await p.evaluate(() => ({ calls: window.__light.calls, body: document.body.classList.contains('light'), fade: getComputedStyle(document.querySelector('#settingsModal .saved')).transitionDuration }));
   const dst = await p.dash().evaluate(() => ({ light: lightMode, body: document.body.classList.contains('light') }));
   ok('ticking it asks the main process to turn it on, once', JSON.stringify(st.calls) === '[true]', st.calls);
   ok('...the window has no fades any more (a fade of ' + fade0 + ' is now 0s), and the Summary knows Light mode is on', st.body && fade0 !== '0s' && st.fade === '0s' && dst.light && dst.body, [st, dst]);
@@ -89,8 +89,8 @@ const STUB = on => `window.__light = { on: ${on ? 'true' : 'false'}, calls: [] }
   p = await open(b, { extraInit: STUB(true), lang: 'pt-BR', w: 1400, h: 900 }); await p.waitForTimeout(400);
   ok('saved as on: the window starts in Light mode, and the Summary too', (await p.evaluate(() => document.body.classList.contains('light'))) && (await p.dash().evaluate(() => lightMode)));
   await p.click('#btnSettings'); await p.waitForTimeout(250);
-  const pt = await p.evaluate(() => { const r = document.getElementById('sLightRow'); return [r.querySelector('b').firstChild.textContent.trim(), document.getElementById('sLight').closest('label').textContent.trim(), document.getElementById('sLight').checked]; });
-  ok('in Portuguese: "Modo leve", "Usar modo leve", ticked', JSON.stringify(pt) === JSON.stringify(['Modo leve', 'Usar modo leve', true]), pt);
+  const pt = await p.evaluate(() => { const r = document.getElementById('sLightRow'); return [(r.querySelector('label[for]') || r.querySelector('b')).firstChild.textContent.trim(), document.getElementById('sLight').checked]; });
+  ok('in Portuguese: "Modo leve", ticked', JSON.stringify(pt) === JSON.stringify(['Modo leve', true]), pt);
   ok('no JavaScript errors', p.errors.length === 0, p.errors); await p.context().close();
   await b.close(); console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAILED ' + e.message + '\n' + e.stack); process.exit(1); });

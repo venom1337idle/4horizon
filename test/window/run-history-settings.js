@@ -10,7 +10,7 @@ const total = async p => { const row = await p.locator('#hxOut table').first().l
   let p = await open(b, { extraInit: CSVSTUB, w: 1500, h: 1000 });
   ok('History is not on the top bar and not a tab of the dashboard', await p.evaluate(() => !document.getElementById('btnHistory')) && (await p.frameLocator('#dash').locator('#view-history, #historyHost').count()) === 0);
   await p.click('#btnSettings'); await p.waitForTimeout(400);
-  ok('Settings has the section "HISTORY · DAILY TOTALS, SAVED ON THIS COMPUTER" with the real middle dot', /HISTORY · DAILY TOTALS, SAVED ON THIS COMPUTER/.test(await p.locator('#settingsModal .shead').allInnerTexts().then(a => a.join('|'))), await p.locator('#settingsModal .shead').allInnerTexts());
+  ok('Settings has the History card: "History" with "Daily totals, saved on this computer" beside it, and the note about the numbers as its "i" tooltip (lang-74)', (await p.evaluate(() => document.querySelector('#cHist .sh').textContent.trim())) === 'History' && (await p.evaluate(() => document.querySelector('#cHist .subt').textContent.trim())) === 'Daily totals, saved on this computer' && (await p.evaluate(() => !!document.querySelector('#cHist .sh .info') && /Gold is loot \+ captures sold/.test(document.getElementById('histNote').textContent))), await p.locator('#cHist .chead').allInnerTexts());
   // the totals are in a dropdown
   const dd = () => p.evaluate(() => { const t = document.getElementById('hxToggle'), o = document.getElementById('hxOut'); return { exp: t.getAttribute('aria-expanded'), shown: !!(o && o.offsetParent), sum: document.getElementById('hxSummary').textContent, lbl: t.querySelector('.lbl').textContent, noteInCard: !!document.querySelector('#historyHost .card > div:last-child:not(#hxOut):not(.hxToggle)') && /Gold is loot/.test(document.getElementById('historyHost').innerText) }; });
   const d0 = await dd();
@@ -70,8 +70,8 @@ const total = async p => { const row = await p.locator('#hxOut table').first().l
   const ptSum = await p.locator('#hxSummary').innerText(); const ptLbl = await p.locator('#hxToggle .lbl').innerText();
   ok('in Portuguese the dropdown says Totais diários and the summary +1,34M dinheiro · 10M XP · 19,3K kills', ptLbl === 'Totais diários' && ptSum === '+1,34M dinheiro · 10M XP · 19,3K kills', [ptLbl, ptSum]);
   await p.click('#hxToggle'); await p.waitForTimeout(100);
-  const ptHead = (await p.locator('#settingsModal .shead').allInnerTexts()).join('|'), pto = await out(p), ptBar = await p.locator('#historyHost').innerText();
-  ok('in Portuguese the section is in Portuguese: title, period, account, Export, table heads', /HISTÓRICO/.test(ptHead) && /Período/.test(ptBar) && /Conta/.test(ptBar) && /Exportar CSV/.test(ptBar) && /POR DIA/.test(pto) && /POR CONTA/.test(pto), [ptHead, ptBar.slice(0, 120)]);
+  const ptHead = await p.evaluate(() => document.querySelector('#cHist .chead').textContent), pto = await out(p), ptBar = await p.locator('#historyHost').innerText();
+  ok('in Portuguese the section is in Portuguese: title, period, account, Export, table heads', /Histórico/.test(ptHead) && /Período/.test(ptBar) && /Conta/.test(ptBar) && /Exportar CSV/.test(ptBar) && /POR DIA/.test(pto) && /POR CONTA/.test(pto), [ptHead, ptBar.slice(0, 120)]);
   ok('...with the numbers of the language: 19,3K kills and +1,34M gold', /Total \+1,34M 10M 19,3K/.test(await total(p)), await total(p));
   ok('...and no English line is left in the History section', !/\b(Last 7 days|All accounts|Export CSV|BY DAY|BY ACCOUNT|Nothing saved|Loading|Gold is loot)\b/.test(ptBar + ' ' + pto), ptBar + pto);
   await p.selectOption('#hxRange', '1'); await p.waitForTimeout(80);

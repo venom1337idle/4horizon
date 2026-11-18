@@ -8,7 +8,7 @@ const STUB = `window.__n = { cfg: { enabled: true, startupNotice: true, sound: t
 const tipState = p => p.evaluate(() => { const t = document.getElementById('tip'), r = t.getBoundingClientRect(); return { shown: !t.classList.contains('hidden'), text: t.textContent, l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom), W: innerWidth, H: innerHeight }; });
 const rowOf = (p, sel) => p.locator('#settingsModal .srow', { has: p.locator(sel) }).first();
 const infoOf = (p, sel) => rowOf(p, sel).locator('.info').first();
-const descOf = (p, sel) => p.evaluate(s => document.querySelector(s).closest('.srow').querySelector(':scope > div > .sd').textContent.trim(), sel);
+const descOf = (p, sel) => p.evaluate(s => document.querySelector(s).closest('.srow').querySelector(':scope > .sd').textContent.trim(), sel);          // (lang-74: the description is a hidden span of the row)
 const moveTo = async (p, box, dx, dy) => { await p.mouse.move(box.x + box.width / 2 + (dx || 0), box.y + box.height / 2 + (dy || 0)); await p.mouse.move(box.x + box.width / 2 + (dx || 0) + 1, box.y + box.height / 2 + (dy || 0) + 1); };
 const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeeded(); const b = await infoOf(p, sel).boundingBox();          // (lang-67: the list is longer: scrolled to it, as a person would)
    await moveTo(p, b); return b; };
@@ -21,7 +21,7 @@ const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeede
   const vis = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .sd')).filter(e => e.offsetParent !== null).length);
   ok('the descriptions are not written under the settings (none of the 23 is visible)', vis === 0 && (await p.locator('#settingsModal .sd').count()) === 23, vis);
   const infos = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .info')).map(e => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), glyph: getComputedStyle(e, '::before').content, vis: !!e.offsetParent }; }));
-  ok('every setting that has a description has its own small "i": 23 of them (lang-41: Minimize to tray; lang-49: Game panels; lang-58: Accounts; lang-67: Settings backup; 1.0.6: Disable GPU acceleration; lang-70: Great catch, 2nd rule, Light mode; lang-71: Streamer mode; lang-73: Mini screens, Fit), all visible and 17 x 17 px', infos.length === 23 && infos.every(i => i.vis && i.w === 17 && i.h === 17 && i.glyph === '"i"'), infos.slice(0, 2));
+  ok('every setting that has a description has its own small "i": 22 of them (lang-74: the cards; 23 descriptions, Accounts has no "i" as its button is the name, and the History card has one), all visible and 16 x 16 px', infos.length === 22 && infos.every(i => i.vis && i.w === 16 && i.h === 16 && i.glyph === '"i"'), infos.slice(0, 2));
 
   // the bug: the tooltip must not show for anything else in the settings
   const tr = await p.locator('#settingsModal .srow', { has: p.locator('#langSel') }).first().boundingBox();
@@ -32,7 +32,7 @@ const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeede
     ok('resting 1.2 s on ' + pl[0] + ' shows nothing', !(await tipState(p)).shown, [pl[0], await tipState(p)]);
   }
   await p.mouse.move(5, 5); await p.waitForTimeout(60);
-  const hd = await p.locator('#settingsModal .shead[data-tip-from] > span').first().boundingBox();
+  const hd = await p.locator('#cHist .sh').first().boundingBox();
   await moveTo(p, hd, -30, 0); await p.waitForTimeout(1200);
   ok('...nor on the words of the History heading', !(await tipState(p)).shown);
 
@@ -46,23 +46,23 @@ const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeede
   ok('...and it is inside the window', t1.l >= 0 && t1.t >= 0 && t1.r <= t1.W && t1.b <= t1.H, t1);
   const ib = await infoOf(p, '#langSel').boundingBox(); await p.mouse.move(ib.x + ib.width + 40, ib.y + 4); await p.waitForTimeout(80);
   ok('moving off the "i" (even along the same setting) hides it at once', !(await tipState(p)).shown);
-  await hoverInfo(p, '#nIV'); await p.waitForTimeout(150);
+  await hoverInfo(p, '#evGoodCatch'); await p.waitForTimeout(150);
   ok('moving to the "i" of another setting: the first is gone and the second has not appeared yet', !(await tipState(p)).shown);
   await p.waitForTimeout(600);
   const t2 = await tipState(p);
-  ok('...then it shows Great catch', t2.shown && /OR: it notifies when a catch reaches at least one/.test(t2.text) && t2.text === await descOf(p, '#nIV'), t2.text);
+  ok('...then it shows Great catch', t2.shown && /OR: it notifies when a catch reaches at least one/.test(t2.text) && t2.text === await descOf(p, '#evGoodCatch'), t2.text);
   await p.mouse.move(5, 5); await p.waitForTimeout(100);
   ok('leaving the dialog hides it', !(await tipState(p)).shown);
-  await hoverInfo(p, '#nDrop'); await p.waitForTimeout(700);
+  await hoverInfo(p, '#evRareDrop'); await p.waitForTimeout(700);
   ok('Valuable drop shows its tooltip', (await tipState(p)).shown && /price of ONE item/.test((await tipState(p)).text));
   await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(80);
   ok('a click hides it', !(await tipState(p)).shown);
-  await hoverInfo(p, '#nSample'); await p.waitForTimeout(700); await p.mouse.wheel(0, 200); await p.waitForTimeout(100);
+  await hoverInfo(p, '#evSupplies'); await p.waitForTimeout(700); await p.mouse.wheel(0, 200); await p.waitForTimeout(100);
   ok('scrolling hides it', !(await tipState(p)).shown);
 
   // the History heading has an "i"; the dropdown header and the numbers do not
-  await p.evaluate(() => document.querySelector('#settingsModal .shead[data-tip-from]').scrollIntoView({ block: 'center' })); await p.waitForTimeout(150);
-  const hi = await p.locator('#settingsModal .shead[data-tip-from] .info').boundingBox(); await moveTo(p, hi); await p.waitForTimeout(700);
+  await p.evaluate(() => document.querySelector('#cHist').scrollIntoView({ block: 'center' })); await p.waitForTimeout(150);
+  const hi = await p.locator('#cHist .sh .info').boundingBox(); await moveTo(p, hi); await p.waitForTimeout(700);
   ok('the "i" of the History heading shows how the numbers are counted', (await tipState(p)).shown && /^Gold is loot \+ captures sold/.test((await tipState(p)).text), (await tipState(p)).text.slice(0, 60));
   await p.mouse.move(5, 5); await p.waitForTimeout(100);
   const tb = await p.locator('#hxToggle').boundingBox(); await moveTo(p, tb, -100, 0); await p.waitForTimeout(1000);
@@ -73,7 +73,7 @@ const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeede
 
   // keyboard: the "i" can be reached with Tab and shows the same text
   await p.mouse.move(5, 5); await p.keyboard.press('Shift');
-  await p.evaluate(() => document.querySelector('#nDrop').closest('.srow').querySelector('.info').focus()); await p.waitForTimeout(700);
+  await p.evaluate(() => document.querySelector('#evRareDrop').closest('.srow').querySelector('.info').focus()); await p.waitForTimeout(700);
   ok('an "i" that gets the keyboard focus shows its tooltip', (await tipState(p)).shown && /price of ONE item/.test((await tipState(p)).text), await tipState(p));
   await p.keyboard.press('Shift+Tab'); await p.waitForTimeout(100);
   ok('pressing a key hides it', !(await tipState(p)).shown);
@@ -89,10 +89,10 @@ const hoverInfo = async (p, sel) => { await infoOf(p, sel).scrollIntoViewIfNeede
   // Portuguese
   p = await open(b, { extraInit: STUB, lang: 'pt-BR', w: 1500, h: 1000 });
   await p.click('#btnSettings'); await p.waitForTimeout(400);
-  await hoverInfo(p, '#nIV'); await p.waitForTimeout(700);
+  await hoverInfo(p, '#evGoodCatch'); await p.waitForTimeout(700);
   const tp = await tipState(p);
   ok('in Portuguese the tooltip is in Portuguese (IV OU qualidade, Rara ×1,37)', tp.shown && /OU: avisa quando a captura chega a pelo menos um/.test(tp.text) && /Rara ×1,37/.test(tp.text), tp.text);
-  await p.evaluate(() => I18N.setLang('en')); await p.waitForTimeout(150); await p.mouse.move(5, 5); await hoverInfo(p, '#nIV'); await p.waitForTimeout(700);
+  await p.evaluate(() => I18N.setLang('en')); await p.waitForTimeout(150); await p.mouse.move(5, 5); await hoverInfo(p, '#evGoodCatch'); await p.waitForTimeout(700);
   ok('...and in English again after the language is changed while Settings is open', /OR: it notifies when a catch reaches at least one/.test((await tipState(p)).text), (await tipState(p)).text.slice(0, 50));
   await p.context().close();
 

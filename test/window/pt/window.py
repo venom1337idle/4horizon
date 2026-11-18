@@ -39,26 +39,36 @@ EXACT = {
   'How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).': 'Quantas contas você joga ao mesmo tempo. Os painéis que não estão em uso nem são carregados. Mudar isso recarrega a janela (você continua conectado).',
   '{n} game panels: the window is loading again…': '{n} painéis do jogo: a janela está recarregando…',
   # lang-41: notifications of missions and eggs, minimize to tray
-  'A battle pass mission is completed': 'Uma missão do passe de batalha é concluída',
-  'A daily mission is completed': 'Uma missão diária é concluída',
-  'An egg is ready to hatch': 'Um ovo está pronto para chocar',
-  'Minimize to tray': 'Minimizar para a bandeja',
+
   'Minimizing the window hides 4horizon in the tray, as closing it does. Click the tray icon to bring it back.': 'Minimizar a janela esconde o 4horizon na bandeja, como fechá-la já faz. Clique no ícone da bandeja para trazê-lo de volta.',
   'Disable GPU acceleration': 'Desativar aceleração de GPU',
   'Turn this on if you see visual glitches when hovering or taking screenshots. Requires restarting 4horizon.': 'Ative isso se você vir falhas visuais ao passar o mouse ou tirar screenshots. Requer reiniciar o 4horizon.',
-  'Disable hardware acceleration': 'Desativar aceleração de hardware',
+
   'Saved. Restart 4horizon for the change to take effect.': 'Salvo. Reinicie o 4horizon para a mudança ter efeito.',
   'Hide in the tray when minimized': 'Esconder na bandeja ao minimizar',
   'Could not save the setting': 'Não foi possível salvar a configuração',
   # lang-71: Streamer mode
   'Streamer mode': 'Modo streamer',
   'For streaming 4horizon (OBS: Window Capture) while you use other apps. The game screens keep moving when other windows cover 4horizon (not when it is minimized: Windows cannot capture a minimized window), and the e-mails of the logins are hidden on screen. It uses about as much CPU as a visible window, and economy mode is not available while it is on. Restart 4horizon after changing it.': 'Para fazer live do 4horizon (OBS: Captura de janela) enquanto você usa outros apps. As telas do jogo continuam se movendo quando outras janelas cobrem o 4horizon (não quando ele está minimizado: o Windows não consegue capturar uma janela minimizada), e os e-mails dos logins ficam escondidos na tela. Usa mais ou menos a mesma CPU de uma janela visível, e o modo economia não fica disponível enquanto ele está ligado. Reinicie o 4horizon depois de mudar.',
-  'Use streamer mode': 'Usar modo streamer',
+
   'Streamer mode is on': 'Modo streamer ligado',
   'Streamer mode is off': 'Modo streamer desligado',
   'Economy mode is not available while Streamer mode is on (Settings).': 'O modo economia não está disponível enquanto o Modo streamer está ligado (Configurações).',
+  # lang-74: the Settings redesign (cards, switches)
+  'Game & accounts': 'Jogo e contas', 'Startup & tray': 'Início e bandeja', 'Display': 'Tela',
+  'Start with the PC': 'Iniciar com o PC', 'Hide in the tray when minimized': 'Esconder na bandeja ao minimizar',
+  'With Start with the PC: the window stays hidden in the tray at the start; click the tray icon to show it.': 'Com Iniciar com o PC: a janela começa escondida na bandeja; clique no ícone da bandeja para mostrar.',
+  'Sound': 'Som', 'On app start': 'Ao abrir o app', 'The Windows notification sound.': 'O som de notificação do Windows.',
+  'The notice that tells you the alerts are on each time the app starts.': 'O aviso de que os alertas estão ligados, toda vez que o app abre.',
+  'Send test': 'Enviar teste', 'Shows a notification now, with the sound setting': 'Mostra uma notificação agora, com a opção de som',
+  'Rule 1': 'Regra 1', 'Rule 2': 'Regra 2',
+  'Tick Rule 2 to have a second combination. A catch is great when it meets Rule 1 OR Rule 2. Example: Rule 1 IV 130 AND quality 1.75, Rule 2 IV 170 OR quality 5 (no catch reaches 5, so only the IV counts).': 'Marque Regra 2 para ter uma segunda combinação. Uma captura é ótima quando atende à Regra 1 OU à Regra 2. Exemplo: Regra 1 IV 130 E qualidade 1,75, Regra 2 IV 170 OU qualidade 5 (nenhuma captura chega a 5, então só o IV conta).',
+  'Simple alerts': 'Alertas simples', 'A shiny is captured': 'Um shiny é capturado', 'New hunt unlocks': 'Nova hunt liberada', 'Battle pass mission done': 'Missão do passe de batalha concluída',
+  'Daily mission done': 'Missão diária concluída', 'Egg ready to hatch': 'Ovo pronto para chocar', 'Account stopped': 'Conta parada',
+  'Min. hunting': 'Min. caçando', 'No kills (s)': 'Sem kills (s)', 'No data (s)': 'Sem dados (s)',
+  'History': 'Histórico', 'Daily totals, saved on this computer': 'Totais do dia, guardados neste computador', 'until': 'até',
   # lang-73: Settings › Grid, and the strip of mini screens beside an expanded screen
-  'Grid': 'Grade',
+
   'Mini screens': 'Telas mini',
   'When a screen is expanded, the arrow in its header shows the other screens as mini screens: in a strip on the right, or along the bottom. A click on a mini screen expands it.': 'Quando uma tela está expandida, a seta no cabeçalho dela mostra as outras telas como telas mini: numa faixa à direita, ou ao longo da parte de baixo. Um clique numa tela mini expande ela.',
   'On the right': 'À direita', 'Along the bottom': 'Embaixo',
@@ -75,7 +85,7 @@ EXACT = {
   # lang-70: Light mode
   'Light mode': 'Modo leve',
   'For slower PCs. The game screens stop their decorative animations (the game\'s own \"reduce motion\": shine, glows, pulsing buttons), the Summary is redrawn every 5 seconds instead of every second, and 4horizon\'s own animations stop. The hunts, the numbers and the captures do not change. No restart needed.': 'Para PCs mais lentos. As telas do jogo param as animações decorativas (o \"reduzir movimento\" do próprio jogo: brilhos, reflexos, botões pulsando), o Resumo é redesenhado a cada 5 segundos em vez de a cada segundo, e as animações do próprio 4horizon param. As hunts, os números e as capturas não mudam. Não precisa reiniciar.',
-  'Use light mode': 'Usar modo leve',
+
   'Light mode is on': 'Modo leve ligado',
   'Light mode is off': 'Modo leve desligado',
   'Back to last hunt': 'Voltar para a última hunt',
@@ -125,7 +135,7 @@ EXACT = {
   'the page did not answer': 'a página não respondeu',
   'Start with the PC': 'Iniciar com o PC',
   'Opens 4horizon by itself when you sign in to Windows, so that the alerts and the history keep going after a restart.': 'Abre o 4horizon sozinho quando você entra no Windows, para que os avisos e o histórico continuem depois de reiniciar.',
-  'Start 4horizon with the PC': 'Iniciar o 4horizon com o PC',
+
   'Start hidden in the tray': 'Iniciar oculto na bandeja',
   'Starting with the PC works on Windows only.': 'Iniciar com o PC só funciona no Windows.',
   '"Start hidden" needs install-diagnostics.js: run it in the project folder and restart the app.': '"Iniciar oculto" precisa do install-diagnostics.js: rode-o na pasta do projeto e reinicie o app.',
@@ -133,9 +143,7 @@ EXACT = {
   'Could not change the start with the PC': 'Não foi possível mudar o início com o PC',
   'Quiet hours': 'Horário de silêncio',
   'No alerts between these two times (the time of this computer). An alert that happens then is not shown later. A window like 23:00 to 07:00 crosses midnight. The test button still works.': 'Sem avisos entre estes dois horários (o horário deste computador). Um aviso que acontece nesse período não é mostrado depois. Uma janela como 23:00 até 07:00 passa da meia-noite. O botão de teste continua funcionando.',
-  'Keep quiet between': 'Ficar em silêncio entre',
-  'From': 'De',
-  'Until': 'Até',
+
   'Shinies still notify': 'Shinies ainda avisam',
   'History error: {msg}': 'Erro no histórico: {msg}',
   'Language, start with the PC, notifications, history and diagnostics': 'Idioma, início com o PC, notificações, histórico e diagnóstico',
@@ -143,21 +151,12 @@ EXACT = {
   'Test notification sent': 'Notificação de teste enviada',
   'Could not send the test': 'Não foi possível enviar o teste',
   'Windows notifications': 'Notificações do Windows',
-  'Enabled': 'Ativadas',
+
   'Alerts that pop up on your screen, even when the window is hidden in the tray. The tray menu has the same switch.': 'Avisos que aparecem na tela, mesmo com a janela escondida na bandeja. O menu da bandeja tem o mesmo botão.',
-  'Tell me when': 'Avise-me quando',
-  'Untick what you do not want to hear about.': 'Desmarque o que você não quer receber.',
-  'A shiny is captured': 'Um shiny for capturado',
-  'A great catch (the numbers are below)': 'Houver uma ótima captura (os números estão abaixo)',
-  'A valuable item drops': 'Um item valioso cair',
-  'Balls or potions are running low': 'As bolas ou poções estiverem acabando',
-  'An account stops hunting, gets no kills or goes silent': 'Uma conta parar de caçar, ficar sem kills ou ficar em silêncio',
-  'A new hunt unlocks': 'Uma nova hunt for liberada',
+
   'A catch counts as great by its IV and its quality. OR: it notifies when a catch reaches at least one of the two numbers. AND: it notifies only when a catch reaches both. The IV goes up to 192. The quality is the number after the × of a catch (Rara ×1.37, Lendária ×1.78). To ignore one of the two: with OR put a number above the highest possible, with AND put 0.': 'Uma captura é ótima pelo IV e pela qualidade. OU: avisa quando a captura chega a pelo menos um dos dois números. E: avisa só quando chega aos dois. O IV vai até 192. A qualidade é o número depois do × de uma captura (Rara ×1,37, Lendária ×1,78). Para ignorar um dos dois: com OU coloque um número acima do maior possível, com E coloque 0.',
   # lang-70: the second rule of Great catch
-  'Great catch, 2nd rule': 'Ótima captura, 2ª regra',
-  'Tick Active to have a second combination. A catch is great when it meets the rule above OR this one. Example: above IV 130 AND quality 1.75, here IV 170 OR quality 5 (no catch reaches 5, so only the IV counts).': 'Marque Ativa para ter uma segunda combinação. Uma captura é ótima quando atende à regra de cima OU a esta. Exemplo: em cima IV 130 E qualidade 1,75, aqui IV 170 OU qualidade 5 (nenhuma captura chega a 5, então só o IV conta).',
-  'Active': 'Ativa',
+
   'IV at least': 'IV mínimo',
   'Quality at least': 'Qualidade mínima',
   'Valuable drop': 'Drop valioso',
@@ -166,16 +165,9 @@ EXACT = {
   'Supplies running low': 'Suprimentos acabando',
   'Warns when the balls or the potions of an account will run out within this time at the pace of the current hunt. It needs some minutes of hunting to know the pace.': 'Avisa quando as bolas ou as poções de uma conta vão acabar dentro deste tempo, no ritmo da hunt atual. Precisa de alguns minutos de hunt para saber o ritmo.',
   'Hours left': 'Horas restantes',
-  'Minutes of hunting': 'Minutos de hunt',
+
   'Warns when an account that is hunting gets no kills for this long, or leaves the hunt (the city, for example) and is not back within that time; and when nothing arrives from its game for the second time.': 'Avisa quando uma conta que está caçando fica sem kills por este tempo, ou sai da hunt (para a cidade, por exemplo) e não volta dentro desse tempo; e quando nada chega do jogo dela pelo segundo tempo.',
-  'No kills (seconds)': 'Sem kills (segundos)',
-  'No data (seconds)': 'Sem dados (segundos)',
-  'Sound and start': 'Som e início',
-  'The Windows notification sound, and the notice that tells you the alerts are on each time the app starts.': 'O som de notificação do Windows, e o aviso que diz que os alertas estão ligados toda vez que o app inicia.',
-  'Play the sound': 'Tocar o som',
-  'Tell me when the app starts': 'Avisar quando o app iniciar',
-  'Try it': 'Experimente',
-  'Shows a notification now, with the sound setting above.': 'Mostra uma notificação agora, com a configuração de som acima.',
+
   'The notification settings need install-diagnostics.js: run it in the project folder and restart the app.': 'As configurações de notificações precisam do install-diagnostics.js: rode-o na pasta do projeto e reinicie o app.',
   'Log in all': 'Entrar em todas',
   'Sign in every panel that has a saved login': 'Conectar todos os painéis que têm login salvo',

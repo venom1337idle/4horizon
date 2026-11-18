@@ -18,8 +18,8 @@ const bar = p => p.evaluate(() => ({ ids: Array.from(document.querySelectorAll('
   ok('...no Update button while this is the latest version', !s.upShown, s);
   // Accounts in Settings, under Game panels
   await p.click('#btnSettings'); await p.waitForTimeout(250);
-  const rows = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .srow > div:first-child b')).map(x => x.textContent));
-  ok('Settings: "Accounts" is the row right under "Game panels", with an "Open accounts" button', rows[0] === 'Game panels' && rows[1] === 'Accounts' && (await p.evaluate(() => document.getElementById('btnAccounts').closest('.srow').querySelector('b').textContent === 'Accounts' && document.getElementById('btnAccounts').textContent.trim() === 'Open accounts')), rows.slice(0, 3));
+  const rows = await p.evaluate(() => Array.from(document.querySelectorAll('#cGame .srow b')).map(x => x.textContent));
+  ok('Settings (lang-74): "Open accounts" is in the Game & accounts card, under Game panels and Language (its name "Accounts" is the tooltip)', rows.join() === 'Game panels,Language,Accounts,Settings backup' && (await p.evaluate(() => document.getElementById('btnAccounts').closest('.srow').querySelector('b').textContent === 'Accounts' && document.getElementById('btnAccounts').textContent.trim() === 'Open accounts' && !!document.getElementById('btnAccounts').closest('#cGame'))), rows);
   await p.click('#btnAccounts'); await p.waitForTimeout(300);
   const st = await p.evaluate(() => ({ acc: !document.getElementById('modal').classList.contains('hidden'), set: !document.getElementById('settingsModal').classList.contains('hidden'), rows: document.querySelectorAll('#arows .arow').length }));
   ok('"Open accounts": the Accounts window opens (Settings steps aside)', st.acc && !st.set && st.rows === 4, st);

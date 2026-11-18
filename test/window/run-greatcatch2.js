@@ -18,19 +18,19 @@ const STUB = (withRule2) => `
 const last = p => p.evaluate(() => JSON.stringify(window.__n.calls.slice(-1)[0]));
 const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.press('#' + id, 'Tab'); await p.waitForTimeout(100); };
 const row = p => p.evaluate(() => { const r = document.getElementById('nGc2Row'), v = id => document.getElementById(id).value;
-  return { shown: !r.classList.contains('hidden') && r.getBoundingClientRect().height > 0, title: r.querySelector('b').textContent.trim(), active: document.getElementById('nGc2On').checked, iv: v('nIV2'), q: v('nQuality2'),
+  return { shown: !r.classList.contains('hidden') && r.getBoundingClientRect().height > 0, title: r.querySelector('.rl').firstChild.textContent.trim() || r.querySelector('.rl').textContent.trim(), active: document.getElementById('nGc2On').checked, iv: v('nIV2'), q: v('nQuality2'),
     mode: Array.from(document.querySelectorAll('#nMode2 input')).filter(x => x.checked).map(x => x.value).join(), mode1: Array.from(document.querySelectorAll('#nMode input')).filter(x => x.checked).map(x => x.value).join(),
-    dim: getComputedStyle(r.querySelector('.f')).opacity, words: Array.from(document.querySelectorAll('#nMode2 label')).map(l => l.textContent.trim()), tick: document.getElementById('nGc2On').closest('label').textContent.trim(), tip: r.getAttribute('title') || (r.querySelector('.sd') || {}).textContent }; });
+    dim: getComputedStyle(r.querySelector('.f')).opacity, words: Array.from(document.querySelectorAll('#nMode2 label')).map(l => l.textContent.trim()), tick: document.getElementById('nGc2On').closest('label').textContent.trim().replace(/\s*i$/, ''), tip: r.getAttribute('title') || (r.querySelector('.sd') || {}).textContent }; });
 (async () => {
   const b = await chromium.launch();
   let p = await open(b, { extraInit: STUB(true), w: 1400, h: 900 });
   await p.click('#btnSettings'); await p.waitForTimeout(300);
   let R = await row(p);
-  ok('Settings has a second row under Great catch: "Great catch, 2nd rule", with "Active" unticked, IV 170, OR, quality 5', R.shown && R.title === 'Great catch, 2nd rule' && R.tick === 'Active' && !R.active && R.iv === '170' && R.q === '5' && R.mode === 'or' && JSON.stringify(R.words) === '["AND","OR"]', R);
+  ok('Settings has a second rule row under Great catch (lang-74: "Rule 2" with its tick box), unticked, IV 170, OR, quality 5', R.shown && R.tick === 'Rule 2' && !R.active && R.iv === '170' && R.q === '5' && R.mode === 'or' && JSON.stringify(R.words) === '["AND","OR"]', R);
   ok('...while it is off its boxes are dimmed (they can still be filled in)', R.dim === '0.5' && !(await p.evaluate(() => document.getElementById('nIV2').disabled)), R.dim);
   const pos = await p.evaluate(() => ['nIV', 'nMode', 'nQuality', 'nIV2', 'nMode2', 'nQuality2', 'nGc2On'].map(id => { const r = document.getElementById(id).getBoundingClientRect(); return { id, x: Math.round(r.left), y: Math.round(r.top), cy: Math.round(r.top + r.height / 2) }; }));
   const P = id => pos.find(q => q.id === id);
-  ok('the 2nd rule is right under the first, in the same three columns (IV, AND | OR, Quality), on one line, with "Active" above them', P('nIV2').x === P('nIV').x && P('nMode2').x === P('nMode').x && P('nQuality2').x === P('nQuality').x && Math.abs(P('nIV2').cy - P('nMode2').cy) <= 2 && Math.abs(P('nMode2').cy - P('nQuality2').cy) <= 2 && P('nIV2').y > P('nQuality').y && P('nGc2On').y < P('nIV2').y, pos);
+  ok('the 2nd rule is right under the first, in the same three columns (IV, AND | OR, Quality), on one line, with its "Rule 2" tick box on that line (lang-74)', P('nIV2').x === P('nIV').x && P('nMode2').x === P('nMode').x && P('nQuality2').x === P('nQuality').x && Math.abs(P('nIV2').cy - P('nMode2').cy) <= 2 && Math.abs(P('nMode2').cy - P('nQuality2').cy) <= 2 && P('nIV2').y > P('nQuality').y && Math.abs(P('nGc2On').cy - P('nIV2').cy) <= 12 && P('nGc2On').x < P('nIV2').x, pos);
 
   await p.evaluate(() => document.getElementById('nGc2Row').scrollIntoView({ block: 'center' })); await p.waitForTimeout(100); await p.screenshot({ path: 'greatcatch2-off.png' });
   await p.check('#nGc2On'); await p.waitForTimeout(120); R = await row(p); await p.screenshot({ path: 'greatcatch2-on.png' });
@@ -67,7 +67,7 @@ const row = p => p.evaluate(() => { const r = document.getElementById('nGc2Row')
   // Portuguese
   p = await open(b, { extraInit: STUB(true), lang: 'pt-BR', w: 1400, h: 900 });
   await p.click('#btnSettings'); await p.waitForTimeout(300); R = await row(p);
-  ok('in Portuguese: "Ótima captura, 2ª regra", "Ativa", E | OU', R.title === 'Ótima captura, 2ª regra' && R.tick === 'Ativa' && JSON.stringify(R.words) === '["E","OU"]', R);
+  ok('in Portuguese: "Regra 2", E | OU', R.tick === 'Regra 2' && JSON.stringify(R.words) === '["E","OU"]', R);
   ok('no JavaScript errors', p.errors.length === 0, p.errors); await p.context().close();
   await b.close(); console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAILED ' + e.message + '\n' + e.stack); process.exit(1); });

@@ -13,10 +13,10 @@ const toasts = p => p.evaluate(() => Array.from(document.querySelectorAll('.toas
   const b = await chromium.launch();
   let p = await open(b, { extraInit: STUB(false, false), w: 1400, h: 900 }); await feedAll(p);
   await p.click('#btnSettings'); await p.waitForTimeout(250);
-  const row = await p.evaluate(() => { const r = document.getElementById('sStreamRow'); return { shown: !r.classList.contains('hidden') && r.getBoundingClientRect().height > 0, title: r.querySelector('b').firstChild.textContent.trim(), tick: document.getElementById('sStream').closest('label').textContent.trim(), checked: document.getElementById('sStream').checked, tip: r.querySelector('.sd').textContent }; });
-  ok('Settings has "Streamer mode" with "Use streamer mode", off at first; it explains OBS, minimized windows, the e-mails, the CPU, economy mode and the restart', row.shown && row.title === 'Streamer mode' && row.tick === 'Use streamer mode' && !row.checked && /OBS/.test(row.tip) && /minimized/.test(row.tip) && /e-mails/.test(row.tip) && /CPU/.test(row.tip) && /economy mode is not available/.test(row.tip) && /Restart 4horizon/.test(row.tip), row);
-  const order = await p.evaluate(() => Array.from(document.querySelectorAll('#settingsModal .srow > div:first-child > b')).map(x => x.firstChild.textContent.trim()));
-  ok('...right under Light mode', order.indexOf('Streamer mode') === order.indexOf('Light mode') + 1, order);
+  const row = await p.evaluate(() => { const r = document.getElementById('sStreamRow'); return { shown: !r.classList.contains('hidden') && r.getBoundingClientRect().height > 0, title: (r.querySelector('label[for]') || r.querySelector('b')).firstChild.textContent.trim(), tick: r.querySelector('label[for=sStream]').firstChild.textContent.trim(), checked: document.getElementById('sStream').checked, tip: r.querySelector('.sd').textContent }; });
+  ok('Settings has "Streamer mode" (lang-74: a switch in the Display card), off at first; it explains OBS, minimized windows, the e-mails, the CPU, economy mode and the restart', row.shown && row.title === 'Streamer mode' && row.tick === 'Streamer mode' && !row.checked && /OBS/.test(row.tip) && /minimized/.test(row.tip) && /e-mails/.test(row.tip) && /CPU/.test(row.tip) && /economy mode is not available/.test(row.tip) && /Restart 4horizon/.test(row.tip), row);
+  const order = await p.evaluate(() => Array.from(document.querySelectorAll('#cDisplay .srow.sw label[for]')).map(x => x.firstChild.textContent.trim()));
+  ok('...right under Light mode, in the Display card', order.indexOf('Streamer mode') === order.indexOf('Light mode') + 1, order);
   // off: economy mode works, the e-mails are shown
   await p.click('#setClose'); await p.evaluate(() => document.getElementById('btnEco').click()); await p.waitForTimeout(200);
   ok('streamer mode off: the leaf button turns economy mode on as before', await p.evaluate(() => document.body.classList.contains('eco')) && (await p.evaluate(() => window.__st.eco.filter(v => v === true).length)) === 1);          // (the window says "off" once when it starts)
@@ -60,8 +60,8 @@ const toasts = p => p.evaluate(() => Array.from(document.querySelectorAll('.toas
 
   // Portuguese
   p = await open(b, { extraInit: STUB(true, true), w: 1400, h: 900, lang: 'pt-BR' }); await feedAll(p); await p.click('#btnSettings'); await p.waitForTimeout(250);
-  const pt = await p.evaluate(() => { const r = document.getElementById('sStreamRow'); return [r.querySelector('b').firstChild.textContent.trim(), document.getElementById('sStream').closest('label').textContent.trim(), document.getElementById('btnEco').title]; });
-  ok('in Portuguese: "Modo streamer", "Usar modo streamer", and the leaf button says why it is off', pt[0] === 'Modo streamer' && pt[1] === 'Usar modo streamer' && /^O modo economia não está disponível enquanto o Modo streamer está ligado/.test(pt[2]), pt);
+  const pt = await p.evaluate(() => { const r = document.getElementById('sStreamRow'); return [(r.querySelector('label[for]') || r.querySelector('b')).firstChild.textContent.trim(), document.getElementById('btnEco').title]; });
+  ok('in Portuguese: "Modo streamer", and the leaf button says why it is off', pt[0] === 'Modo streamer' && /^O modo economia não está disponível enquanto o Modo streamer está ligado/.test(pt[1]), pt);
   ok('no JavaScript errors', p.errors.length === 0, p.errors); await p.context().close();
   await b.close(); console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAILED ' + e.message + '\n' + e.stack); process.exit(1); });

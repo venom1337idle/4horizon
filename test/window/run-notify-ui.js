@@ -74,7 +74,7 @@ const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.
   p = await open(b, { extraInit: STUB, lang: 'pt-BR', w: 1400, h: 900 });
   await p.click('#btnSettings'); await p.waitForTimeout(250);
   const txt = await p.locator('#settingsModal').innerText();
-  ok('in Portuguese the section is in Portuguese (title, switches, hints, button)', /Notificações do Windows/.test(txt) && /Avise-me quando/.test(txt) && /IV mínimo/.test(txt) && /Qualidade mínima/.test(txt) && /Enviar notificação de teste/.test(txt), txt.slice(0, 400));
+  ok('in Portuguese the section is in Portuguese (title, switches, hints, button)', /Notificações do Windows/.test(txt) && /Alertas simples/.test(txt) && /IV mínimo/.test(txt) && /Qualidade mínima/.test(txt) && /Enviar teste/.test(txt), txt.slice(0, 400));
   ok('...and no English line is left in the dialog', !/\b(Tell me when|Untick|at least|Play the sound|Try it|Supplies running low|Valuable drop)\b/.test(txt), txt);
   await p.click('#nTest'); await p.waitForTimeout(100);
   ok('the toast is in Portuguese too', /Notificação de teste enviada/.test(await p.locator('#toast').innerText()));
@@ -171,7 +171,7 @@ const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.
   p = await open(b, { extraInit: STUB, lang: 'pt-BR', w: 1400, h: 900 });
   await p.click('#btnSettings'); await p.waitForTimeout(250);
   const ptx = await p.locator('#settingsModal').innerText();
-  ok('in Portuguese: Iniciar com o PC, Iniciar oculto na bandeja, Horário de silêncio, Ficar em silêncio entre, Shinies ainda avisam', /Iniciar com o PC/.test(ptx) && /Iniciar oculto na bandeja/.test(ptx) && /Horário de silêncio/.test(ptx) && /Ficar em silêncio entre/.test(ptx) && /Shinies ainda avisam/.test(ptx), ptx.slice(0, 300));
+  ok('in Portuguese: Iniciar com o PC, Iniciar oculto na bandeja, Horário de silêncio, Shinies ainda avisam', /Iniciar com o PC/.test(ptx) && /Iniciar oculto na bandeja/.test(ptx) && /Horário de silêncio/.test(ptx) && /Shinies ainda avisam/.test(ptx), ptx.slice(0, 300));
   ok('...and none of the new English lines is left', !/\b(Start with the PC|Start hidden|Quiet hours|Keep quiet|Shinies still)\b/.test(ptx));
   await p.context().close();
 
@@ -181,10 +181,13 @@ const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.
     await p.click('#btnSettings'); await p.waitForTimeout(300);
     const L = await p.evaluate(() => { const dlg = document.querySelector('#settingsModal .dlg').getBoundingClientRect();
       return { dlgL: dlg.left, dlgR: dlg.right, boxes: Array.from(document.querySelectorAll('#evChecks label')).map(l => { const r = l.getBoundingClientRect(); return { ev: l.querySelector('input').dataset.ev, x: Math.round(r.left), y: Math.round(r.top), r: Math.round(r.right), h: Math.round(r.height) }; }) }; });
-    const [a, b2, c, d2, e, f] = [L.boxes[0], L.boxes[2], L.boxes[4], L.boxes[5], L.boxes[6], L.boxes[8]];
-    ok('at ' + size[0] + ' x ' + size[1] + ': the nine alerts are in two columns (five on the left, four on the right), each column straight', L.boxes.slice(0, 5).every(x => x.x === a.x) && L.boxes.slice(5).every(x => x.x === d2.x) && d2.x > a.x + 200 && L.boxes.slice(0, 5).every((x, i, arr) => i === 0 || x.y > arr[i - 1].y) && L.boxes.slice(5).every((x, i, arr) => i === 0 || x.y > arr[i - 1].y) && a.y < b2.y && b2.y < c.y && d2.y < e.y && e.y < f.y && Math.abs(a.y - d2.y) <= 2, L.boxes);
-    ok('...in this order: shiny, great catch, valuable drop, supplies low, stopped | new hunt, battle pass, daily mission, egg', L.boxes.map(x => x.ev).join() === 'shiny,goodCatch,rareDrop,suppliesLow,stopped,huntUnlocked,battlePass,dailyQuest,eggReady', L.boxes.map(x => x.ev));
-    ok('...and all of them are inside the dialog', L.boxes.every(x => x.x >= L.dlgL && x.r <= L.dlgR), [L.dlgL, L.dlgR, L.boxes.map(x => x.r)]);
+    // lang-74: the five simple alerts are one straight column in their own box; the four with numbers (great catch, valuable drop, supplies low, stopped) are the tick boxes of their own cards
+    const a = L.boxes[0];
+    ok('at ' + size[0] + ' x ' + size[1] + ': the five simple alerts are one straight column, one under the other', L.boxes.length === 5 && L.boxes.every(x => x.x === a.x) && L.boxes.every((x, i, arr) => i === 0 || x.y > arr[i - 1].y), L.boxes);
+    ok('...in this order: shiny, new hunt, battle pass, daily mission, egg', L.boxes.map(x => x.ev).join() === 'shiny,huntUnlocked,battlePass,dailyQuest,eggReady', L.boxes.map(x => x.ev));
+    const cards = await p.evaluate(() => ['goodCatch', 'rareDrop', 'suppliesLow', 'stopped'].map(ev => { const i = document.querySelector('#notifBody [data-ev="' + ev + '"]'), s = i.closest('.sub'), r = i.getBoundingClientRect(); return { ev, inCard: !!s, x: Math.round(r.left), y: Math.round(r.top), r: Math.round(r.right), first: s && s.querySelector('input') === i }; }));
+    ok('...the four alerts with numbers are the tick box at the top of their own card (great catch, valuable drop, supplies low, stopped), the last three side by side', cards.every(c => c.inCard && c.first) && cards[1].x < cards[2].x && cards[2].x < cards[3].x && Math.abs(cards[1].y - cards[2].y) <= 2 && cards[0].y < cards[1].y, cards);
+    ok('...and all of them are inside the dialog', L.boxes.concat(cards).every(x => x.x >= L.dlgL && x.r <= L.dlgR), [L.dlgL, L.dlgR]);
     if (size[0] === 1400) await p.screenshot({ path: 'notif-cols.png' });
     ok('no JavaScript errors', p.errors.length === 0, p.errors); await p.context().close();
   }
@@ -209,11 +212,11 @@ const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.
   p = await open(b, { extraInit: STUB, w: 1400, h: 900 });
   await p.click('#btnSettings'); await p.waitForTimeout(300);
   const nw = await p.evaluate(() => ['battlePass', 'dailyQuest', 'eggReady'].map(k => { const e = document.querySelector('#notifBody [data-ev="' + k + '"]'); return e ? e.parentNode.textContent.trim() + '|' + e.checked : null; }));
-  ok('three new notifications in Settings, on at first: a battle pass mission, a daily mission, an egg ready to hatch', nw.join() === 'A battle pass mission is completed|true,A daily mission is completed|true,An egg is ready to hatch|true', nw);
+  ok('three new notifications in Settings, on at first: a battle pass mission, a daily mission, an egg ready to hatch', nw.join() === 'Battle pass mission done|true,Daily mission done|true,Egg ready to hatch|true', nw);          // (lang-74: short names in the Simple alerts box)
   await p.click('#notifBody [data-ev="eggReady"]'); await p.waitForTimeout(250);
   ok('...turning one off is sent and saved like the others ({ events: { eggReady: false } })', JSON.stringify((await calls(p)).slice(-1)) === '[{"events":{"eggReady":false}}]' && await p.evaluate(() => window.__n.cfg.events.eggReady === false), await calls(p));
-  let tr = await p.evaluate(() => ({ row: document.getElementById('sTray').closest('.srow').querySelector('b').textContent, label: document.getElementById('sTray').parentNode.textContent.trim(), on: document.getElementById('sTray').checked, dis: document.getElementById('sTray').disabled }));
-  ok('"Minimize to tray": its own row, off at first, can be changed', tr.row === 'Minimize to tray' && tr.label === 'Hide in the tray when minimized' && !tr.on && !tr.dis, tr);
+  let tr = await p.evaluate(() => ({ label: document.querySelector('label[for=sTray]').firstChild.textContent.trim(), card: !!document.getElementById('sTray').closest('#cStart'), on: document.getElementById('sTray').checked, dis: document.getElementById('sTray').disabled }));
+  ok('"Hide in the tray when minimized": its own switch in the Startup & tray card (lang-74), off at first, can be changed', tr.label === 'Hide in the tray when minimized' && tr.card && !tr.on && !tr.dis, tr);
   await p.click('#sTray'); await p.waitForTimeout(250);
   tr = await p.evaluate(() => ({ on: document.getElementById('sTray').checked, last: window.__s.calls.slice(-1)[0], toast: document.getElementById('toast').textContent, startup: document.getElementById('sStartup').checked }));
   ok('...ticking it asks for { toTray: true } and says it was saved; the start with the PC is not touched', tr.on && JSON.stringify(tr.last) === '{"toTray":true}' && /Saved/.test(tr.toast) && !tr.startup, tr);
@@ -224,8 +227,8 @@ const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.
   ok('an older settings.js that does not know it: the box is greyed out', await p.evaluate(() => document.getElementById('sTray').disabled));
   await p.context().close();
   p = await open(b, { extraInit: STUB, w: 1400, h: 900, lang: 'pt-BR' }); await p.click('#btnSettings'); await p.waitForTimeout(300);
-  const ptw = await p.evaluate(() => [document.querySelector('#notifBody [data-ev="dailyQuest"]').parentNode.textContent.trim(), document.getElementById('sTray').closest('.srow').querySelector('b').textContent]);
-  ok('in Portuguese: "Uma missão diária é concluída", "Minimizar para a bandeja"', ptw.join('|') === 'Uma missão diária é concluída|Minimizar para a bandeja', ptw);
+  const ptw = await p.evaluate(() => [document.querySelector('#notifBody [data-ev="dailyQuest"]').parentNode.textContent.trim(), document.querySelector('label[for=sTray]').firstChild.textContent.trim()]);
+  ok('in Portuguese: "Missão diária concluída", "Esconder na bandeja ao minimizar"', ptw.join('|') === 'Missão diária concluída|Esconder na bandeja ao minimizar', ptw);
   await p.context().close();
 
   // a look at it in English at a normal size

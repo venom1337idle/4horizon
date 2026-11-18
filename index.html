@@ -140,53 +140,97 @@
   .dlg .warn { color: var(--gold); font-size: 12px; margin: 0 0 10px; }
   /* ---------- Diagnostics ---------- */
   #settingsModal { position: fixed; inset: 0; background: rgba(3, 6, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 42; }
-  .srow { display: flex; align-items: center; gap: 16px; padding: 13px 0; border-top: 1px solid var(--line); }
-  .srow > div { flex: 1; min-width: 0; }
-  .srow b { display: block; color: var(--text); font-size: 13px; }
-  .srow .sd { display: block; margin-top: 3px; color: var(--dim); font-size: 12px; line-height: 1.5; }
-  .srow select, .srow button { flex: none; min-width: 170px; }
-  #settingsModal .dlg { display: flex; flex-direction: column; max-height: 92vh; }
-  #settingsModal .sbody { overflow-y: auto; min-height: 0; margin: 0 -8px; padding: 0 8px; }
-  .shead { display: flex; align-items: baseline; gap: 12px; margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line2); font-family: var(--serif); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
-  .shead .saved { margin-left: auto; font-family: inherit; font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--green, #6fdc8c); opacity: 0; transition: opacity .25s; }
-  .shead .saved.on { opacity: 1; }
-  .srow.stack { flex-direction: column; align-items: stretch; gap: 9px; }
-  .checks.cols { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, auto); grid-auto-flow: column; column-gap: 28px; row-gap: 8px; width: 100%; }        /* 5 and 4 (lang-41): the alerts of the hunt on the left, the ones of progress (new hunt, battle pass, daily mission, egg) on the right */
-  .checks { display: flex; flex-direction: column; gap: 7px; flex: none; width: 330px; }
-  .checks label, .srow label.tick { display: flex; gap: 8px; align-items: center; color: var(--text); font-size: 12.5px; cursor: pointer; }
+  /* ---------- Settings (lang-74: cards; switches for on/off settings; the description of a setting is a tooltip, shown by the small "i" after its name) ---------- */
+  #settingsModal .dlg { display: flex; flex-direction: column; max-height: 92vh; width: min(820px, 95vw); }
+  #settingsModal .sbody { overflow-y: auto; min-height: 0; margin: 0 -8px; padding: 2px 8px 4px; display: flex; flex-direction: column; gap: 12px; }
+  #settingsModal .card { background: rgba(255, 255, 255, .025); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px 14px; min-width: 0; }
+  #settingsModal .card.slim { padding: 8px 16px; }
+  #settingsModal .cards3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  #settingsModal .sh { margin: 0 0 10px; font-family: var(--serif); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  #settingsModal .chead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  #settingsModal .chead .srow.sw { gap: 7px; } #settingsModal .chead .srow.sw > label { font-weight: 500; font-size: 12px; white-space: nowrap; } #settingsModal .chead .info { margin-left: 5px; } #settingsModal .chead > button { flex: none; padding: 0 10px; white-space: nowrap; } #settingsModal .chead .sh { letter-spacing: .08em; }
+  #settingsModal .chead .sh { margin: 0; margin-right: auto; }
+  #settingsModal .chead .subt { color: var(--dim); font-size: 12px; margin-right: auto; margin-left: -8px; }
+  #settingsModal .saved { font-size: 11px; color: var(--green, #6fdc8c); opacity: 0; transition: opacity .25s; }
+  #settingsModal .saved.on { opacity: 1; }
+  /* a row of a card: a name (bold) with its "i", and its control; the description stays hidden in the row */
+  #settingsModal .srow { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 9px; }
+  #settingsModal .srow:first-child, #settingsModal .two .srow { margin-top: 0; }
+  #settingsModal .srow b, #settingsModal .srow > label:not(.f) { color: var(--text); font-size: 12.5px; font-weight: 500; min-width: 0; }
+  #settingsModal .srow b { font-weight: 600; }
+  #settingsModal .srow.fld { flex-direction: column; align-items: stretch; gap: 5px; }
+  #settingsModal .srow.fld b { font-weight: 500; color: var(--dim); font-size: 11.5px; }
+  #settingsModal .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }          /* a name that is only for the tooltip and screen readers (the button says it) */
+  #settingsModal .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  #settingsModal .two:first-child { margin-top: 0; }
+  #settingsModal .card select, #settingsModal .card button, #settingsModal .f input, #settingsModal input[type=time] { height: 34px; box-sizing: border-box; min-width: 0; width: 100%; }
+  #settingsModal #historyHost select, #settingsModal #historyHost button { width: auto; }          /* the History controls keep their own row (Period, Account, Export CSV) */
+  #settingsModal .card select { background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 8px; font: inherit; font-size: 12.5px; }
+  #settingsModal .card button { justify-content: center; padding: 0 10px; font-size: 12.5px; }
+  #settingsModal .srow > button.wide { width: 100%; }
+  #settingsModal .srow:has(> .two) { flex-direction: column; align-items: stretch; gap: 6px; }          /* Settings backup: the name, then its two buttons */
+  #settingsModal .srow > .two { flex: 1; margin-top: 0; }
+  #cDisplay .two { grid-template-columns: 1fr; gap: 8px; }          /* the two lists of the Display card one under the other: their choices are long */
+  #settingsModal .srow > .two button { width: 100%; padding: 0 6px; font-size: 12px; white-space: nowrap; }
+  #settingsModal #cHist .sh { margin-right: 0; } #settingsModal #cHist .subt { margin-left: 0; }
+  #settingsModal .srow.sw { gap: 10px; min-height: 28px; }
+  #settingsModal .srow.sw label { cursor: pointer; }
+  #settingsModal .chead .srow { margin: 0; }
+  #settingsModal .chead > button { width: auto; height: 32px; }
+  /* the switch */
+  #settingsModal .sw > input[type=checkbox] { appearance: none; -webkit-appearance: none; flex: none; width: 34px; height: 18px; margin: 0; border-radius: 9px; background: #2b3758; border: 1px solid var(--line); position: relative; cursor: pointer; transition: background .15s; }
+  #settingsModal .sw > input[type=checkbox]::after { content: ''; position: absolute; left: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #c6d0ea; transition: left .15s, background .15s; }
+  #settingsModal .sw > input[type=checkbox]:checked { background: var(--blue, #5aa9ff); border-color: var(--blue, #5aa9ff); }
+  #settingsModal .sw > input[type=checkbox]:checked::after { left: 18px; background: #fff; }
+  #settingsModal .sw > input[type=checkbox]:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #settingsModal .sw > input[type=checkbox]:disabled { opacity: .45; cursor: default; }
+  /* the tick boxes of the lists */
+  #settingsModal .ck { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 12.5px; cursor: pointer; }
+  #settingsModal .ck input[type=checkbox], #settingsModal .srow.ck > input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; flex: none; margin: 0; border-radius: 3px; background: #e9edf5; border: 1px solid #9aa6bf; position: relative; cursor: pointer; }
+  #settingsModal .ck input[type=checkbox]:checked, #settingsModal .srow.ck > input[type=checkbox]:checked { background: var(--blue, #5aa9ff); border-color: var(--blue, #5aa9ff); }
+  #settingsModal .ck input[type=checkbox]:checked::after, #settingsModal .srow.ck > input[type=checkbox]:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  #settingsModal .ck input[type=checkbox]:focus-visible, #settingsModal .srow.ck > input[type=checkbox]:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #settingsModal .srow.ck { gap: 8px; }
+  #settingsModal .srow.ck label { cursor: pointer; }
+  /* notifications: the boxes of the rules */
+  #settingsModal .ngrid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 10px; }
+  #settingsModal .ngrid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+  #settingsModal .sub { background: rgba(0, 0, 0, .18); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 12px; min-width: 0; }
+  #settingsModal .sub > .srow:first-child { margin-top: 0; }
+  #settingsModal .subh { font-size: 11.5px; color: var(--dim); margin: 2px 0 8px; }
+  #settingsModal #evChecks .ck { margin-top: 7px; }
+  #settingsModal .rule { display: grid; grid-template-columns: 86px minmax(0, 1fr) 96px minmax(0, 1fr); gap: 8px; align-items: end; margin-top: 10px; }          /* (86 px: room for "Rule 2", its tick box and its "i") */
+  #settingsModal .rule .rl { font-size: 11.5px; color: var(--dim); padding-bottom: 9px; white-space: nowrap; }
+  #settingsModal .rule .rl.ck { font-size: 11.5px; padding-bottom: 8px; gap: 6px; }
+  #settingsModal .rule .rl.ck input { width: 14px; height: 14px; }
+  #settingsModal .rule .rl.ck input:checked::after { left: 3px; top: 0; width: 4px; height: 7px; }
+  #settingsModal #nGc2Row.g2off .f, #settingsModal #nGc2Row.g2off .seg { opacity: .5; }          /* lang-70: the 2nd rule of Great catch while it is off (its boxes can still be filled in) */
+  #settingsModal .flds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  #settingsModal .flds .f:only-child { grid-column: 1 / -1; }
+  #settingsModal .f { display: flex; flex-direction: column; gap: 4px; min-width: 0; line-height: 13px; color: var(--dim); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #settingsModal .f input { background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 9px; font: inherit; }
+  #settingsModal input[type=time] { background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 9px; font: inherit; color-scheme: dark; width: 118px; }
+  #settingsModal .quiet { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  #settingsModal .quiet .srow { margin: 0; margin-right: 6px; }
+  #settingsModal .quiet .to { color: var(--dim); font-size: 12px; }
+  #settingsModal .quiet .ck.right { margin-left: auto; }
+  #settingsModal .quiet.off input[type=time], #settingsModal .quiet.off .ck.right { opacity: .5; }
   #notifBody.off { opacity: .45; }
-  /* every setting has the same control area on the right (same left edge, same right edge, the same three columns for the boxes), and its name is on the line of the first control */
-  #settingsModal .srow { align-items: flex-start; }
-  #settingsModal .srow > div:first-child { flex: 1; min-width: 0; min-height: 34px; display: flex; flex-direction: column; justify-content: center; }
-  #settingsModal .srow.cap > div:first-child { margin-top: 17px; }
-  #settingsModal .ctl { flex: none; width: 400px; display: grid; grid-template-columns: 136px 104px 136px; column-gap: 12px; row-gap: 6px; align-items: center; }
-  #settingsModal .ctl > * { grid-column: 1 / -1; justify-self: start; }
-  #settingsModal .ctl > .f1 { grid-column: 1; }
-  #settingsModal .ctl > .f2 { grid-column: 2 / 4; }        /* the second boxes start under the E of the AND | OR choice */
-  #settingsModal .ctl > .f3 { grid-column: 3; }             /* only the Quality box of Great catch is to the right of the choice */
-  #settingsModal .ctl > .mid { grid-column: 2; align-self: end; }
-  #settingsModal .ctl > .tick { min-height: 34px; display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 12.5px; cursor: pointer; }
-  #settingsModal .ctl > select, #settingsModal .ctl > button { width: 232px; min-width: 0; height: 34px; box-sizing: border-box; }
-  #settingsModal .f { display: flex; flex-direction: column; gap: 4px; width: 136px; line-height: 13px; color: var(--dim); font-size: 11px; white-space: nowrap; }
-  #settingsModal .f input { width: 100%; height: 34px; background: var(--bg2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 0 9px; font: inherit; min-width: 0; box-sizing: border-box; }
-  #settingsModal .f input[type=time] { color-scheme: dark; }
-  #settingsModal .ctl.off .f { opacity: .5; }
-  #settingsModal #nGc2Row.g2off .ctl .f, #settingsModal #nGc2Row.g2off .ctl .seg { opacity: .5; }          /* lang-70: the 2nd rule of Great catch while it is off (its boxes can still be filled in) */
-  .seg { display: inline-flex; width: 104px; height: 34px; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; background: var(--bg2); box-sizing: border-box; }
-  .ctl .seg label { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--dim); user-select: none; }
-  .ctl .seg label + label { border-left: 1px solid var(--line); }
-  .ctl .seg input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; left: 0; top: 0; cursor: pointer; }
-  .ctl .seg label:hover { color: var(--text); }
-  .ctl .seg label:has(input:checked) { background: linear-gradient(180deg, var(--gold-a) 0%, var(--gold-b) 55%, var(--gold-c) 100%); color: var(--on-gold); }
-  .ctl .seg label:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: -2px; }
-  /* the description of a setting is not written under it: it is a tooltip, shown when the pointer rests on the setting */
+  .seg { display: inline-flex; width: 96px; height: 34px; border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; background: var(--bg2); box-sizing: border-box; }
+  .seg label { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--dim); user-select: none; }
+  .seg label + label { border-left: 1px solid var(--line); }
+  .seg input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; left: 0; top: 0; cursor: pointer; }
+  .seg label:hover { color: var(--text); }
+  .seg label:has(input:checked) { background: linear-gradient(180deg, var(--gold-a) 0%, var(--gold-b) 55%, var(--gold-c) 100%); color: var(--on-gold); }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: -2px; }
+  /* the description of a setting is not written under it: it is a tooltip, shown when the pointer rests on the small "i" after its name */
   #settingsModal .sd { display: none; }
-  #settingsModal .srow { padding: 10px 0; }
-  /* the small "i" after the name of a setting is the only thing that shows its description (a tooltip) */
-  #settingsModal .info { display: inline-block; width: 17px; height: 17px; margin-left: 9px; border: 1px solid var(--dim2); border-radius: 50%; color: var(--dim2); font: italic 700 12px/15px Georgia, serif; text-align: center;
-                         vertical-align: -3px; text-transform: none; letter-spacing: 0; opacity: .8; cursor: help; user-select: none; }
+  #settingsModal .info { display: inline-block; width: 16px; height: 16px; margin-left: 7px; border: 1px solid var(--dim2); border-radius: 50%; color: var(--dim2); font: italic 700 11px/14px Georgia, serif; text-align: center;
+                         vertical-align: -3px; text-transform: none; letter-spacing: 0; opacity: .8; cursor: help; user-select: none; flex: none; }
   #settingsModal .info::before { content: 'i'; }
   #settingsModal .info:hover, #settingsModal .info:focus-visible { color: var(--gold); border-color: var(--gold); opacity: 1; outline: none; }
+  #settingsModal .card.slim .srow { margin: 0; } #settingsModal .card.slim button { width: auto; padding: 0 14px; }
+  #settingsModal #nNeedInstall { margin: 10px 0 0; }
   .note { display: block; margin-top: 5px; color: var(--gold); font-size: 12px; line-height: 1.45; }
   #tip { position: fixed; z-index: 60; max-width: 340px; padding: 10px 13px; border-radius: 10px; background: linear-gradient(180deg, #1a2646, #0f172e); border: 1px solid var(--line2); border-left: 3px solid var(--gold);
          color: var(--text); font-size: 12px; line-height: 1.55; box-shadow: 0 12px 34px rgba(0, 0, 0, .65); pointer-events: none; }
@@ -200,8 +244,7 @@
   #historyHost .card.open .chev { transform: rotate(45deg); }
   #historyHost .card.compact:not(.open) #hxOut { display: none; }
   #historyHost .card.compact.open #hxOut { margin-top: 10px; }
-  #settingsModal .dlg { width: min(780px, 95vw); }
-  #historyHost { padding: 12px 0 4px; }
+  #historyHost { padding: 0; }
   #historyHost .card { background: none; border: 0; box-shadow: none; padding: 0; margin: 0; }
   #historyHost #hxOut { overflow-x: auto; }
   #historyHost table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -377,115 +420,74 @@
     <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="setTitle">
       <h2 id="setTitle">Settings</h2>
       <div class="sbody">
-      <div class="srow">
-        <div><b>Game panels</b><span class="sd">How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).</span></div>
-        <div class="ctl"><select id="panelsSel" data-no-i18n><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+      <!-- lang-74: the Settings redesign: cards (Game & accounts · Startup & tray · Display · Notifications · History · Diagnostics), switches for on/off settings, the descriptions as the "i" tooltips -->
+      <div class="cards3">
+        <section class="card" id="cGame"><h3 class="sh">Game &amp; accounts</h3>
+          <div class="two">
+            <div class="srow fld"><b>Game panels</b><span class="sd">How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).</span><select id="panelsSel" data-no-i18n><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+            <div class="srow fld"><b>Language</b><span class="sd">The language of the whole app: the screens, the notifications and the tray menu.</span><select id="langSel" data-no-i18n><option value="en">English</option><option value="pt-BR">Português (Brasil)</option></select></div>
+          </div>
+          <div class="srow"><b class="vh">Accounts</b><span class="sd">The saved logins of the game panels, used by Log in all (the passwords are encrypted).</span><button id="btnAccounts" class="wide"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Open accounts</button></div>
+          <div class="srow"><b>Settings backup</b><span class="sd">Save your settings to a file, or load them from one (on a new PC, after a fresh install). Saved logins and passwords are never in it, nor your history.</span><div class="two"><button id="btnSetExport">Save to a file</button><button id="btnSetImport">Load from a file</button></div></div>
+        </section>
+        <section class="card" id="cStart"><h3 class="sh">Startup &amp; tray</h3>
+          <div class="srow sw"><input type="checkbox" id="sStartup"><label for="sStartup">Start with the PC</label><span class="sd">Opens 4horizon by itself when you sign in to Windows, so that the alerts and the history keep going after a restart.</span></div>
+          <div class="srow sw"><input type="checkbox" id="sHidden"><label for="sHidden">Start hidden in the tray</label><span class="sd">With Start with the PC: the window stays hidden in the tray at the start; click the tray icon to show it.</span></div>
+          <div class="srow sw"><input type="checkbox" id="sTray"><label for="sTray">Hide in the tray when minimized</label><span class="sd">Minimizing the window hides 4horizon in the tray, as closing it does. Click the tray icon to bring it back.</span></div>
+          <span class="note hidden" id="sNote"></span>
+        </section>
+        <section class="card" id="cDisplay"><h3 class="sh">Display</h3>
+          <div class="srow sw" id="sLightRow"><input type="checkbox" id="sLight"><label for="sLight">Light mode</label><span class="sd">For slower PCs. The game screens stop their decorative animations (the game's own "reduce motion": shine, glows, pulsing buttons), the Summary is redrawn every 5 seconds instead of every second, and 4horizon's own animations stop. The hunts, the numbers and the captures do not change. No restart needed.</span></div>
+          <div class="srow sw hidden" id="sStreamRow"><input type="checkbox" id="sStream"><label for="sStream">Streamer mode</label><span class="sd">For streaming 4horizon (OBS: Window Capture) while you use other apps. The game screens keep moving when other windows cover 4horizon (not when it is minimized: Windows cannot capture a minimized window), and the e-mails of the logins are hidden on screen. It uses about as much CPU as a visible window, and economy mode is not available while it is on. Restart 4horizon after changing it.</span></div>
+          <div class="srow sw"><input type="checkbox" id="sGpu"><label for="sGpu">Disable GPU acceleration</label><span class="sd">Turn this on if you see visual glitches when hovering or taking screenshots. Requires restarting 4horizon.</span></div>
+          <div class="two">
+            <div class="srow fld"><b>Mini screens</b><span class="sd">When a screen is expanded, the arrow in its header shows the other screens as mini screens: in a strip on the right, or along the bottom. A click on a mini screen expands it.</span><select id="miniSel"><option value="right">On the right</option><option value="bottom">Along the bottom</option></select></div>
+            <div class="srow fld"><b>Fit</b><span class="sd">In a 2 × 2 grid with three screens: the third screen keeps its own quarter, or stretches across the whole bottom.</span><select id="fitSel"><option value="wide">Across the bottom</option><option value="quarter">Its own quarter</option></select></div>
+          </div>
+        </section>
       </div>
-      <div class="srow">
-        <div><b>Accounts</b><span class="sd">The saved logins of the game panels, used by Log in all (the passwords are encrypted).</span></div>
-        <div class="ctl"><button id="btnAccounts"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Open accounts</button></div>
-      </div>
-      <div class="srow">
-        <div><b>Settings backup</b><span class="sd">Save your settings to a file, or load them from one (on a new PC, after a fresh install). Saved logins and passwords are never in it, nor your history.</span></div>
-        <div class="ctl"><button id="btnSetExport">Save to a file</button> <button id="btnSetImport">Load from a file</button></div>
-      </div>
-      <div class="srow">
-        <div><b>Language</b><span class="sd">The language of the whole app: the screens, the notifications and the tray menu.</span></div>
-        <div class="ctl"><select id="langSel" data-no-i18n><option value="en">English</option><option value="pt-BR">Português (Brasil)</option></select></div>
-      </div>
-      <div class="srow">
-        <div><b>Start with the PC</b><span class="sd">Opens 4horizon by itself when you sign in to Windows, so that the alerts and the history keep going after a restart.</span><span class="note hidden" id="sNote"></span></div>
-        <div class="ctl"><label class="tick"><input type="checkbox" id="sStartup"> Start 4horizon with the PC</label><label class="tick"><input type="checkbox" id="sHidden"> Start hidden in the tray</label></div>
-      </div>
-      <div class="srow">
-        <div><b>Minimize to tray</b><span class="sd">Minimizing the window hides 4horizon in the tray, as closing it does. Click the tray icon to bring it back.</span></div>
-        <div class="ctl"><label class="tick"><input type="checkbox" id="sTray"> Hide in the tray when minimized</label></div>
-      </div>
-      <div class="srow">
-        <div><b>Disable GPU acceleration</b><span class="sd">Turn this on if you see visual glitches when hovering or taking screenshots. Requires restarting 4horizon.</span></div>
-        <div class="ctl"><label class="tick"><input type="checkbox" id="sGpu"> Disable hardware acceleration</label></div>
-      </div>
-      <div class="srow" id="sLightRow">
-        <div><b>Light mode</b><span class="sd">For slower PCs. The game screens stop their decorative animations (the game's own "reduce motion": shine, glows, pulsing buttons), the Summary is redrawn every 5 seconds instead of every second, and 4horizon's own animations stop. The hunts, the numbers and the captures do not change. No restart needed.</span></div>
-        <div class="ctl"><label class="tick"><input type="checkbox" id="sLight"> Use light mode</label></div>
-      </div>
-      <div class="srow hidden" id="sStreamRow">
-        <div><b>Streamer mode</b><span class="sd">For streaming 4horizon (OBS: Window Capture) while you use other apps. The game screens keep moving when other windows cover 4horizon (not when it is minimized: Windows cannot capture a minimized window), and the e-mails of the logins are hidden on screen. It uses about as much CPU as a visible window, and economy mode is not available while it is on. Restart 4horizon after changing it.</span></div>
-        <div class="ctl"><label class="tick"><input type="checkbox" id="sStream"> Use streamer mode</label></div>
-      </div>
-      <div class="shead"><span>Grid</span></div>
-      <div class="srow">
-        <div><b>Mini screens</b><span class="sd">When a screen is expanded, the arrow in its header shows the other screens as mini screens: in a strip on the right, or along the bottom. A click on a mini screen expands it.</span></div>
-        <div class="ctl"><select id="miniSel"><option value="right">On the right</option><option value="bottom">Along the bottom</option></select></div>
-      </div>
-      <div class="srow">
-        <div><b>Fit</b><span class="sd">In a 2 × 2 grid with three screens: the third screen keeps its own quarter, or stretches across the whole bottom.</span></div>
-        <div class="ctl"><select id="fitSel"><option value="wide">Across the bottom</option><option value="quarter">Its own quarter</option></select></div>
-      </div>
-      <div class="shead"><span>Notifications</span><span class="saved" id="nSaved">Saved</span></div>
-      <div class="srow">
-        <div><b>Windows notifications</b><span class="sd">Alerts that pop up on your screen, even when the window is hidden in the tray. The tray menu has the same switch.</span></div>
-        <div class="ctl"><label class="tick"><input type="checkbox" id="nEnabled"> Enabled</label></div>
-      </div>
-      <div id="notifBody">
-        <div class="srow stack">
-          <div><b>Tell me when</b><span class="sd">Untick what you do not want to hear about.</span></div>
-          <div class="checks cols" id="evChecks">
-            <label><input type="checkbox" data-ev="shiny"> A shiny is captured</label>
-            <label><input type="checkbox" data-ev="goodCatch"> A great catch (the numbers are below)</label>
-            <label><input type="checkbox" data-ev="rareDrop"> A valuable item drops</label>
-            <label><input type="checkbox" data-ev="suppliesLow"> Balls or potions are running low</label>
-            <label><input type="checkbox" data-ev="stopped"> An account stops hunting, gets no kills or goes silent</label>
-            <label><input type="checkbox" data-ev="huntUnlocked"> A new hunt unlocks</label>
-            <label><input type="checkbox" data-ev="battlePass"> A battle pass mission is completed</label>
-            <label><input type="checkbox" data-ev="dailyQuest"> A daily mission is completed</label>
-            <label><input type="checkbox" data-ev="eggReady"> An egg is ready to hatch</label>
+      <section class="card" id="cNotif">
+        <div class="chead"><h3 class="sh">Notifications</h3><span class="saved" id="nSaved">Saved</span>
+          <div class="srow sw"><input type="checkbox" id="nEnabled"><label for="nEnabled">Windows notifications</label><span class="sd">Alerts that pop up on your screen, even when the window is hidden in the tray. The tray menu has the same switch.</span></div>
+          <div class="srow sw"><input type="checkbox" id="nSound"><label for="nSound">Sound</label><span class="sd">The Windows notification sound.</span></div>
+          <div class="srow sw"><input type="checkbox" id="nStartup"><label for="nStartup">On app start</label><span class="sd">The notice that tells you the alerts are on each time the app starts.</span></div>
+          <button id="nTest" title="Shows a notification now, with the sound setting">Send test</button>
+        </div>
+        <div id="notifBody">
+          <div class="ngrid">
+            <div class="sub" id="nGcBox">
+              <div class="srow ck"><input type="checkbox" data-ev="goodCatch" id="evGoodCatch"><label for="evGoodCatch"><b>Great catch</b></label><span class="sd">A catch counts as great by its IV and its quality. OR: it notifies when a catch reaches at least one of the two numbers. AND: it notifies only when a catch reaches both. The IV goes up to 192. The quality is the number after the × of a catch (Rara ×1.37, Lendária ×1.78). To ignore one of the two: with OR put a number above the highest possible, with AND put 0.</span></div>
+              <div class="rule"><span class="rl">Rule 1</span><label class="f">IV at least<input type="number" id="nIV" min="0" max="200" step="1"></label><div class="seg" id="nMode" role="radiogroup"><label><input type="radio" name="gcMode" value="and"><span data-word="AND"></span></label><label><input type="radio" name="gcMode" value="or"><span data-word="OR"></span></label></div><label class="f">Quality at least<input type="number" id="nQuality" min="0" max="5" step="0.05"></label></div>
+              <div class="rule srow" id="nGc2Row"><label class="rl ck"><input type="checkbox" id="nGc2On"> Rule 2</label><span class="sd">Tick Rule 2 to have a second combination. A catch is great when it meets Rule 1 OR Rule 2. Example: Rule 1 IV 130 AND quality 1.75, Rule 2 IV 170 OR quality 5 (no catch reaches 5, so only the IV counts).</span><label class="f">IV at least<input type="number" id="nIV2" min="0" max="200" step="1"></label><div class="seg" id="nMode2" role="radiogroup"><label><input type="radio" name="gcMode2" value="and"><span data-word="AND"></span></label><label><input type="radio" name="gcMode2" value="or"><span data-word="OR"></span></label></div><label class="f">Quality at least<input type="number" id="nQuality2" min="0" max="5" step="0.05"></label></div>
+            </div>
+            <div class="sub" id="evChecks"><div class="subh">Simple alerts</div>
+              <label class="ck"><input type="checkbox" data-ev="shiny"> A shiny is captured</label>
+              <label class="ck"><input type="checkbox" data-ev="huntUnlocked"> New hunt unlocks</label>
+              <label class="ck"><input type="checkbox" data-ev="battlePass"> Battle pass mission done</label>
+              <label class="ck"><input type="checkbox" data-ev="dailyQuest"> Daily mission done</label>
+              <label class="ck"><input type="checkbox" data-ev="eggReady"> Egg ready to hatch</label>
+            </div>
+          </div>
+          <div class="ngrid3">
+            <div class="sub"><div class="srow ck"><input type="checkbox" data-ev="rareDrop" id="evRareDrop"><label for="evRareDrop"><b>Valuable drop</b></label><span class="sd">The price of ONE item at the NPC shop. An item worth less than this does not notify.</span></div>
+              <div class="flds"><label class="f">Worth at least $<input type="number" id="nDrop" min="0" step="1000"></label></div></div>
+            <div class="sub"><div class="srow ck"><input type="checkbox" data-ev="suppliesLow" id="evSupplies"><label for="evSupplies"><b>Supplies running low</b></label><span class="sd">Warns when the balls or the potions of an account will run out within this time at the pace of the current hunt. It needs some minutes of hunting to know the pace.</span></div>
+              <div class="flds"><label class="f">Hours left<input type="number" id="nRunway" min="0.25" max="48" step="0.25"></label><label class="f">Min. hunting<input type="number" id="nSample" min="1" max="240" step="1"></label></div></div>
+            <div class="sub"><div class="srow ck"><input type="checkbox" data-ev="stopped" id="evStopped"><label for="evStopped"><b>Account stopped</b></label><span class="sd">Warns when an account that is hunting gets no kills for this long, or leaves the hunt (the city, for example) and is not back within that time; and when nothing arrives from its game for the second time.</span></div>
+              <div class="flds"><label class="f">No kills (s)<input type="number" id="nNoKills" min="30" max="7200" step="30"></label><label class="f">No data (s)<input type="number" id="nSilent" min="30" max="7200" step="30"></label></div></div>
+          </div>
+          <div class="sub quiet" id="nQuietBox">
+            <div class="srow sw"><input type="checkbox" id="nQuiet"><label for="nQuiet">Quiet hours</label><span class="sd">No alerts between these two times (the time of this computer). An alert that happens then is not shown later. A window like 23:00 to 07:00 crosses midnight. The test button still works.</span></div>
+            <input type="time" id="nQFrom" step="60"><span class="to">until</span><input type="time" id="nQTo" step="60">
+            <label class="ck right"><input type="checkbox" id="nQShiny"> Shinies still notify</label>
           </div>
         </div>
-        <div class="srow cap">
-          <div><b>Great catch</b><span class="sd">A catch counts as great by its IV and its quality. OR: it notifies when a catch reaches at least one of the two numbers. AND: it notifies only when a catch reaches both. The IV goes up to 192. The quality is the number after the × of a catch (Rara ×1.37, Lendária ×1.78). To ignore one of the two: with OR put a number above the highest possible, with AND put 0.</span></div>
-          <div class="ctl"><label class="f f1">IV at least<input type="number" id="nIV" min="0" max="200" step="1"></label><div class="seg mid" id="nMode" role="radiogroup"><label><input type="radio" name="gcMode" value="and"><span data-word="AND"></span></label><label><input type="radio" name="gcMode" value="or"><span data-word="OR"></span></label></div><label class="f f3">Quality at least<input type="number" id="nQuality" min="0" max="5" step="0.05"></label></div>
-        </div>
-        <div class="srow" id="nGc2Row">
-          <div><b>Great catch, 2nd rule</b><span class="sd">Tick Active to have a second combination. A catch is great when it meets the rule above OR this one. Example: above IV 130 AND quality 1.75, here IV 170 OR quality 5 (no catch reaches 5, so only the IV counts).</span></div>
-          <div class="ctl"><label class="tick"><input type="checkbox" id="nGc2On"> Active</label><label class="f f1">IV at least<input type="number" id="nIV2" min="0" max="200" step="1"></label><div class="seg mid" id="nMode2" role="radiogroup"><label><input type="radio" name="gcMode2" value="and"><span data-word="AND"></span></label><label><input type="radio" name="gcMode2" value="or"><span data-word="OR"></span></label></div><label class="f f3">Quality at least<input type="number" id="nQuality2" min="0" max="5" step="0.05"></label></div>
-        </div>
-        <div class="srow cap">
-          <div><b>Valuable drop</b><span class="sd">The price of ONE item at the NPC shop. An item worth less than this does not notify.</span></div>
-          <div class="ctl"><label class="f f1">Worth at least $<input type="number" id="nDrop" min="0" step="1000"></label></div>
-        </div>
-        <div class="srow cap">
-          <div><b>Supplies running low</b><span class="sd">Warns when the balls or the potions of an account will run out within this time at the pace of the current hunt. It needs some minutes of hunting to know the pace.</span></div>
-          <div class="ctl"><label class="f f1">Hours left<input type="number" id="nRunway" min="0.25" max="48" step="0.25"></label><label class="f f2">Minutes of hunting<input type="number" id="nSample" min="1" max="240" step="1"></label></div>
-        </div>
-        <div class="srow cap">
-          <div><b>Stopped</b><span class="sd">Warns when an account that is hunting gets no kills for this long, or leaves the hunt (the city, for example) and is not back within that time; and when nothing arrives from its game for the second time.</span></div>
-          <div class="ctl"><label class="f f1">No kills (seconds)<input type="number" id="nNoKills" min="30" max="7200" step="30"></label><label class="f f2">No data (seconds)<input type="number" id="nSilent" min="30" max="7200" step="30"></label></div>
-        </div>
-        <div class="srow">
-          <div><b>Quiet hours</b><span class="sd">No alerts between these two times (the time of this computer). An alert that happens then is not shown later. A window like 23:00 to 07:00 crosses midnight. The test button still works.</span></div>
-          <div class="ctl" id="nQuietBox">
-            <label class="tick"><input type="checkbox" id="nQuiet"> Keep quiet between</label>
-            <label class="f f1">From<input type="time" id="nQFrom" step="60"></label><label class="f f2">Until<input type="time" id="nQTo" step="60"></label>
-            <label class="tick"><input type="checkbox" id="nQShiny"> Shinies still notify</label>
-          </div>
-        </div>
-        <div class="srow">
-          <div><b>Sound and start</b><span class="sd">The Windows notification sound, and the notice that tells you the alerts are on each time the app starts.</span></div>
-          <div class="ctl"><label class="tick"><input type="checkbox" id="nSound"> Play the sound</label><label class="tick"><input type="checkbox" id="nStartup"> Tell me when the app starts</label></div>
-        </div>
-        <div class="srow">
-          <div><b>Try it</b><span class="sd">Shows a notification now, with the sound setting above.</span></div>
-          <div class="ctl"><button id="nTest">Send test notification</button></div>
-        </div>
-      </div>
-      <p class="note hidden" id="nNeedInstall" style="margin:10px 0 0">The notification settings need install-diagnostics.js: run it in the project folder and restart the app.</p>
-      <div class="shead" data-tip-from="#histNote"><span>HISTORY · DAILY TOTALS, SAVED ON THIS COMPUTER</span><span class="sd" id="histNote">Gold is loot + captures sold − balls and potions, the same balance the game shows. Only what this app saw is counted: the first session of an account is not counted (the app does not know when it started), and gaps of more than 10 minutes (app closed, PC asleep) are skipped. In a party, kills are this account’s share of the shared counter. A day runs from midnight to midnight, local time.</span></div>
-      <div id="historyHost" data-compact="1"></div>
-      <div class="srow">
-        <div><b>Diagnostics</b><span class="sd">Check that everything works, and copy a report to send.</span></div>
-        <div class="ctl"><button id="btnDiag" title="Check that everything works, and copy a report to send">Open diagnostics</button></div>
-      </div>
+        <p class="note hidden" id="nNeedInstall">The notification settings need install-diagnostics.js: run it in the project folder and restart the app.</p>
+      </section>
+      <section class="card" id="cHist" data-tip-from="#histNote"><div class="chead"><h3 class="sh">History</h3><span class="subt">Daily totals, saved on this computer</span><span class="sd" id="histNote">Gold is loot + captures sold − balls and potions, the same balance the game shows. Only what this app saw is counted: the first session of an account is not counted (the app does not know when it started), and gaps of more than 10 minutes (app closed, PC asleep) are skipped. In a party, kills are this account’s share of the shared counter. A day runs from midnight to midnight, local time.</span></div>
+        <div id="historyHost" data-compact="1"></div>
+      </section>
+      <section class="card slim" id="cDiag"><div class="srow"><b>Diagnostics</b><span class="sd">Check that everything works, and copy a report to send.</span><span class="grow"></span><button id="btnDiag" title="Check that everything works, and copy a report to send">Open diagnostics</button></div></section>
       </div>
       <div class="foot"><span class="grow"></span><button class="primary" id="setClose">Close</button></div>
     </div>
@@ -1006,7 +1008,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-73';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-74';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 
@@ -1169,7 +1171,7 @@
     async function loadNotif() {
       const ok = !!(api.notifyGet && api.notifySet);
       N_('nNeedInstall').classList.toggle('hidden', ok);
-      document.querySelectorAll('#nEnabled, #notifBody input, #notifBody button').forEach(e => { e.disabled = !ok; });
+      document.querySelectorAll('#nEnabled, #nSound, #nStartup, #nTest, #notifBody input, #notifBody button').forEach(e => { e.disabled = !ok; });          // (lang-74: Sound, On app start and Send test are in the card's header)
       if (!ok) { N_('notifBody').classList.add('off'); return; }
       try { const c = await api.notifyGet(); if (c) fillNotif(c); } catch (e) {}
     }
@@ -1311,11 +1313,12 @@
       const tip = document.getElementById('tip'), DELAY = 450;
       let timer = null, pending = null, shownFor = null, lastX = 0, lastY = 0;
       const makeInfo = () => { const e = document.createElement('span'); e.className = 'info'; e.tabIndex = 0; e.setAttribute('role', 'img'); return e; };
-      settingsModal.querySelectorAll('.srow').forEach(row => { const b = row.querySelector(':scope > div > b'); if (b && row.querySelector(':scope > div > .sd')) b.appendChild(makeInfo()); });
-      const hd = settingsModal.querySelector('.shead[data-tip-from] > span:first-child'); if (hd) hd.appendChild(makeInfo());
+      // lang-74: the "i" goes after the name of the row: its <b> (a field, a card row), or the <label> of a switch / tick box; a hidden name (.vh) gets none (its button is the name)
+      settingsModal.querySelectorAll('.srow').forEach(row => { if (!row.querySelector(':scope > .sd, :scope > b > .sd')) return; const b = row.querySelector(':scope > b:not(.vh), :scope > label, :scope > .rl'); if (b) b.appendChild(makeInfo()); });
+      const hd = settingsModal.querySelector('[data-tip-from] .sh'); if (hd) hd.appendChild(makeInfo());
       const sourceOf = info => {
-        const row = info.closest('.srow'); if (row) return row.querySelector(':scope > div > .sd');
-        const head = info.closest('.shead[data-tip-from]'); return head ? document.querySelector(head.getAttribute('data-tip-from')) : null;
+        const row = info.closest('.srow'); if (row) return row.querySelector(':scope > .sd, :scope > b > .sd');
+        const head = info.closest('[data-tip-from]'); return head ? document.querySelector(head.getAttribute('data-tip-from')) : null;
       };
       const targetOf = node => (node && node.closest) ? node.closest('.info') : null;
       function hide() { clearTimeout(timer); timer = null; pending = null; shownFor = null; tip.classList.add('hidden'); }
@@ -1333,6 +1336,7 @@
       settingsModal.addEventListener('mousemove', e => { const el = targetOf(e.target); if (!el || !settingsModal.contains(el)) { hide(); return; } lastX = e.clientX; lastY = e.clientY; arm(el, e.clientX, e.clientY); });
       settingsModal.addEventListener('mouseleave', hide);
       settingsModal.addEventListener('mousedown', hide);
+      settingsModal.addEventListener('click', e => { if (targetOf(e.target)) { e.preventDefault(); e.stopPropagation(); } });          // (lang-74: an "i" inside a label never flips its switch)
       settingsModal.addEventListener('wheel', hide, true);
       settingsModal.addEventListener('scroll', hide, true);
       settingsModal.addEventListener('keydown', hide, true);
