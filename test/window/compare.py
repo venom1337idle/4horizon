@@ -56,7 +56,7 @@ def drop_block(text, block):
 g = json.load(open(sys.argv[1], encoding='utf-8')); n = json.load(open(sys.argv[2], encoding='utf-8'))
 import re
 EXPECTED = [(re.compile(r'(combat|lang|calib|plan)-[0-9]+'), 'BUILD'), (re.compile('\u25c6 ?'), ''), (re.compile(r'\d+ fine \u00b7 \d+ to look at \u00b7 \d+ failed \u00b7 \d+ cannot tell yet'), 'COUNTS OF THE CHECKS')]       # the number of checks grows with the package       # the build of the app changes with every package
-LANG_OPTS = {'English', 'Portugu\u00eas (Brasil)'}                          # the language select of Settings is new
+LANG_OPTS = {'English', 'Portugu\u00eas (Brasil)', 'Portugu\u00eas'}            # the language select of Settings is new (lang-74: shortened to "Português")
 def norm(s):
     for rx, rep in EXPECTED: s = rx.sub(rep, s)
     return re.sub(r' (notifyGet|notifySet|startupSet)=(yes|NO)', '', s)          # the report lists three more functions of the bridge

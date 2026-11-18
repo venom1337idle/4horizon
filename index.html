@@ -147,8 +147,10 @@
   #settingsModal .card.slim { padding: 8px 16px; }
   #settingsModal .cards3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
   #settingsModal .sh { margin: 0 0 10px; font-family: var(--serif); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
-  #settingsModal .chead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  #settingsModal .chead .srow.sw { gap: 7px; } #settingsModal .chead .srow.sw > label { font-weight: 500; font-size: 12px; white-space: nowrap; } #settingsModal .chead .info { margin-left: 5px; } #settingsModal .chead > button { flex: none; padding: 0 10px; white-space: nowrap; } #settingsModal .chead .sh { letter-spacing: .08em; }
+  #settingsModal .chead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  /* (the header must stay one line also with the wider fonts of Linux, where the tests run: smaller labels, and a label gives way with "…" before anything wraps) */
+  #settingsModal .chead .srow.sw { gap: 6px; flex: 0 1 auto; min-width: 0; } #settingsModal .chead .srow.sw > label { font-weight: 500; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+  #settingsModal .chead .info { margin-left: 4px; } #settingsModal .chead > button { flex: none; padding: 0 10px; white-space: nowrap; font-size: 12px; } #settingsModal .chead .sh { letter-spacing: .06em; flex: none; }
   #settingsModal .chead .sh { margin: 0; margin-right: auto; }
   #settingsModal .chead .subt { color: var(--dim); font-size: 12px; margin-right: auto; margin-left: -8px; }
   #settingsModal .saved { font-size: 11px; color: var(--green, #6fdc8c); opacity: 0; transition: opacity .25s; }
@@ -159,9 +161,10 @@
   #settingsModal .srow b, #settingsModal .srow > label:not(.f) { color: var(--text); font-size: 12.5px; font-weight: 500; min-width: 0; }
   #settingsModal .srow b { font-weight: 600; }
   #settingsModal .srow.fld { flex-direction: column; align-items: stretch; gap: 5px; }
-  #settingsModal .srow.fld b { font-weight: 500; color: var(--dim); font-size: 11.5px; }
+  #settingsModal .srow.fld b { font-weight: 500; color: var(--dim); font-size: 11.5px; min-height: 28px; display: flex; align-items: center; gap: 4px; line-height: 1.2; }
+  #settingsModal .srow.fld .info { align-self: center; }
   #settingsModal .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }          /* a name that is only for the tooltip and screen readers (the button says it) */
-  #settingsModal .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  #settingsModal .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: 10px; }
   #settingsModal .two:first-child { margin-top: 0; }
   #settingsModal .card select, #settingsModal .card button, #settingsModal .f input, #settingsModal input[type=time] { height: 34px; box-sizing: border-box; min-width: 0; width: 100%; }
   #settingsModal #historyHost select, #settingsModal #historyHost button { width: auto; }          /* the History controls keep their own row (Period, Account, Export CSV) */
@@ -171,7 +174,7 @@
   #settingsModal .srow:has(> .two) { flex-direction: column; align-items: stretch; gap: 6px; }          /* Settings backup: the name, then its two buttons */
   #settingsModal .srow > .two { flex: 1; margin-top: 0; }
   #cDisplay .two { grid-template-columns: 1fr; gap: 8px; }          /* the two lists of the Display card one under the other: their choices are long */
-  #settingsModal .srow > .two button { width: 100%; padding: 0 6px; font-size: 12px; white-space: nowrap; }
+  #settingsModal .srow > .two button { width: 100%; padding: 0 6px; font-size: 12px; white-space: normal; line-height: 1.15; min-height: 34px; height: auto; }          /* a long label (Portuguese) wraps rather than overlaps */
   #settingsModal #cHist .sh { margin-right: 0; } #settingsModal #cHist .subt { margin-left: 0; }
   #settingsModal .srow.sw { gap: 10px; min-height: 28px; }
   #settingsModal .srow.sw label { cursor: pointer; }
@@ -425,7 +428,7 @@
         <section class="card" id="cGame"><h3 class="sh">Game &amp; accounts</h3>
           <div class="two">
             <div class="srow fld"><b>Game panels</b><span class="sd">How many accounts you play at the same time. The panels not in use are not loaded at all. Changing it reloads the window (you stay signed in).</span><select id="panelsSel" data-no-i18n><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
-            <div class="srow fld"><b>Language</b><span class="sd">The language of the whole app: the screens, the notifications and the tray menu.</span><select id="langSel" data-no-i18n><option value="en">English</option><option value="pt-BR">Português (Brasil)</option></select></div>
+            <div class="srow fld"><b>Language</b><span class="sd">The language of the whole app: the screens, the notifications and the tray menu.</span><select id="langSel" data-no-i18n><option value="en">English</option><option value="pt-BR">Português</option></select></div>
           </div>
           <div class="srow"><b class="vh">Accounts</b><span class="sd">The saved logins of the game panels, used by Log in all (the passwords are encrypted).</span><button id="btnAccounts" class="wide"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Open accounts</button></div>
           <div class="srow"><b>Settings backup</b><span class="sd">Save your settings to a file, or load them from one (on a new PC, after a fresh install). Saved logins and passwords are never in it, nor your history.</span><div class="two"><button id="btnSetExport">Save to a file</button><button id="btnSetImport">Load from a file</button></div></div>
