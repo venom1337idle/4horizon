@@ -352,7 +352,7 @@
   #todayTot { display: inline-flex; align-items: center; gap: 10px; margin-right: 10px; color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
   #todayTot b { color: var(--text); font-weight: 600; }
   #todayTot .tc { display: inline-flex; align-items: center; gap: 4px; } #todayTot .tc .ic { font-size: 12.5px; }
-  #todayTot .tc.shiny .ic { color: var(--pink, #ff8fd0); } #todayTot .tc.stone .ic { color: var(--teal, #65d2b4); } #todayTot .tc.adu .ic { color: var(--gold); }
+  #todayTot .tc img.ic { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: -3px; }          /* the three icons in item-icons/ (shiny-pokemon, shiny-stone, adupoke) */
   #todayList .ev { display: grid; grid-template-columns: 40px 16px minmax(0, 1fr); align-items: center; column-gap: 8px; height: 36px; box-sizing: border-box; padding: 0 11px; margin-bottom: 4px; border-radius: var(--r-sm);
                    background: var(--bg2); border: 1px solid #141d3a; font-size: 12px; }
   #todayList .ev .when { color: var(--dim2); font-variant-numeric: tabular-nums; }
@@ -1295,9 +1295,9 @@ function drawToday() {
   // lang-75: the three counters in the header: shiny captured, shiny stones, adupokes
   const tot = document.getElementById('todayTot'), c = today.counts || { shiny: 0, shinyStone: 0, adupoke: 0 };
   const parts = [];
-  if (c.shiny > 0) parts.push('<span class="tc shiny" title="' + esc(t('Shinies captured today')) + '"><span class="ic">\u2726</span><b>' + fmt(c.shiny) + '</b></span>');
-  if (c.shinyStone > 0) parts.push('<span class="tc stone" title="' + esc(t('Pedras Shiny picked up today')) + '"><span class="ic">\u2756</span><b>' + fmt(c.shinyStone) + '</b></span>');
-  if (c.adupoke > 0) parts.push('<span class="tc adu" title="' + esc(t('Adupokes picked up today')) + '"><span class="ic">\u2605</span><b>' + fmt(c.adupoke) + '</b></span>');
+  if (c.shiny > 0) parts.push('<span class="tc shiny" title="' + esc(t('Shinies captured today')) + '"><img class="ic" src="item-icons/shiny-pokemon.png" alt="" onerror="this.remove()"><b>' + fmt(c.shiny) + '</b></span>');
+  if (c.shinyStone > 0) parts.push('<span class="tc stone" title="' + esc(t('Pedras Shiny picked up today')) + '"><img class="ic" src="item-icons/shiny-stone.png" alt="" onerror="this.remove()"><b>' + fmt(c.shinyStone) + '</b></span>');
+  if (c.adupoke > 0) parts.push('<span class="tc adu" title="' + esc(t('Adupokes picked up today')) + '"><img class="ic" src="item-icons/adupoke.png" alt="" onerror="this.remove()"><b>' + fmt(c.adupoke) + '</b></span>');
   tot.innerHTML = parts.join('');
   const html = items.length ? items.map(x => {
     const d = new Date(x.t), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');

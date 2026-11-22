@@ -79,20 +79,38 @@ function selfTestInPage() {
     // the icon bar's own position (the clean expanded screen widens it: left, right, width, max-width, margins, transform as the game set them; inner = its content / its width)
     const tw = document.querySelector('.hud .toolbar-wrap');
     if (tw) { const s = getComputedStyle(tw); boxes.barStyle = ['left ' + s.left, 'right ' + s.right, 'width ' + s.width, 'max-width ' + s.maxWidth, 'margin ' + s.marginLeft + ' ' + s.marginRight, 'transform ' + s.transform, 'inner ' + Math.round(tw.scrollWidth) + '/' + Math.round(tw.clientWidth)].join(' \u00b7 ').slice(0, 200); }
-    // lang-75: any item icon on screen (Mochila, Hunt Analyzer Drops tab, inventory tooltips). Reports the first few: their URL and the nearby word. Used to pick the game's own icons for future features.
+    // lang-75: pair every item icon on screen with its Portuguese name, so that the slug -> numeric id map (used by the Overview rows) can be built from one game panel
+    // (Mochila: a button.slot has title="<name>" and an inner <img class=item-icon>; Hunt Analyzer Drops: the <img class=item-icon> sits next to a sibling .grow with the name).
+    // The images are loading="lazy": offsetParent may be null even when they are visible, so this ignores shown(img) for item-icon images and only filters by URL + size.
     const icons = [];
     try {
-      const imgs = document.querySelectorAll('img');
+      const seen = new Set(), SRC_RX = /\.(png|webp|jpg|jpeg|gif|svg)(\?|$)/i;
+      const push = (name, src) => {
+        if (icons.length >= 60) return;                                                           // one Mochila has about 40 items; 60 is plenty
+        if (!src || !SRC_RX.test(src) || /^data:/.test(src) || seen.has(src)) return;
+        const n = plain((name || '').replace(/\s+/g, ' ').trim());
+        if (!n || n.length < 2 || n.length > 40) return;
+        seen.add(src); icons.push(n + ' | ' + src.slice(0, 180));
+      };
+      // the Mochila: button.slot title="<name>" > img.item-icon
+      Array.prototype.forEach.call(document.querySelectorAll('button.slot[title], button.slot[data-tip], button.slot[aria-description]'), btn => {
+        const img = btn.querySelector('img'); if (!img) return;
+        const name = btn.getAttribute('title') || btn.getAttribute('data-tip') || btn.getAttribute('aria-description');
+        push(name, img.getAttribute('src'));
+      });
+      // the Hunt Analyzer Drops (and any other list with img.item-icon next to a sibling with the name)
+      Array.prototype.forEach.call(document.querySelectorAll('img.item-icon'), img => {
+        const row = img.closest('li') || img.parentElement, grow = row && row.querySelector('.grow');
+        const name = (grow && grow.textContent) || img.getAttribute('alt') || img.getAttribute('title') || img.getAttribute('aria-label') || '';
+        push(name, img.getAttribute('src'));
+      });
+      // a general fallback: any small <img> that is actually visible, with its alt/title/nearby word (catches top-bar UI icons etc.)
       const closestWord = el => { let e = el; for (let i = 0; e && i < 6; i++, e = e.parentElement) { const t = plain((e.textContent || '').replace(/\s+/g, ' ').trim()); if (t && t.length >= 3 && t.length <= 60) return t.slice(0, 40); } return ''; };
-      const seen = new Set();
-      Array.prototype.forEach.call(imgs, img => {
-        if (icons.length >= 8) return;
-        const src = img.getAttribute('src') || '';
-        if (!/\.(png|webp|jpg|jpeg|gif|svg)(\?|$)/i.test(src) || /^data:/.test(src) || !shown(img)) return;
-        const r = img.getBoundingClientRect(); if (r.width < 14 || r.width > 96 || r.height < 14 || r.height > 96) return;          // only small icon-like images
-        const alt = plain(img.getAttribute('alt') || img.getAttribute('title') || img.getAttribute('aria-label') || ''), near = alt || closestWord(img);
-        if (!near) return; if (seen.has(src)) return; seen.add(src);
-        icons.push(src.slice(0, 180) + ' (' + near + ')');
+      Array.prototype.forEach.call(document.querySelectorAll('img'), img => {
+        if (icons.length >= 60) return;
+        const src = img.getAttribute('src'); if (!src || seen.has(src) || !SRC_RX.test(src) || /^data:/.test(src) || !shown(img)) return;
+        const r = img.getBoundingClientRect(); if (r.width < 14 || r.width > 96 || r.height < 14 || r.height > 96) return;
+        push(img.getAttribute('alt') || img.getAttribute('title') || img.getAttribute('aria-label') || closestWord(img), src);
       });
     } catch (e) { boxes.iconsError = String(e && e.message || e).slice(0, 60); }
     if (icons.length) boxes.icons = icons;
