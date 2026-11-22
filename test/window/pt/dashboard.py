@@ -106,8 +106,12 @@ EXACT = {
   'Last 5': 'Últimas 5', 'Best 5': '5 melhores', 'Last 5 hunts, newest first': 'Últimas 5 hunts, da mais recente', 'previous hunt': 'hunt anterior',
   # lang-72: the gear of the Overview (what it shows)
   'Overview settings': 'Configurações da Visão geral', 'Show in the Overview': 'Mostrar na Visão geral',
+  # lang-75: Today's highlights filter in the Overview's gear
+  'Today\u2019s highlights: show': 'Destaques de hoje: mostrar',
+  'Great catch': 'Ótima captura', 'Evolved': 'Evoluiu',
+  'Only the Overview uses these choices. The incubators show only while an account is breeding. Great catches and valuable drops also follow Settings \u203a Notifications.':
+    'Só a Visão geral usa estas escolhas. As incubadoras só aparecem enquanto uma conta está fazendo breeding. As ótimas capturas e os drops valiosos também seguem Configurações \u203a Notificações.',
   'Today (daily totals)': 'Hoje (totais do dia)', 'Live totals (per hour)': 'Totais ao vivo (por hora)', 'Incubators': 'Incubadoras', 'Latest captures': 'Últimas capturas', 'Today’s highlights': 'Destaques de hoje',
-  'Only the Overview uses these choices. The incubators show only while an account is breeding.': 'Só a Visão geral usa estas escolhas. As incubadoras só aparecem enquanto uma conta está fazendo breeding.',
   'Everything is hidden: use the gear to show it again': 'Está tudo escondido: use a engrenagem para mostrar de novo',
   'Hidden: press Overview to show it again': 'Escondida: clique em Visão geral para mostrar de novo', 'Hide the Overview, or show it again': 'Esconder a Visão geral, ou mostrar de novo',
   'Best 5 by gold per hour': '5 melhores por gold por hora', 'Best 5 by XP per hour': '5 melhores por XP por hora', 'Best 5 by gold and XP together': '5 melhores por gold e XP juntos',

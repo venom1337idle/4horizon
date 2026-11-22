@@ -680,7 +680,9 @@ const sumCfg = (() => {
   const off = {}; if (o.off && typeof o.off === 'object') Object.keys(o.off).slice(0, 60).forEach(k => { if (o.off[k] === true) off[String(k).slice(0, 40)] = true; });
   const tab = (o.tab === 'sum' || (Number.isInteger(o.tab) && o.tab >= 0 && o.tab <= 3)) ? o.tab : 'sum';
   const ovOff = {}; if (o.ovOff && typeof o.ovOff === 'object') OV_PARTS.forEach(p => { if (o.ovOff[p.key] === true) ovOff[p.key] = true; });          // lang-72: the parts of the Overview that are hidden
-  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold', cmpView: o.cmpView === 'best' ? 'best' : 'last', ovOff: ovOff, ovFold: o.ovFold === true };          // (lang-72: cmpView, the list of the comparison)
+  // lang-75: Today's highlights: which of the six kinds show (shiny, catch = great catch, drop = valuable drop, egg, hunt, evo); all on at first
+  const ovTodayOff = {}; if (o.ovTodayOff && typeof o.ovTodayOff === 'object') ['shiny', 'catch', 'drop', 'egg', 'hunt', 'evo'].forEach(k => { if (o.ovTodayOff[k] === true) ovTodayOff[k] = true; });
+  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold', cmpView: o.cmpView === 'best' ? 'best' : 'last', ovOff: ovOff, ovFold: o.ovFold === true, ovTodayOff: ovTodayOff };          // (lang-72: cmpView, the list of the comparison)
 })();
 let sumOpen = false;                                   // is the panel of the settings open
 const saveSumCfg = () => { try { localStorage.setItem(SUMKEY, JSON.stringify(sumCfg)); } catch (e) {} };
@@ -1222,8 +1224,10 @@ function todayText(x) {
 }
 const TODAY_ICON = { shiny: '\u2726', catch: '\u2605', drop: '$', egg: '\u25cf', evo: '\u21e7', hunt: '\u2691' };
 // what is shown: everything, except the great catches and drops that the CURRENT settings do not count (changing a number changes the list at once)
-const todayShown = x => x.kind === 'catch' ? isGreatCatch(x.p && x.p.iv !== '' ? Number(x.p.iv) : null, qualityOf(x.p || {}), x.p && x.p.rarity)
-  : x.kind === 'drop' ? Number(x.p && x.p.each) >= minDrop() : true;
+// lang-75: an event shows only if its kind is ticked in the gear (sumCfg.ovTodayOff), AND, for great catches and valuable drops, it meets the Notifications rule
+const ovTodayOn = k => !sumCfg.ovTodayOff[k];
+const todayShown = x => ovTodayOn(x.kind) && (x.kind === 'catch' ? isGreatCatch(x.p && x.p.iv !== '' ? Number(x.p.iv) : null, qualityOf(x.p || {}), x.p && x.p.rarity)
+  : x.kind === 'drop' ? Number(x.p && x.p.each) >= minDrop() : true);
 function drawToday() {
   todayDay();
   const list = document.getElementById('todayList'), cnt = document.getElementById('todayCount'), items = today.items.filter(todayShown);
@@ -1417,10 +1421,15 @@ function applyOv() {
   const b = document.querySelector('#topTabs .vt'); if (b) { b.classList.toggle('on', !sumCfg.ovFold); b.setAttribute('aria-pressed', String(!sumCfg.ovFold)); }
 }
 var ovOpen = false;                                      // (var: the Summary's gear closes this panel, and may run first)
+// lang-75: the six kinds of events in Today's highlights, in the order they are drawn
+const TODAY_KINDS = [{ k: 'shiny', n: () => t('A shiny is captured') }, { k: 'catch', n: () => t('Great catch') }, { k: 'drop', n: () => t('Valuable drop') },
+  { k: 'egg', n: () => t('Egg ready to hatch') }, { k: 'hunt', n: () => t('New hunt unlocks') }, { k: 'evo', n: () => t('Evolved') }];
 function drawOvSettings() {
   document.getElementById('ovSettings').innerHTML = '<div class="ss-h">' + t('Show in the Overview') + '</div>' +
     OV_PARTS.map(p => '<label class="ss-row' + (ovShow(p.key) ? '' : ' off') + '"><input type="checkbox" class="ss-cb" data-ov="' + p.key + '"' + (ovShow(p.key) ? ' checked' : '') + '><span class="nm">' + esc(p.name()) + '</span></label>').join('') +
-    '<div class="ss-note">' + t('Only the Overview uses these choices. The incubators show only while an account is breeding.') + '</div>';
+    '<div class="ss-h">' + t('Today\u2019s highlights: show') + '</div>' +
+    TODAY_KINDS.map(k => '<label class="ss-row' + (ovTodayOn(k.k) ? '' : ' off') + '"><input type="checkbox" class="ss-cb" data-ovtoday="' + k.k + '"' + (ovTodayOn(k.k) ? ' checked' : '') + '><span class="nm">' + esc(k.n()) + '</span></label>').join('') +
+    '<div class="ss-note">' + t('Only the Overview uses these choices. The incubators show only while an account is breeding. Great catches and valuable drops also follow Settings \u203a Notifications.') + '</div>';
 }
 function setOvOpen(v) {
   ovOpen = !!v;
@@ -1536,11 +1545,17 @@ document.getElementById('btnOvSettings').onclick = e => { e.stopPropagation(); s
 document.addEventListener('click', e => { if (ovOpen && !document.getElementById('ovSettings').contains(e.target) && !document.getElementById('btnOvSettings').contains(e.target)) setOvOpen(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && ovOpen) { setOvOpen(false); document.getElementById('btnOvSettings').focus(); } });
 document.getElementById('ovSettings').addEventListener('change', e => {
-  const el = e.target, k = el.getAttribute && el.getAttribute('data-ov');
-  if (!k || !OV_PARTS.some(p => p.key === k)) return;
-  if (el.checked) delete sumCfg.ovOff[k]; else sumCfg.ovOff[k] = true;
-  const row = el.closest('.ss-row'); if (row) row.classList.toggle('off', !el.checked);
-  saveSumCfg(); renderAll();
+  const el = e.target, k = el.getAttribute && el.getAttribute('data-ov'), tk = el.getAttribute && el.getAttribute('data-ovtoday');
+  if (k && OV_PARTS.some(p => p.key === k)) {
+    if (el.checked) delete sumCfg.ovOff[k]; else sumCfg.ovOff[k] = true;
+    const row = el.closest('.ss-row'); if (row) row.classList.toggle('off', !el.checked);
+    saveSumCfg(); renderAll(); return;
+  }
+  if (tk && TODAY_KINDS.some(x => x.k === tk)) {          // lang-75: Today's highlights filter
+    if (el.checked) delete sumCfg.ovTodayOff[tk]; else sumCfg.ovTodayOff[tk] = true;
+    const row = el.closest('.ss-row'); if (row) row.classList.toggle('off', !el.checked);
+    saveSumCfg(); drawToday();
+  }
 });
 setTimeout(() => { if (sumCfg.best !== bestMode) setBestMode(sumCfg.best, false); }, 0);          // (after live.js has added its third option)
 document.getElementById('capAcc').onchange = e => { capFilter.acc = e.target.value; drawCaptures(); };

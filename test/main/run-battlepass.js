@@ -61,6 +61,11 @@ const look = p => p.evaluate(() => { const st = id => { const b = document.getEl
   ok('"Comprar passe" with a second line "Combo por R$ 109,90" (lang-72): hidden, stopped, and the ONE note is where it was', L.buy.hidden && L.buy.kind === 'passbuy' && L.gift.hidden && L.notes === 1 && L.next === 'buy' && (await press(p, 'buy')) === 0, L);
   await p.evaluate(h => window.__redraw(h), PASS({ title: 'Battle Pass', buy: 'Buy pass', combo: 'Combo for R$ 109.90', gift: 'Gift the Pass to a friend' })); await p.waitForTimeout(450); L = await look(p);
   ok('...the same in English ("Buy pass" / "Combo for R$ 109.90")', L.buy.hidden && L.buy.kind === 'passbuy' && L.notes === 1 && (await press(p, 'buy')) === 0, L);
+  // the owner reported 2026-11-20: once the pass is finished, the game shows "Recomprar passe" with a second line "Volta ao nível 1 e libera as recompensas de novo"
+  await p.evaluate(h => window.__redraw(h), PASS({ buy: 'Recomprar passe', combo: 'Volta ao nível 1 e libera as recompensas de novo' })); await p.waitForTimeout(450); L = await look(p);
+  ok('"Recomprar passe" (after the pass is finished, two lines): hidden, stopped, and the ONE note is where it was', L.buy.hidden && L.buy.kind === 'passbuy' && L.gift.hidden && L.notes === 1 && L.next === 'buy' && (await press(p, 'buy')) === 0, L);
+  await p.evaluate(h => window.__redraw(h), PASS({ title: 'Battle Pass', buy: 'Rebuy pass', combo: 'Back to level 1 and unlocks the rewards again', gift: 'Gift the Pass to a friend' })); await p.waitForTimeout(450); L = await look(p);
+  ok('...the same in English ("Rebuy pass")', L.buy.hidden && L.buy.kind === 'passbuy' && L.notes === 1 && (await press(p, 'buy')) === 0, L);
   await p.evaluate(() => { document.getElementById('root').innerHTML = ''; }); await p.waitForTimeout(450); L = await look(p);
   ok('the window is closed: no note is left anywhere', L.allNotes === 0, L);
   await p.evaluate(h => window.__redraw(h), PASS({ title: 'Battle Pass', buy: 'Buy pass', gift: 'Gift the Pass to a friend' })); await p.waitForTimeout(450); L = await look(p);

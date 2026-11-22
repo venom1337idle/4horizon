@@ -51,7 +51,7 @@ function guardInPage(cfg) {
   const PAY = /^(doar|donate|donar)\s*(r\$|us\$|\$|\u20ac)/;                               // "Doar R$ 33,25 com Pix": the button that makes the donation (real money, anywhere)
   const TAB = /^(diamantes|diamonds)$/;                                                    // the tab "Diamantes" of the shop: the page of the donation
   // lang-70, the Battle Pass window: "Comprar passe" and "🎁 Dar o Passe para um amigo" (they are paid with real money). The leading picture or symbol of a label is not counted.
-  const PASS_BUY = /^(comprar|buy|purchase|adquirir|obter|get)\s+(o\s+|the\s+|el\s+)?(passe|pass|pase)\b/;
+  const PASS_BUY = /^(comprar|recomprar|rebuy|buy|purchase|adquirir|obter|get)\s+(o\s+|the\s+|el\s+)?(passe|pass|pase)\b/;          // lang-74+: "Recomprar passe" after the pass is finished
   const PASS_GIFT = /^(dar|presentear|enviar|gift|give|send|regalar)\b.{0,20}\b(passe|pass|pase)\b.{0,25}\b(amigo|amiga|amigos|friend|friends)\b/;
   const lead = t => t.replace(/^[^a-z0-9]+/, '');
   const CLICKABLE = 'button,[role="button"],[role="tab"],a,[onclick],input[type="button"],input[type="submit"]';

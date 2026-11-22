@@ -14,7 +14,7 @@ const parts = fr => fr.evaluate(ids => { const o = {}; Object.keys(ids).forEach(
   const em = document.getElementById('ovEmpty'); o.empty = getComputedStyle(em).display !== 'none' ? em.textContent : null; return o; }, IDS);
 const panel = fr => fr.evaluate(() => { const box = document.getElementById('ovSettings'), btn = document.getElementById('btnOvSettings');
   return { open: !box.classList.contains('hidden'), on: btn.classList.contains('on'), expanded: btn.getAttribute('aria-expanded'), head: (box.querySelector('.ss-h') || {}).textContent || '',
-    rows: Array.from(box.querySelectorAll('.ss-row')).map(r => ({ key: r.querySelector('input').getAttribute('data-ov'), name: r.querySelector('.nm').textContent, on: r.querySelector('input').checked })), note: (box.querySelector('.ss-note') || {}).textContent || '' }; });
+    rows: Array.from(box.querySelectorAll('.ss-row input[data-ov]')).map(i => { const r = i.closest('.ss-row'); return { key: i.getAttribute('data-ov'), name: r.querySelector('.nm').textContent, on: i.checked }; }), note: (box.querySelector('.ss-note') || {}).textContent || '' }; });
 const tick = (fr, key) => fr.click('#ovSettings input[data-ov="' + key + '"]');
 (async () => {
   const b = await chromium.launch();
@@ -27,7 +27,7 @@ const tick = (fr, key) => fr.click('#ovSettings input[data-ov="' + key + '"]');
   await fr.click('#btnOvSettings'); await p.waitForTimeout(150);
   let S = await panel(fr);
   ok('pressed: the panel opens (the gear lit), "Show in the Overview", the six parts in their order on screen, all ticked', S.open && S.on && S.expanded === 'true' && S.head === 'Show in the Overview' && S.rows.map(r => r.name).join('|') === 'Today (daily totals)|Live totals (per hour)|Per account|Incubators|Latest captures|Today\u2019s highlights' && S.rows.every(r => r.on), S);
-  ok('...and a note: only the Overview uses these choices, the incubators only while an account is breeding', /^Only the Overview uses these choices\. The incubators show only while an account is breeding\.$/.test(S.note), S.note);
+  ok('...and a note: only the Overview uses these choices, the incubators only while an account is breeding', /^Only the Overview uses these choices\. The incubators show only while an account is breeding\./.test(S.note), S.note);
   const look = await fr.evaluate(() => { const a = getComputedStyle(document.getElementById('ovSettings')), s = document.getElementById('ovSettings').getBoundingClientRect(), g = document.getElementById('btnOvSettings').getBoundingClientRect(); return { border: a.borderTopColor, bg: a.backgroundColor, below: s.top >= g.bottom, left: Math.abs(s.left - g.left) < 120 }; });
   ok('...it looks like the Summary\u2019s panel (gold border, dark box) and opens under the gear', look.border === 'rgb(227, 192, 107)' && look.bg === 'rgb(14, 23, 48)' && look.below && look.left, look);
   // one part off: hidden, not drawn, and the others keep their place and size
@@ -67,6 +67,30 @@ const tick = (fr, key) => fr.click('#ovSettings input[data-ov="' + key + '"]');
   both = await fr.evaluate(() => [!document.getElementById('ovSettings').classList.contains('hidden'), !document.getElementById('sumSettings').classList.contains('hidden')]);
   ok('...and the other way round', both[0] && !both[1], both);
   ok('no JavaScript errors', p.errors.length === 0, p.errors);
+  await p.context().close();
+  // ---- lang-75: Today's highlights filter in the gear (six kinds, all ticked at first)
+  ({ p, fr } = await setup(b));
+  await fr.click('#btnOvSettings'); await p.waitForTimeout(150);
+  const flt = async () => fr.evaluate(() => { const box = document.getElementById('ovSettings'); return { heads: Array.from(box.querySelectorAll('.ss-h')).map(h => h.textContent.trim()), rows: Array.from(box.querySelectorAll('input[data-ovtoday]')).map(i => ({ k: i.getAttribute('data-ovtoday'), on: i.checked, name: i.closest('.ss-row').querySelector('.nm').textContent })) }; });
+  let F = await flt();
+  ok('the gear has a second section "Today\u2019s highlights: show" with the six kinds, in order (shiny, catch, drop, egg, hunt, evo), all ticked', F.heads.join('|') === 'Show in the Overview|Today\u2019s highlights: show' && F.rows.map(r => r.k).join() === 'shiny,catch,drop,egg,hunt,evo' && F.rows.every(r => r.on), F);
+  ok('...the labels match Notifications: "A shiny is captured", "Great catch", "Valuable drop", "Egg ready to hatch", "New hunt unlocks", "Evolved"', F.rows.map(r => r.name).join('|') === 'A shiny is captured|Great catch|Valuable drop|Egg ready to hatch|New hunt unlocks|Evolved', F.rows.map(r => r.name));
+  // the Today's highlights list reads the filter
+  await fr.evaluate(() => { today.items = [{ t: Date.now(), acc: 0, name: 'x', kind: 'shiny', p: { name: 'A', iv: 1, max: 192, rarity: 'Comum' } }, { t: Date.now(), acc: 0, name: 'x', kind: 'catch', p: { name: 'B', iv: 192, max: 192, quality: 2, rarity: 'Lend\u00e1ria' } }, { t: Date.now(), acc: 0, name: 'x', kind: 'egg', p: { name: 'C' } }]; drawToday(); });
+  const before = await fr.evaluate(() => Array.from(document.querySelectorAll('#todayList .ev')).map(e => e.className.replace('ev ', '')).join());
+  ok('with everything ticked all the kinds show in the list', before === 'shiny,catch,egg');
+  await fr.click('#ovSettings input[data-ovtoday="catch"]'); await p.waitForTimeout(150);
+  F = await flt(); const after = await fr.evaluate(() => Array.from(document.querySelectorAll('#todayList .ev')).map(e => e.className.replace('ev ', '')).join());
+  ok('unticking "Great catch": the row disappears at once, the others stay, the choice is in storage (ovTodayOff.catch = true)', after === 'shiny,egg' && !F.rows.find(r => r.k === 'catch').on && (await fr.evaluate(() => JSON.parse(localStorage.getItem('4h.summary')).ovTodayOff.catch)) === true);
+  await fr.click('#ovSettings input[data-ovtoday="catch"]'); await p.waitForTimeout(150);
+  ok('...ticking it again brings the row back, the key is gone from storage', (await fr.evaluate(() => Array.from(document.querySelectorAll('#todayList .ev')).map(e => e.className.replace('ev ', '')).join())) === 'shiny,catch,egg' && (await fr.evaluate(() => JSON.parse(localStorage.getItem('4h.summary')).ovTodayOff.catch)) === undefined);
+  // a kind that is unticked still counts; ticking shows it again (same stored events)
+  await fr.click('#ovSettings input[data-ovtoday="shiny"]'); await fr.click('#ovSettings input[data-ovtoday="egg"]'); await p.waitForTimeout(150);
+  ok('two kinds off: only "catch" shows', (await fr.evaluate(() => Array.from(document.querySelectorAll('#todayList .ev')).map(e => e.className.replace('ev ', '')).join())) === 'catch');
+  await fr.evaluate(() => location.reload()); await p.waitForTimeout(1500); fr = p.dash();
+  const F2 = await fr.evaluate(() => { const s = JSON.parse(localStorage.getItem('4h.summary')); return s.ovTodayOff; });
+  ok('after a reload: the two kinds are still off (saved under ovTodayOff)', F2.shiny === true && F2.egg === true && !F2.catch);
+  ok('no JavaScript errors (filter)', p.errors.length === 0, p.errors);
   await p.context().close();
   // the "Overview" button folds the whole Overview away and back; the gear's choices are what comes back
   ({ p, fr } = await setup(b));
