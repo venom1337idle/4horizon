@@ -86,10 +86,10 @@ function selfTestInPage() {
       const closestWord = el => { let e = el; for (let i = 0; e && i < 6; i++, e = e.parentElement) { const t = plain((e.textContent || '').replace(/\s+/g, ' ').trim()); if (t && t.length >= 3 && t.length <= 60) return t.slice(0, 40); } return ''; };
       const seen = new Set();
       Array.prototype.forEach.call(imgs, img => {
-        if (icons.length >= 6) return;
+        if (icons.length >= 8) return;
         const src = img.getAttribute('src') || '';
         if (!/\.(png|webp|jpg|jpeg|gif|svg)(\?|$)/i.test(src) || /^data:/.test(src) || !shown(img)) return;
-        const r = img.getBoundingClientRect(); if (r.width < 16 || r.width > 96 || r.height < 16 || r.height > 96) return;          // only small icon-like images
+        const r = img.getBoundingClientRect(); if (r.width < 14 || r.width > 96 || r.height < 14 || r.height > 96) return;          // only small icon-like images
         const alt = plain(img.getAttribute('alt') || img.getAttribute('title') || img.getAttribute('aria-label') || ''), near = alt || closestWord(img);
         if (!near) return; if (seen.has(src)) return; seen.add(src);
         icons.push(src.slice(0, 180) + ' (' + near + ')');

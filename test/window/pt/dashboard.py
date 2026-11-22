@@ -106,6 +106,14 @@ EXACT = {
   'Last 5': 'Últimas 5', 'Best 5': '5 melhores', 'Last 5 hunts, newest first': 'Últimas 5 hunts, da mais recente', 'previous hunt': 'hunt anterior',
   # lang-72: the gear of the Overview (what it shows)
   'Overview settings': 'Configurações da Visão geral', 'Show in the Overview': 'Mostrar na Visão geral',
+  # lang-75: combined session drops across the accounts, shown as a new card on the Overview
+  'Session drops (combined)': 'Drops da sessão (combinado)',
+  'Session drops \u00b7 all accounts': 'Drops da sessão \u00b7 todas as contas',
+  'No drops yet in any of the ticked accounts. A session starts again from nothing when an account changes hunt.':
+    'Nenhum drop ainda nas contas marcadas. A sessão recomeça do zero quando uma conta troca de hunt.',
+  'each': 'cada',
+  # lang-75: the pin on the left of each row (Session drops · all accounts)
+  'Pin to the top': 'Fixar no topo', 'Unpin': 'Desafixar',
   # lang-75: Today's highlights filter in the Overview's gear
   'Today\u2019s highlights: show': 'Destaques de hoje: mostrar',
   'Great catch': 'Ótima captura', 'Evolved': 'Evoluiu',

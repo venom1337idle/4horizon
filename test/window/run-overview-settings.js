@@ -4,7 +4,7 @@
 const { chromium } = require('./pw');
 const { open, feedAll } = require('./scen');
 let pass = 0, fail = 0; const ok = (l, c, x) => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (c ? '' : '   ' + String(JSON.stringify(x)).slice(0, 700))); c ? pass++ : fail++; };
-const IDS = { today: 'todayRow', live: 'kpis', table: 'tableCard', eggs: 'eggCard', caps: 'capCard', high: 'todayCard' };
+const IDS = { today: 'todayRow', live: 'kpis', table: 'tableCard', eggs: 'eggCard', caps: 'capCard', high: 'todayCard', drops: 'dropsCard' };          // lang-75: combined Session drops
 const setup = async (b, o) => {
   const p = await open(b, Object.assign({ w: 1700, h: 1000 }, o || {})); await feedAll(p);
   await p.evaluate(() => { if (!ui.simple) document.getElementById('btnSimple').click(); }); await p.waitForTimeout(500);
@@ -22,11 +22,11 @@ const tick = (fr, key) => fr.click('#ovSettings input[data-ov="' + key + '"]');
   const place = await fr.evaluate(() => { const tabs = Array.from(document.querySelectorAll('#topTabs > *')), g = document.getElementById('btnOvSettings'); return { next: tabs.indexOf(g) === tabs.indexOf(document.querySelector('#topTabs .vt')) + 1, title: g.title, label: g.getAttribute('aria-label') }; });
   ok('a gear right beside the "Overview" button, "Overview settings"', place.next && place.title === 'Overview settings' && place.label === 'Overview settings', place);
   let P = await parts(fr);
-  ok('at first everything is shown (as before), and no "everything is hidden" line', ['today', 'live', 'table', 'caps', 'high'].every(k => !P[k].off && P[k].shown) && !P.eggs.off && P.empty === null, P);
+  ok('at first everything is shown (as before), and no "everything is hidden" line', ['today', 'live', 'table', 'caps', 'high', 'drops'].every(k => !P[k].off && P[k].shown) && !P.eggs.off && P.empty === null, P);
   const w0 = P.high.w;
   await fr.click('#btnOvSettings'); await p.waitForTimeout(150);
   let S = await panel(fr);
-  ok('pressed: the panel opens (the gear lit), "Show in the Overview", the six parts in their order on screen, all ticked', S.open && S.on && S.expanded === 'true' && S.head === 'Show in the Overview' && S.rows.map(r => r.name).join('|') === 'Today (daily totals)|Live totals (per hour)|Per account|Incubators|Latest captures|Today\u2019s highlights' && S.rows.every(r => r.on), S);
+  ok('pressed: the panel opens (the gear lit), "Show in the Overview", the seven parts in their order on screen, all ticked (lang-75: "Session drops (combined)" is the last)', S.open && S.on && S.expanded === 'true' && S.head === 'Show in the Overview' && S.rows.map(r => r.name).join('|') === 'Today (daily totals)|Live totals (per hour)|Per account|Incubators|Latest captures|Today\u2019s highlights|Session drops (combined)' && S.rows.every(r => r.on), S);
   ok('...and a note: only the Overview uses these choices, the incubators only while an account is breeding', /^Only the Overview uses these choices\. The incubators show only while an account is breeding\./.test(S.note), S.note);
   const look = await fr.evaluate(() => { const a = getComputedStyle(document.getElementById('ovSettings')), s = document.getElementById('ovSettings').getBoundingClientRect(), g = document.getElementById('btnOvSettings').getBoundingClientRect(); return { border: a.borderTopColor, bg: a.backgroundColor, below: s.top >= g.bottom, left: Math.abs(s.left - g.left) < 120 }; });
   ok('...it looks like the Summary\u2019s panel (gold border, dark box) and opens under the gear', look.border === 'rgb(227, 192, 107)' && look.bg === 'rgb(14, 23, 48)' && look.below && look.left, look);
@@ -48,7 +48,7 @@ const tick = (fr, key) => fr.click('#ovSettings input[data-ov="' + key + '"]');
   ok('after the Overview is loaded again (the app started again): "Latest captures" is still hidden, the rest shown', P.caps.off && !P.caps.shown && P.table.shown && P.live.shown && P.high.shown, P);
   // everything hidden
   await fr.click('#btnOvSettings'); await p.waitForTimeout(150);
-  for (const k of ['today', 'live', 'table', 'eggs', 'high']) { await tick(fr, k); await p.waitForTimeout(80); }
+  for (const k of ['today', 'live', 'table', 'eggs', 'high', 'drops']) { await tick(fr, k); await p.waitForTimeout(80); }
   P = await parts(fr);
   ok('everything unticked: nothing of the Overview is left, and one line says how to get it back: "Everything is hidden: use the gear to show it again"', Object.keys(IDS).every(k => P[k].off && !P[k].shown) && P.empty === 'Everything is hidden: use the gear to show it again', P);
   await tick(fr, 'high'); await p.waitForTimeout(150); P = await parts(fr);
@@ -123,7 +123,7 @@ const tick = (fr, key) => fr.click('#ovSettings input[data-ov="' + key + '"]');
   ({ p, fr } = await setup(b, { lang: 'pt-BR' }));
   await fr.click('#btnOvSettings'); await p.waitForTimeout(150); S = await panel(fr);
   const ttl = await fr.evaluate(() => document.getElementById('btnOvSettings').title);
-  ok('in Portuguese: "Configurações da Visão geral", "Mostrar na Visão geral", the six parts', ttl === 'Configurações da Visão geral' && S.head === 'Mostrar na Visão geral' && S.rows.map(r => r.name).join('|') === 'Hoje (totais do dia)|Totais ao vivo (por hora)|Por conta|Incubadoras|Últimas capturas|Destaques de hoje' && /^Só a Visão geral usa estas escolhas/.test(S.note), [ttl, S]);
+  ok('in Portuguese: "Configurações da Visão geral", "Mostrar na Visão geral", the seven parts', ttl === 'Configurações da Visão geral' && S.head === 'Mostrar na Visão geral' && S.rows.map(r => r.name).join('|') === 'Hoje (totais do dia)|Totais ao vivo (por hora)|Por conta|Incubadoras|Últimas capturas|Destaques de hoje|Drops da sessão (combinado)' && /^Só a Visão geral usa estas escolhas/.test(S.note), [ttl, S]);
   for (const k of Object.keys(IDS)) { await tick(fr, k); await p.waitForTimeout(60); }
   P = await parts(fr);
   ok('...and "Está tudo escondido: use a engrenagem para mostrar de novo"', P.empty === 'Está tudo escondido: use a engrenagem para mostrar de novo', P.empty);

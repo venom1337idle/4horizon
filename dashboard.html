@@ -318,7 +318,36 @@
   /* the captures card is the left half of its row; the right half is left empty for another table */
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .split > .card { margin-bottom: 14px; min-width: 0; }
+  /* lang-75: three cards, two per row (the third wraps below); when only one of the three is shown, it still takes half the width (it starts a new row by itself) */
+  .split3 { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .split3 > .card { flex: 1 1 calc(50% - 7px); min-width: 0; max-width: calc(50% - 7px); margin-bottom: 0; }
   /* the day's tracker (lang-47): one row per thing worth seeing, newest first */
+  /* lang-75: Session drops · all accounts (a card on the Overview; one line per item, per-account split in the tooltip; the account tick boxes hide the lines only, the sums keep counting; a pin on the left of each row rides it to the top and is kept across restarts) */
+  #dropsAcc { display: inline-flex; align-items: center; gap: 8px; }
+  #dropsAcc label { display: inline-flex; align-items: center; gap: 4px; color: var(--dim); font-size: 11.5px; cursor: pointer; white-space: nowrap; }
+  #dropsAcc label.on { color: var(--text); font-weight: 600; } #dropsAcc label.on .dot { box-shadow: 0 0 6px var(--c); }
+  #dropsAcc .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; opacity: .4; } #dropsAcc label.on .dot { opacity: 1; }
+  #dropsAcc input { appearance: none; -webkit-appearance: none; width: 12px; height: 12px; margin: 0; border: 1px solid var(--line2); border-radius: 3px; background: #0c1222; cursor: pointer; position: relative; }
+  #dropsAcc input:checked { background: var(--blue, #5aa9ff); border-color: var(--blue, #5aa9ff); }
+  #dropsAcc input:checked::after { content: ''; position: absolute; left: 3px; top: 0; width: 3px; height: 6px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  #dropsList { max-height: 359px; }                                       /* a box of its own height with a scroll bar, like Latest captures and Today's highlights (the three cards line up) */
+  /* lang-75: each row is a dark pill, the same look as the per-account Session drops (reusing .drops .row / .row.hot / .row.top from above); hot items keep their gold tint; a pinned row has a dashed gold border on top of the dark pill */
+  #dropsList .row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto auto; align-items: center; column-gap: 8px;
+    background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); padding: 7px 11px; margin-bottom: 5px; font-size: 12px; }
+  #dropsList .row.hot { background: linear-gradient(90deg, rgba(227, 192, 107, .17), rgba(227, 192, 107, .04)); border-color: rgba(227, 192, 107, .5); box-shadow: inset 3px 0 0 var(--gold); }
+  #dropsList .row.hot .nm { color: var(--gold); font-weight: 700; }
+  #dropsList .row.hot .q { color: rgba(227, 192, 107, .75); }
+  #dropsList .row.top { background: linear-gradient(90deg, rgba(227, 192, 107, .30), rgba(227, 192, 107, .08)); border-color: rgba(227, 192, 107, .8); box-shadow: inset 3px 0 0 var(--gold), 0 0 14px rgba(227, 192, 107, .22); }
+  #dropsList .row.pinned { border-style: dashed; border-color: var(--gold); }        /* owner choice 2026-11-22: a dashed gold border instead of an outline */
+  #dropsList .row .pin { appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: var(--dim2); font-size: 13px; line-height: 1; opacity: .5; transition: opacity .15s, color .15s; }
+  #dropsList .row:hover .pin, #dropsList .row.pinned .pin { opacity: 1; }
+  #dropsList .row.pinned .pin { color: var(--gold); }
+  #dropsList .row .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dropsList .row .nm .q { color: var(--dim); font-size: 11.5px; margin-left: 4px; }
+  #dropsList .row .who { display: inline-flex; gap: 4px; margin: 0 4px; }
+  #dropsList .row .who i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); display: inline-block; }
+  #dropsList .row .gold { color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; min-width: 60px; text-align: right; }
+  #dropsList .empty { color: var(--dim); font-size: 12px; padding: 8px 2px; line-height: 1.5; }
   /* lang-75: the three counters in the header (shiny captured, shiny stones, adupokes dropped today) */
   #todayTot { display: inline-flex; align-items: center; gap: 10px; margin-right: 10px; color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
   #todayTot b { color: var(--text); font-weight: 600; }
@@ -386,7 +415,8 @@
           <div class="h"><span>Incubators &middot; breeding, every account</span></div>
           <div class="eggs" id="eggGrid"></div>
         </div>
-        <div class="split">
+        <!-- lang-75: Latest captures, Today's highlights, Session drops: three cards of the same size. Two per row (flex-wrap); when only one of the three is shown, it takes its own row (half width). Session drops is combined (one line per item, per-account split in the tooltip; accounts unticked here still count behind the scenes; pins on the left of each row ride to the top and are kept). -->
+        <div class="split3">
         <div class="card" id="capCard">
           <div class="h"><span>Latest captures &middot; all accounts</span></div>
           <div class="caps">
@@ -403,6 +433,10 @@
         <div class="card" id="todayCard">
           <div class="h"><span>Today’s highlights &middot; 00:00 to 23:59</span><span class="grow"></span><span class="todayTot" id="todayTot"></span><span class="chip" id="todayCount"></span></div>
           <div class="scrollbox" id="todayList"></div>
+        </div>
+        <div class="card" id="dropsCard">
+          <div class="h"><span>Session drops &middot; all accounts</span><span class="grow"></span><span id="dropsAcc"></span><span class="chip" id="dropsCount"></span></div>
+          <div class="scrollbox" id="dropsList"></div>
         </div>
         </div>
       </div>
@@ -679,7 +713,8 @@ const gemImg = '<img class="gem" src="gem.png" alt="">';
 const SUMKEY = '4h.summary';
 // lang-72: the parts of the Overview, in their order on screen, that its gear can hide (key, element, name in the list)
 const OV_PARTS = [{ key: 'today', id: 'todayRow', name: () => t('Today (daily totals)') }, { key: 'live', id: 'kpis', name: () => t('Live totals (per hour)') }, { key: 'table', id: 'tableCard', name: () => t('Per account') },
-  { key: 'eggs', id: 'eggCard', name: () => t('Incubators') }, { key: 'caps', id: 'capCard', name: () => t('Latest captures') }, { key: 'high', id: 'todayCard', name: () => t('Today\u2019s highlights') }];
+  { key: 'eggs', id: 'eggCard', name: () => t('Incubators') }, { key: 'caps', id: 'capCard', name: () => t('Latest captures') }, { key: 'high', id: 'todayCard', name: () => t('Today\u2019s highlights') },
+  { key: 'drops', id: 'dropsCard', name: () => t('Session drops (combined)') }];          // lang-75: combined session drops across the accounts
 const sumCfg = (() => {
   let o = {}; try { o = JSON.parse(localStorage.getItem(SUMKEY)) || {}; } catch (e) {}
   const off = {}; if (o.off && typeof o.off === 'object') Object.keys(o.off).slice(0, 60).forEach(k => { if (o.off[k] === true) off[String(k).slice(0, 40)] = true; });
@@ -687,7 +722,11 @@ const sumCfg = (() => {
   const ovOff = {}; if (o.ovOff && typeof o.ovOff === 'object') OV_PARTS.forEach(p => { if (o.ovOff[p.key] === true) ovOff[p.key] = true; });          // lang-72: the parts of the Overview that are hidden
   // lang-75: Today's highlights: which of the six kinds show (shiny, catch = great catch, drop = valuable drop, egg, hunt, evo); all on at first
   const ovTodayOff = {}; if (o.ovTodayOff && typeof o.ovTodayOff === 'object') ['shiny', 'catch', 'drop', 'egg', 'hunt', 'evo'].forEach(k => { if (o.ovTodayOff[k] === true) ovTodayOff[k] = true; });
-  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold', cmpView: o.cmpView === 'best' ? 'best' : 'last', ovOff: ovOff, ovFold: o.ovFold === true, ovTodayOff: ovTodayOff };          // (lang-72: cmpView, the list of the comparison)
+  // lang-75: Session drops (combined): which accounts are shown (an account unticked here keeps counting; it just does not show in the list). All on at first.
+  const ovDropsOff = {}; if (o.ovDropsOff && typeof o.ovDropsOff === 'object') [1, 2, 3, 4].forEach(n => { if (o.ovDropsOff[n] === true) ovDropsOff[n] = true; });
+  // lang-75: Session drops (combined): the items the user pinned (the pin on the left of a row sends it to the top; pins stay across restarts, and ride in Settings backup)
+  const dropsPins = {}; if (o.dropsPins && typeof o.dropsPins === 'object') Object.keys(o.dropsPins).slice(0, 40).forEach(k => { if (o.dropsPins[k] === true) dropsPins[String(k).slice(0, 60)] = true; });
+  return { off: off, best: ['iv', 'quality', 'score'].indexOf(o.best) >= 0 ? o.best : 'iv', hot: (typeof o.hot === 'number' && isFinite(o.hot) && o.hot >= 100 && o.hot <= 1e9) ? Math.round(o.hot) : 10000, locked: o.locked === true, tab: tab, rank: ['gold', 'xp', 'both'].indexOf(o.rank) >= 0 ? o.rank : 'gold', cmpView: o.cmpView === 'best' ? 'best' : 'last', ovOff: ovOff, ovFold: o.ovFold === true, ovTodayOff: ovTodayOff, ovDropsOff: ovDropsOff, dropsPins: dropsPins };          // (lang-72: cmpView, the list of the comparison)
 })();
 let sumOpen = false;                                   // is the panel of the settings open
 const saveSumCfg = () => { try { localStorage.setItem(SUMKEY, JSON.stringify(sumCfg)); } catch (e) {} };
@@ -1434,7 +1473,45 @@ function renderAll() {
   if (ovDraw('eggs')) drawEggs();
   if (ovDraw('caps')) drawCaptures();
   if (ovDraw('high')) drawToday();
+  if (ovDraw('drops')) drawDropsCombined();          // lang-75: combined session drops
   applyOv();
+}
+// lang-75: the Session drops of every account added up. One line per item; the per-account breakdown in the tooltip. Account tick boxes HIDE the account only
+// (its share is subtracted and the row goes away if no ticked account has it); the data is always kept, so ticking an account back is instant and accurate.
+function drawDropsCombined() {
+  const list = document.getElementById('dropsList'), cnt = document.getElementById('dropsCount'), acc = document.getElementById('dropsAcc');
+  // the account tick boxes (always in the header, in the account's colour)
+  const accHtml = accounts.map(a => { const on = !sumCfg.ovDropsOff[a.idx + 1]; return '<label class="' + (on ? 'on' : '') + '" style="--c:' + COLORS[a.idx % COLORS.length] + '"><input type="checkbox" data-drops-acc="' + (a.idx + 1) + '"' + (on ? ' checked' : '') + '><span class="dot"></span>' + esc(accName(a)) + '</label>'; }).join('');
+  if (acc.dataset.html !== accHtml) { acc.dataset.html = accHtml; acc.innerHTML = accHtml; }
+  // add each account's drops to a map { name -> { qty, value, each, byAcc: { idx -> qty } } }
+  const by = {};
+  accounts.forEach(a => {
+    if (sumCfg.ovDropsOff[a.idx + 1]) return;
+    (a.drops || []).forEach(d => {
+      if (!d || !d.name || !(d.qty > 0)) return;
+      const r = by[d.name] || (by[d.name] = { name: d.name, qty: 0, value: 0, each: null, byAcc: {} });
+      r.qty += d.qty; if (typeof d.value === 'number') r.value += d.value;
+      if (r.each === null && d.qty > 0 && typeof d.value === 'number') r.each = d.value / d.qty;          // (the game sells the same item at the same price for every account)
+      r.byAcc[a.idx] = (r.byAcc[a.idx] || 0) + d.qty;
+    });
+  });
+  // sort: pinned first (most valuable among pinned first), then expensive (price of one >= hot), then the rest by total value
+  const sortRule = (x, y) => ((y.each >= DROP_HOT) - (x.each >= DROP_HOT)) || (x.each >= DROP_HOT ? ((y.each || 0) - (x.each || 0)) : 0) || ((y.value || 0) - (x.value || 0)) || ((y.qty || 0) - (x.qty || 0));
+  const rows = Object.values(by).sort((x, y) => (!!sumCfg.dropsPins[y.name] - !!sumCfg.dropsPins[x.name]) || sortRule(x, y));
+  cnt.textContent = rows.length ? String(rows.length) : '';
+  cnt.classList.toggle('hidden', !rows.length);
+  const html = rows.length ? rows.map(r => {
+    const tier = r.each >= DROP_TOP ? ' hot top' : r.each >= DROP_HOT ? ' hot' : '';
+    const pinned = !!sumCfg.dropsPins[r.name];
+    const pinTip = pinned ? t('Unpin') : t('Pin to the top');
+    const who = Object.keys(r.byAcc).map(i => '<i style="--c:' + COLORS[i % COLORS.length] + '" title="' + esc(accName(accounts[i])) + ': \u00d7' + fmt(r.byAcc[i]) + '"></i>').join('');
+    const tip = Object.keys(r.byAcc).map(i => accName(accounts[i]) + ': \u00d7' + fmt(r.byAcc[i])).join('\n') + (r.each !== null ? '\n$' + fmt(Math.round(r.each)) + ' ' + t('each') : '');
+    return '<div class="row' + tier + (pinned ? ' pinned' : '') + '" title="' + esc(tip) + '">' +
+      '<button class="pin" data-pin="' + esc(r.name) + '" title="' + esc(pinTip) + '" aria-label="' + esc(pinTip) + '" aria-pressed="' + pinned + '">' + (pinned ? '\u2605' : '\u2606') + '</button>' +
+      '<span class="nm">' + (r.each >= DROP_TOP ? star + ' ' : '') + esc(r.name) + ' <span class="q">\u00d7' + fmt(r.qty) + '</span></span>' +
+      '<span class="who">' + who + '</span>' + '<span class="gold">' + (r.value ? '$' + fmt(Math.round(r.value)) : '') + '</span></div>';
+  }).join('') : '<div class="empty">' + t('No drops yet in any of the ticked accounts. A session starts again from nothing when an account changes hunt.') + '</div>';
+  if (list.dataset.html !== html) { list.dataset.html = html; list.innerHTML = html; }
 }
 // lang-72: the gear beside "Overview": the parts it shows, and one line when nothing is left on screen (the incubators count only while an account is breeding).
 // The "Overview" button folds the whole Overview away and unfolds it (sumCfg.ovFold, kept): the gear's choices are not touched, they are what comes back.
@@ -1583,6 +1660,21 @@ document.getElementById('ovSettings').addEventListener('change', e => {
     const row = el.closest('.ss-row'); if (row) row.classList.toggle('off', !el.checked);
     saveSumCfg(); drawToday();
   }
+});
+// lang-75: Session drops · all accounts, the account tick boxes in the card's header
+document.getElementById('dropsAcc').addEventListener('change', e => {
+  const el = e.target, n = Number(el.getAttribute && el.getAttribute('data-drops-acc'));
+  if (!(n >= 1 && n <= 4)) return;
+  if (el.checked) delete sumCfg.ovDropsOff[n]; else sumCfg.ovDropsOff[n] = true;
+  saveSumCfg(); drawDropsCombined();
+});
+// lang-75: the pin on the left of each row (sends it to the top; click again to unpin). Kept across restarts (sumCfg.dropsPins).
+document.getElementById('dropsList').addEventListener('click', e => {
+  const b = e.target && e.target.closest && e.target.closest('button[data-pin]');
+  if (!b) return;
+  const name = b.getAttribute('data-pin');
+  if (sumCfg.dropsPins[name]) delete sumCfg.dropsPins[name]; else sumCfg.dropsPins[name] = true;
+  saveSumCfg(); drawDropsCombined();
 });
 setTimeout(() => { if (sumCfg.best !== bestMode) setBestMode(sumCfg.best, false); }, 0);          // (after live.js has added its third option)
 document.getElementById('capAcc').onchange = e => { capFilter.acc = e.target.value; drawCaptures(); };
