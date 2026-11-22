@@ -109,6 +109,10 @@ EXACT = {
   # lang-75: Today's highlights filter in the Overview's gear
   'Today\u2019s highlights: show': 'Destaques de hoje: mostrar',
   'Great catch': 'Ótima captura', 'Evolved': 'Evoluiu',
+  # lang-75: the three counters in the Today's highlights header
+  'Shinies captured today': 'Shinies capturados hoje',
+  'Pedras Shiny picked up today': 'Pedras Shiny pegas hoje',
+  'Adupokes picked up today': 'Adupokes pegos hoje',
   'Only the Overview uses these choices. The incubators show only while an account is breeding. Great catches and valuable drops also follow Settings \u203a Notifications.':
     'Só a Visão geral usa estas escolhas. As incubadoras só aparecem enquanto uma conta está fazendo breeding. As ótimas capturas e os drops valiosos também seguem Configurações \u203a Notificações.',
   'Today (daily totals)': 'Hoje (totais do dia)', 'Live totals (per hour)': 'Totais ao vivo (por hora)', 'Incubators': 'Incubadoras', 'Latest captures': 'Últimas capturas', 'Today’s highlights': 'Destaques de hoje',

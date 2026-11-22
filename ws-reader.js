@@ -309,7 +309,7 @@ function attachReader(wc, account, send) {
                      Math.floor((secs % 3600) / 60) + 'm ' + (secs % 60) + 's',
         // the game sends item ids and amounts, but no names or prices
         drops: Object.entries(s.loot || {})
-          .map(([id, qty]) => { const it = itemInfo(id); return { name: it.name, qty: qty, value: it.price === null ? null : Math.round(it.price * qty * 10) / 10 }; })
+          .map(([id, qty]) => { const it = itemInfo(id); return { id: id, name: it.name, qty: qty, value: it.price === null ? null : Math.round(it.price * qty * 10) / 10 }; })          // lang-75: the id is kept too (Today's header counters pick shiny-stone / adupoke by id, not by the localized name)
           .sort((a, b) => ((b.value === null ? -1 : b.value) - (a.value === null ? -1 : a.value)) || (b.qty - a.qty))
       };
       if (hours > 0.002) {       // not in the very first seconds, to avoid dividing by almost zero

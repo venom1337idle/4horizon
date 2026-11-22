@@ -79,6 +79,23 @@ function selfTestInPage() {
     // the icon bar's own position (the clean expanded screen widens it: left, right, width, max-width, margins, transform as the game set them; inner = its content / its width)
     const tw = document.querySelector('.hud .toolbar-wrap');
     if (tw) { const s = getComputedStyle(tw); boxes.barStyle = ['left ' + s.left, 'right ' + s.right, 'width ' + s.width, 'max-width ' + s.maxWidth, 'margin ' + s.marginLeft + ' ' + s.marginRight, 'transform ' + s.transform, 'inner ' + Math.round(tw.scrollWidth) + '/' + Math.round(tw.clientWidth)].join(' \u00b7 ').slice(0, 200); }
+    // lang-75: any item icon on screen (Mochila, Hunt Analyzer Drops tab, inventory tooltips). Reports the first few: their URL and the nearby word. Used to pick the game's own icons for future features.
+    const icons = [];
+    try {
+      const imgs = document.querySelectorAll('img');
+      const closestWord = el => { let e = el; for (let i = 0; e && i < 6; i++, e = e.parentElement) { const t = plain((e.textContent || '').replace(/\s+/g, ' ').trim()); if (t && t.length >= 3 && t.length <= 60) return t.slice(0, 40); } return ''; };
+      const seen = new Set();
+      Array.prototype.forEach.call(imgs, img => {
+        if (icons.length >= 6) return;
+        const src = img.getAttribute('src') || '';
+        if (!/\.(png|webp|jpg|jpeg|gif|svg)(\?|$)/i.test(src) || /^data:/.test(src) || !shown(img)) return;
+        const r = img.getBoundingClientRect(); if (r.width < 16 || r.width > 96 || r.height < 16 || r.height > 96) return;          // only small icon-like images
+        const alt = plain(img.getAttribute('alt') || img.getAttribute('title') || img.getAttribute('aria-label') || ''), near = alt || closestWord(img);
+        if (!near) return; if (seen.has(src)) return; seen.add(src);
+        icons.push(src.slice(0, 180) + ' (' + near + ')');
+      });
+    } catch (e) { boxes.iconsError = String(e && e.message || e).slice(0, 60); }
+    if (icons.length) boxes.icons = icons;
   } catch (e) { boxes.error = String(e && e.message || e).slice(0, 60); }
   return { signedIn: signedIn, toolbar: toolbar, analyzer: analyzer, hunts: hunts, boxes: boxes };
 }

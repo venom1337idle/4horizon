@@ -42,6 +42,26 @@ const settle = p => p.waitForTimeout(1300);
   ok('...a new hunt session starts again from what it holds (nothing announced at once)', (await rows(p)).length === 5);
   await drops(1, 9002, [['Water gem', 2, 15000]]); await settle(p);
   ok('...and announces what it gets after that', (await rows(p))[0].tx === 'trainer1: Valuable drop: Water gem ×1 · $15K each');
+  // ---- lang-75: the three counters in the header (shiny captured, shiny stones, adupokes)
+  const header = () => p.dash().evaluate(() => Array.from(document.querySelectorAll('#todayTot .tc')).map(e => ({ k: e.classList.contains('shiny') ? 'shiny' : e.classList.contains('stone') ? 'stone' : 'adu', n: e.querySelector('b').textContent, title: e.title })));
+  let H = await header();
+  ok('the header has a counter for shinies captured (two shinies have been captured: Gengar and Eevee)', H.length >= 1 && H.find(x => x.k === 'shiny') && H.find(x => x.k === 'shiny').n === '2' && /Shinies captured today/.test(H.find(x => x.k === 'shiny').title), H);
+  ok('...no Pedra Shiny / Adupoke counter yet (no such drop)', !H.find(x => x.k === 'stone') && !H.find(x => x.k === 'adu'), H);
+  await drops(2, 9100, [['shiny-stone', 1, 1000]]); await settle(p);
+  await drops(2, 9100, [['shiny-stone', 4, 1000]]); await settle(p);          // 3 more
+  await drops(3, 9200, [['adupoke', 1, 1000]]); await settle(p);
+  await drops(3, 9200, [['adupoke', 3, 1000]]); await settle(p);               // 2 more
+  H = await header();
+  const stone = H.find(x => x.k === 'stone'), adu = H.find(x => x.k === 'adu');
+  ok('the Pedra Shiny counter shows 3 (the first look of a session is the start, as drops do)', stone && stone.n === '3' && /Pedras Shiny picked up today/.test(stone.title), [stone, H]);
+  ok('the Adupoke counter shows 2', adu && adu.n === '2' && /Adupokes picked up today/.test(adu.title), [adu, H]);
+  await drops(2, 9100, [['shiny-stone', 4, 1000]]); await settle(p);
+  ok('...the same amount again: the counter is unchanged (keys stop doubles)', (await header()).find(x => x.k === 'stone').n === '3');
+  await p.dash().evaluate(() => location.reload()); await p.waitForTimeout(1600);
+  H = await header();
+  ok('after a reload: the three counters are still there, with the same numbers (saved under today.counts)', H.find(x => x.k === 'shiny').n === '2' && H.find(x => x.k === 'stone').n === '3' && H.find(x => x.k === 'adu').n === '2', H);
+  const saved = await p.dash().evaluate(() => JSON.parse(localStorage.getItem('4h.today')).counts);
+  ok('...the saved counts are the same object (shiny, shinyStone, adupoke)', saved.shiny === 2 && saved.shinyStone === 3 && saved.adupoke === 2, saved);
   // ---- evolution (a member of the team, same id, another species)
   const tm = (sp, name) => [{ id: '7', speciesId: 62, name: 'Poliwrath', level: 160, xp: 1, hp: 1, maxHp: 2, slot: 1 }, { id: '8', speciesId: sp, name, level: 76, xp: 1, hp: 1, maxHp: 2, slot: 2 }];
   await p.s(3, { teamList: tm(116, 'Horsea'), teamActiveId: '7' }); await settle(p);

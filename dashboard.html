@@ -319,6 +319,11 @@
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .split > .card { margin-bottom: 14px; min-width: 0; }
   /* the day's tracker (lang-47): one row per thing worth seeing, newest first */
+  /* lang-75: the three counters in the header (shiny captured, shiny stones, adupokes dropped today) */
+  #todayTot { display: inline-flex; align-items: center; gap: 10px; margin-right: 10px; color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  #todayTot b { color: var(--text); font-weight: 600; }
+  #todayTot .tc { display: inline-flex; align-items: center; gap: 4px; } #todayTot .tc .ic { font-size: 12.5px; }
+  #todayTot .tc.shiny .ic { color: var(--pink, #ff8fd0); } #todayTot .tc.stone .ic { color: var(--teal, #65d2b4); } #todayTot .tc.adu .ic { color: var(--gold); }
   #todayList .ev { display: grid; grid-template-columns: 40px 16px minmax(0, 1fr); align-items: center; column-gap: 8px; height: 36px; box-sizing: border-box; padding: 0 11px; margin-bottom: 4px; border-radius: var(--r-sm);
                    background: var(--bg2); border: 1px solid #141d3a; font-size: 12px; }
   #todayList .ev .when { color: var(--dim2); font-variant-numeric: tabular-nums; }
@@ -396,7 +401,7 @@
           <div class="scrollbox" id="capList"></div>
         </div>
         <div class="card" id="todayCard">
-          <div class="h"><span>Today’s highlights &middot; 00:00 to 23:59</span><span class="grow"></span><span class="chip" id="todayCount"></span></div>
+          <div class="h"><span>Today’s highlights &middot; 00:00 to 23:59</span><span class="grow"></span><span class="todayTot" id="todayTot"></span><span class="chip" id="todayCount"></span></div>
           <div class="scrollbox" id="todayList"></div>
         </div>
         </div>
@@ -1135,14 +1140,18 @@ window.addEventListener('message', e => {
 // =====================================================================================
 const TODAY_KEY = '4h.today', TODAY_MAX = 400, GREAT_IV = 170, GREAT_Q = 1.75;
 const dayOf = ms => { const d = new Date(ms); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+// lang-75: three counters for the Today's highlights header: shiny captured (★), shiny stones picked up (Pedra Shiny), adupokes picked up. Kept with the day.
+const TODAY_ZERO_COUNTS = () => ({ shiny: 0, shinyStone: 0, adupoke: 0 });
 const today = (() => {
   let o = null; try { o = JSON.parse(localStorage.getItem(TODAY_KEY)); } catch (e) {}
   const ok = o && typeof o === 'object' && o.date === dayOf(Date.now()) && Array.isArray(o.items) && Array.isArray(o.keys);
   const items = ok ? o.items.filter(x => x && typeof x === 'object' && typeof x.t === 'number' && typeof x.kind === 'string' && x.p && typeof x.p === 'object').slice(0, TODAY_MAX) : [];
-  return { date: dayOf(Date.now()), items: items, keys: ok ? o.keys.filter(k => typeof k === 'string').slice(-2000) : [], base: {} };      // base: what was seen first, per account (not kept: a restart starts again from what it sees)
+  const num = v => (typeof v === 'number' && isFinite(v) && v >= 0 && v < 1e6) ? Math.round(v) : 0;
+  const c = ok && o.counts && typeof o.counts === 'object' ? { shiny: num(o.counts.shiny), shinyStone: num(o.counts.shinyStone), adupoke: num(o.counts.adupoke) } : TODAY_ZERO_COUNTS();
+  return { date: dayOf(Date.now()), items: items, keys: ok ? o.keys.filter(k => typeof k === 'string').slice(-2000) : [], counts: c, base: {} };      // base: what was seen first, per account (not kept: a restart starts again from what it sees)
 })();
-function todaySave() { try { localStorage.setItem(TODAY_KEY, JSON.stringify({ v: 1, date: today.date, items: today.items, keys: today.keys })); } catch (e) {} }
-function todayDay() { const d = dayOf(Date.now()); if (d !== today.date) { today.date = d; today.items = []; today.keys = []; todaySave(); } }      // midnight: a new, empty day
+function todaySave() { try { localStorage.setItem(TODAY_KEY, JSON.stringify({ v: 1, date: today.date, items: today.items, keys: today.keys, counts: today.counts })); } catch (e) {} }
+function todayDay() { const d = dayOf(Date.now()); if (d !== today.date) { today.date = d; today.items = []; today.keys = []; today.counts = TODAY_ZERO_COUNTS(); todaySave(); } }      // midnight: a new, empty day
 // kept as facts (p), written in the chosen language when drawn
 function todayAdd(a, kind, p, key) {
   todayDay();
@@ -1170,8 +1179,18 @@ function todayCatch(a, ev) {
   if (!ev || !ev.name) return;
   const iv = typeof ev.iv === 'number' ? ev.iv : null, q = typeof ev.quality === 'number' ? ev.quality : qualityOf({ rarity: ev.rarity });
   if (!ev.shiny && !isGreatCatch(iv, q, ev.rarity)) return;
-  todayAdd(a, ev.shiny ? 'shiny' : 'catch', { name: ev.name, iv: iv === null ? '' : iv, max: ev.max || 192, rarity: ev.rarity || '', q: typeof q === 'number' ? q : '' },
+  const added = todayAdd(a, ev.shiny ? 'shiny' : 'catch', { name: ev.name, iv: iv === null ? '' : iv, max: ev.max || 192, rarity: ev.rarity || '', q: typeof q === 'number' ? q : '' },
     'c:' + a.idx + ':' + ev.name + ':' + iv + ':' + ev.quality + ':' + (ev.time || '') + ':' + (ev.shiny ? 1 : 0));
+  if (added && ev.shiny) { today.counts.shiny = (today.counts.shiny || 0) + 1; todaySave(); }          // lang-75: the header counter
+}
+// lang-75: a drop of a counted item (shiny-stone / adupoke): bumps the day's counter. Kept per account+session, so a reload of the window does not double it.
+const TODAY_DROPS = { 'shiny-stone': 'shinyStone', 'adupoke': 'adupoke', 'Pedra Shiny': 'shinyStone', 'Adupoke': 'adupoke' };          // lang-75: by the game's id and by the localized name (an older ws-reader has no id)
+function todayDropCount(a, sid, name, qty) {
+  const key = 'dc:' + a.idx + ':' + sid + ':' + name + ':' + qty;
+  if (today.keys.indexOf(key) >= 0) return;
+  today.keys.push(key); if (today.keys.length > 2000) today.keys.splice(0, today.keys.length - 2000);
+  today.counts[TODAY_DROPS[name]] = (today.counts[TODAY_DROPS[name]] || 0) + qty;
+  todaySave();
 }
 // what changed since the last look: new expensive drops, evolutions, a level that opens hunts, eggs that hatched
 function todayScan() {
@@ -1186,6 +1205,7 @@ function todayScan() {
         Object.keys(q).forEach(n => {
           const d = q[n], unit = typeof d.value === 'number' ? d.value / d.qty : null, more = d.qty - (b.drops[n] || 0);
           if (more > 0 && unit !== null && unit >= minDrop()) todayAdd(a, 'drop', { item: n, n: more, each: unit }, 'd:' + a.idx + ':' + sid + ':' + n + ':' + d.qty);
+          if (more > 0 && (TODAY_DROPS[d.id] || TODAY_DROPS[n])) todayDropCount(a, sid, (TODAY_DROPS[d.id] ? d.id : n), more);          // lang-75: the header counters (independent of the "valuable drop" rule); the item's id if the reader sends it, else its name
         });
       }
       b.dropSid = sid; b.drops = {}; Object.keys(q).forEach(n => { b.drops[n] = q[n].qty; });          // (the first look, and a new session, are the start: what they hold is not announced)
@@ -1233,6 +1253,13 @@ function drawToday() {
   const list = document.getElementById('todayList'), cnt = document.getElementById('todayCount'), items = today.items.filter(todayShown);
   cnt.textContent = items.length ? String(items.length) : '';
   cnt.classList.toggle('hidden', !items.length);
+  // lang-75: the three counters in the header: shiny captured, shiny stones, adupokes
+  const tot = document.getElementById('todayTot'), c = today.counts || { shiny: 0, shinyStone: 0, adupoke: 0 };
+  const parts = [];
+  if (c.shiny > 0) parts.push('<span class="tc shiny" title="' + esc(t('Shinies captured today')) + '"><span class="ic">\u2726</span><b>' + fmt(c.shiny) + '</b></span>');
+  if (c.shinyStone > 0) parts.push('<span class="tc stone" title="' + esc(t('Pedras Shiny picked up today')) + '"><span class="ic">\u2756</span><b>' + fmt(c.shinyStone) + '</b></span>');
+  if (c.adupoke > 0) parts.push('<span class="tc adu" title="' + esc(t('Adupokes picked up today')) + '"><span class="ic">\u2605</span><b>' + fmt(c.adupoke) + '</b></span>');
+  tot.innerHTML = parts.join('');
   const html = items.length ? items.map(x => {
     const d = new Date(x.t), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     const a = accounts[x.acc], who = a ? accName(a) : esc(x.name);

@@ -472,6 +472,7 @@
           P('      boxes of the screen (for the clean mini screens): ' + Object.keys(names).map(k => names[k] + ' ' + (Array.isArray(bx[k]) && bx[k].length ? 'found' : 'NOT FOUND')).join(' \u00b7 ') + (bx.error ? ' \u00b7 error: ' + String(bx.error).slice(0, 60) : ''));
           Object.keys(names).forEach(k => { if (Array.isArray(bx[k]) && bx[k].length) P('        ' + names[k] + ': ' + bx[k].slice(0, 3).map(s => String(s).slice(0, 120)).join(' \u2190 ')); });
           if (typeof bx.barStyle === 'string' && bx.barStyle) P('        icon bar position: ' + bx.barStyle.slice(0, 200));
+          if (Array.isArray(bx.icons) && bx.icons.length) { P('        item icons:'); bx.icons.forEach(s => P('          ' + String(s).slice(0, 200))); }          // lang-75
         }
         const h = p.hunts;
         if (h) P('      Hunts panel open: search box yes \u00b7 region tabs ' + (h.regions && h.regions.length ? h.regions.join(', ') : 'NONE') + ' \u00b7 "Todos" ' + (h.todos ? 'yes' : 'NO') + ' \u00b7 "Todos os n\u00edveis" ' + (h.levels ? 'yes' : 'NO') + (h.weak ? ' \u00b7 "Fraco contra": ' + String(h.weak).slice(0, 20) : '') + ' \u00b7 cards ' + (Number(h.cards) || 0) + ' \u00b7 Ca\u00e7ar button ' + (h.cacar === 'found' ? 'yes' : 'none (no hunt chosen)'));
