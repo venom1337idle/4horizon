@@ -1206,17 +1206,19 @@ const todayParse = raw => { let o = null; try { o = JSON.parse(raw); } catch (e)
   const num = v => (typeof v === 'number' && isFinite(v) && v >= 0 && v < 1e6) ? Math.round(v) : 0;
   const c = o.counts && typeof o.counts === 'object' ? { shiny: num(o.counts.shiny), shinyStone: num(o.counts.shinyStone), adupoke: num(o.counts.adupoke) } : TODAY_ZERO_COUNTS();
   const keys = Array.isArray(o.keys) ? o.keys.filter(k => typeof k === 'string').slice(-2000) : [];
-  return { date: String(o.date).slice(0, 10), items: items, keys: keys, counts: c }; };
+  // lang-76+: the per-session baseline, so a reload in the middle of a session keeps counting from the right place (regression reported 2026-11-23: a reload during a session lost the next drop).
+  const base = {}; if (o.base && typeof o.base === 'object') Object.keys(o.base).slice(0, 8).forEach(k => { const b = o.base[k]; if (b && typeof b === 'object' && typeof b.dropSid === 'string') { const bd = {}; if (b.drops && typeof b.drops === 'object') Object.keys(b.drops).slice(0, 40).forEach(n => { if (typeof b.drops[n] === 'number' && b.drops[n] >= 0) bd[String(n).slice(0, 60)] = b.drops[n]; }); base[String(k).slice(0, 4)] = { dropSid: String(b.dropSid).slice(0, 40), drops: bd }; } });
+  return { date: String(o.date).slice(0, 10), items: items, keys: keys, counts: c, base: base }; };
 try { const oldRaw = localStorage.getItem(TODAY_KEY_OLD); if (oldRaw) { const po = todayParse(oldRaw); if (po && !localStorage.getItem(TODAY_KEY_PRE + po.date)) localStorage.setItem(TODAY_KEY_PRE + po.date, JSON.stringify({ v: 1, date: po.date, items: po.items, keys: po.keys, counts: po.counts })); localStorage.removeItem(TODAY_KEY_OLD); } } catch (e) {}
 function todayLoad(date) { const p = todayParse(localStorage.getItem(TODAY_KEY_PRE + date)); return p && p.date === date ? p : null; }
 function todayDates() { const out = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(TODAY_KEY_PRE) === 0) out.push(k.slice(TODAY_KEY_PRE.length)); } return out.sort(); }
 function todayPrune() { const keep = []; for (let i = 0; i <= TODAY_DAYS_BACK; i++) { const d = new Date(); d.setDate(d.getDate() - i); keep.push(dayOf(d.getTime())); } todayDates().forEach(d => { if (keep.indexOf(d) < 0) try { localStorage.removeItem(TODAY_KEY_PRE + d); } catch (e) {} }); }
 const today = (() => {                                                      // the live (editable) day in memory
   const d = dayOf(Date.now()), o = todayLoad(d);
-  return { date: d, items: o ? o.items : [], keys: o ? o.keys : [], counts: o ? o.counts : TODAY_ZERO_COUNTS(), base: {} };          // base: what was seen first, per account (not kept)
+  return { date: d, items: o ? o.items : [], keys: o ? o.keys : [], counts: o ? o.counts : TODAY_ZERO_COUNTS(), base: o && o.base ? o.base : {} };          // base: per-account per-session drop cumulative, kept across reloads (lang-76+)
 })();
 let viewDate = today.date;                                                   // what is currently shown: a date in YYYY-MM-DD; equal to today.date in live mode
-function todaySave() { try { localStorage.setItem(TODAY_KEY_PRE + today.date, JSON.stringify({ v: 1, date: today.date, items: today.items, keys: today.keys, counts: today.counts })); } catch (e) {} }
+function todaySave() { try { localStorage.setItem(TODAY_KEY_PRE + today.date, JSON.stringify({ v: 1, date: today.date, items: today.items, keys: today.keys, counts: today.counts, base: today.base })); } catch (e) {} }
 function todayDay() { const d = dayOf(Date.now()); if (d !== today.date) { todaySave(); today.date = d; today.items = []; today.keys = []; today.counts = TODAY_ZERO_COUNTS(); today.base = {}; if (viewDate === undefined || viewDate < d) viewDate = d; todayPrune(); todaySave(); } }      // midnight: today rolls to the new day (yesterday's entry stays in storage)
 todayPrune();                                                                // on load: drop anything older than the last 7 days
 // kept as facts (p), written in the chosen language when drawn
@@ -1252,11 +1254,12 @@ function todayCatch(a, ev) {
 }
 // lang-75: a drop of a counted item (shiny-stone / adupoke): bumps the day's counter. Kept per account+session, so a reload of the window does not double it.
 const TODAY_DROPS = { 'shiny-stone': 'shinyStone', 'adupoke': 'adupoke', 'Pedra Shiny': 'shinyStone', 'Adupoke': 'adupoke' };          // lang-75: by the game's id and by the localized name (an older ws-reader has no id)
-function todayDropCount(a, sid, name, qty) {
-  const key = 'dc:' + a.idx + ':' + sid + ':' + name + ':' + qty;
+// lang-76+: the dedup key uses the CUMULATIVE total (`total`), not the increment (`add`): two separate drops of the same item in the same session have different totals but the same increment (regression reported 2026-11-23: 4 Adupokes in the list but the counter showed 3).
+function todayDropCount(a, sid, name, add, total) {
+  const key = 'dc:' + a.idx + ':' + sid + ':' + name + ':' + total;
   if (today.keys.indexOf(key) >= 0) return;
   today.keys.push(key); if (today.keys.length > 2000) today.keys.splice(0, today.keys.length - 2000);
-  today.counts[TODAY_DROPS[name]] = (today.counts[TODAY_DROPS[name]] || 0) + qty;
+  today.counts[TODAY_DROPS[name]] = (today.counts[TODAY_DROPS[name]] || 0) + add;
   todaySave();
 }
 // what changed since the last look: new expensive drops, evolutions, a level that opens hunts, eggs that hatched
@@ -1268,14 +1271,18 @@ function todayScan() {
     const sid = a.startedAt !== undefined ? String(a.startedAt) : null;
     if (Array.isArray(a.drops) && sid !== null) {
       const q = {}; a.drops.forEach(d => { if (d && d.name && d.qty > 0) q[d.name] = d; });
+      let dropBumped = false;
       if (b.dropSid === sid && b.drops) {
         Object.keys(q).forEach(n => {
           const d = q[n], unit = typeof d.value === 'number' ? d.value / d.qty : null, more = d.qty - (b.drops[n] || 0);
           if (more > 0 && unit !== null && unit >= minDrop()) todayAdd(a, 'drop', { item: n, n: more, each: unit }, 'd:' + a.idx + ':' + sid + ':' + n + ':' + d.qty);
-          if (more > 0 && (TODAY_DROPS[d.id] || TODAY_DROPS[n])) todayDropCount(a, sid, (TODAY_DROPS[d.id] ? d.id : n), more);          // lang-75: the header counters (independent of the "valuable drop" rule); the item's id if the reader sends it, else its name
+          if (more > 0 && (TODAY_DROPS[d.id] || TODAY_DROPS[n])) todayDropCount(a, sid, (TODAY_DROPS[d.id] ? d.id : n), more, d.qty);          // lang-75: the header counters (independent of the "valuable drop" rule); the item's id if the reader sends it, else its name. Pass `more` and `d.qty` (cumulative) so the dedup key is unique per drop message.
+          if (more > 0) dropBumped = true;
         });
       }
-      b.dropSid = sid; b.drops = {}; Object.keys(q).forEach(n => { b.drops[n] = q[n].qty; });          // (the first look, and a new session, are the start: what they hold is not announced)
+      const sameBase = b.dropSid === sid && b.drops && Object.keys(q).every(n => b.drops[n] === q[n].qty) && Object.keys(b.drops).every(n => (q[n] ? q[n].qty : 0) === b.drops[n]);
+      if (!sameBase) { b.dropSid = sid; b.drops = {}; Object.keys(q).forEach(n => { b.drops[n] = q[n].qty; }); todaySave(); }          // lang-76+: the baseline is kept in storage too, so a reload mid-session does not lose the next drop
+      else if (dropBumped) todaySave();
     }
     // the team: a member (same id) whose species changed evolved
     if (Array.isArray(a.teamList)) {

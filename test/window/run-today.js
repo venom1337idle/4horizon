@@ -62,6 +62,10 @@ const settle = p => p.waitForTimeout(1300);
   ok('after a reload: the three counters are still there, with the same numbers (saved under today.counts)', H.find(x => x.k === 'shiny').n === '2' && H.find(x => x.k === 'stone').n === '3' && H.find(x => x.k === 'adu').n === '2', H);
   const saved = await p.dash().evaluate(() => { const k = Object.keys(localStorage).find(k => k.indexOf('4h.today.') === 0); return JSON.parse(localStorage.getItem(k)).counts; });
   ok('...the saved counts are the same object (shiny, shinyStone, adupoke)', saved.shiny === 2 && saved.shinyStone === 3 && saved.adupoke === 2, saved);
+  // lang-76+: a new drop in the SAME session right AFTER a reload bumps the counter (regression reported 2026-11-23: a reload mid-session lost the next drop because the per-session baseline was in memory only)
+  await drops(3, 9200, [['adupoke', 4, 1000]]); await settle(p);
+  const H3 = await header();
+  ok('after a reload, one more Adupoke drop in the same session bumps the counter at once (baseline survives the reload)', H3.find(x => x.k === 'adu').n === '3', H3);
   // ---- evolution (a member of the team, same id, another species)
   const tm = (sp, name) => [{ id: '7', speciesId: 62, name: 'Poliwrath', level: 160, xp: 1, hp: 1, maxHp: 2, slot: 1 }, { id: '8', speciesId: sp, name, level: 76, xp: 1, hp: 1, maxHp: 2, slot: 2 }];
   await p.s(3, { teamList: tm(116, 'Horsea'), teamActiveId: '7' }); await settle(p);
