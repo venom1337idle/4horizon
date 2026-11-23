@@ -140,7 +140,7 @@
   .dlg .warn { color: var(--gold); font-size: 12px; margin: 0 0 10px; }
   /* ---------- Diagnostics ---------- */
   #settingsModal { position: fixed; inset: 0; background: rgba(3, 6, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 42; }
-  /* ---------- Settings (lang-74: cards; switches for on/off settings; the description of a setting is a tooltip, shown by the small "i" after its name) ---------- */
+  /* ---------- Settings (lang-75: cards; switches for on/off settings; the description of a setting is a tooltip, shown by the small "i" after its name) ---------- */
   #settingsModal .dlg { display: flex; flex-direction: column; max-height: 92vh; width: min(820px, 95vw); }
   #settingsModal .sbody { overflow-y: auto; min-height: 0; margin: 0 -8px; padding: 2px 8px 4px; display: flex; flex-direction: column; gap: 12px; }
   #settingsModal .card { background: rgba(255, 255, 255, .025); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px 14px; min-width: 0; }
@@ -423,7 +423,7 @@
     <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="setTitle">
       <h2 id="setTitle">Settings</h2>
       <div class="sbody">
-      <!-- lang-74: the Settings redesign: cards (Game & accounts · Startup & tray · Display · Notifications · History · Diagnostics), switches for on/off settings, the descriptions as the "i" tooltips -->
+      <!-- lang-75: the Settings redesign: cards (Game & accounts · Startup & tray · Display · Notifications · History · Diagnostics), switches for on/off settings, the descriptions as the "i" tooltips -->
       <div class="cards3">
         <section class="card" id="cGame"><h3 class="sh">Game &amp; accounts</h3>
           <div class="two">
@@ -1011,7 +1011,7 @@
 
     // ---------- Diagnostics ----------
     const diagModal = document.getElementById('diagModal');
-    const UI_BUILD = 'lang-74';                             // changes with each update: what the window shows is compared with what the app behind it reports
+    const UI_BUILD = 'lang-75';                             // changes with each update: what the window shows is compared with what the app behind it reports
     const dg = { data: null, result: null, tab: 'check' };
     const age = t => (t ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
 
@@ -1174,7 +1174,7 @@
     async function loadNotif() {
       const ok = !!(api.notifyGet && api.notifySet);
       N_('nNeedInstall').classList.toggle('hidden', ok);
-      document.querySelectorAll('#nEnabled, #nSound, #nStartup, #nTest, #notifBody input, #notifBody button').forEach(e => { e.disabled = !ok; });          // (lang-74: Sound, On app start and Send test are in the card's header)
+      document.querySelectorAll('#nEnabled, #nSound, #nStartup, #nTest, #notifBody input, #notifBody button').forEach(e => { e.disabled = !ok; });          // (lang-75: Sound, On app start and Send test are in the card's header)
       if (!ok) { N_('notifBody').classList.add('off'); return; }
       try { const c = await api.notifyGet(); if (c) fillNotif(c); } catch (e) {}
     }
@@ -1316,7 +1316,7 @@
       const tip = document.getElementById('tip'), DELAY = 450;
       let timer = null, pending = null, shownFor = null, lastX = 0, lastY = 0;
       const makeInfo = () => { const e = document.createElement('span'); e.className = 'info'; e.tabIndex = 0; e.setAttribute('role', 'img'); return e; };
-      // lang-74: the "i" goes after the name of the row: its <b> (a field, a card row), or the <label> of a switch / tick box; a hidden name (.vh) gets none (its button is the name)
+      // lang-75: the "i" goes after the name of the row: its <b> (a field, a card row), or the <label> of a switch / tick box; a hidden name (.vh) gets none (its button is the name)
       settingsModal.querySelectorAll('.srow').forEach(row => { if (!row.querySelector(':scope > .sd, :scope > b > .sd')) return; const b = row.querySelector(':scope > b:not(.vh), :scope > label, :scope > .rl'); if (b) b.appendChild(makeInfo()); });
       const hd = settingsModal.querySelector('[data-tip-from] .sh'); if (hd) hd.appendChild(makeInfo());
       const sourceOf = info => {
@@ -1339,7 +1339,7 @@
       settingsModal.addEventListener('mousemove', e => { const el = targetOf(e.target); if (!el || !settingsModal.contains(el)) { hide(); return; } lastX = e.clientX; lastY = e.clientY; arm(el, e.clientX, e.clientY); });
       settingsModal.addEventListener('mouseleave', hide);
       settingsModal.addEventListener('mousedown', hide);
-      settingsModal.addEventListener('click', e => { if (targetOf(e.target)) { e.preventDefault(); e.stopPropagation(); } });          // (lang-74: an "i" inside a label never flips its switch)
+      settingsModal.addEventListener('click', e => { if (targetOf(e.target)) { e.preventDefault(); e.stopPropagation(); } });          // (lang-75: an "i" inside a label never flips its switch)
       settingsModal.addEventListener('wheel', hide, true);
       settingsModal.addEventListener('scroll', hide, true);
       settingsModal.addEventListener('keydown', hide, true);
