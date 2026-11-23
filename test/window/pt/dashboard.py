@@ -118,6 +118,11 @@ EXACT = {
   'Today\u2019s highlights: show': 'Destaques de hoje: mostrar',
   'Great catch': 'Ótima captura', 'Evolved': 'Evoluiu',
   # lang-75: the three counters in the Today's highlights header
+  # lang-75: the two arrows on the Today's highlights header (6 days back, up to today)
+  'Yesterday': 'Ontem', '{day}\u2019s highlights': 'Destaques de {day}',
+  'Show the day before': 'Mostrar o dia anterior', 'Show the day after': 'Mostrar o dia seguinte',
+  'Show {day}': 'Mostrar {day}',
+  '4horizon was not running on this day: there is nothing to show.': 'O 4horizon não estava rodando neste dia: não há nada para mostrar.',
   'Shinies captured today': 'Shinies capturados hoje',
   'Pedras Shiny picked up today': 'Pedras Shiny pegas hoje',
   'Adupokes picked up today': 'Adupokes pegos hoje',

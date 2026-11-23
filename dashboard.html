@@ -349,6 +349,12 @@
   #dropsList .row .gold { color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; min-width: 60px; text-align: right; }
   #dropsList .empty { color: var(--dim); font-size: 12px; padding: 8px 2px; line-height: 1.5; }
   /* lang-75: the three counters in the header (shiny captured, shiny stones, adupokes dropped today) */
+  /* lang-75: the two arrows in the Today's highlights header, for stepping through the last 7 days kept on this computer */
+  .dayNav { appearance: none; -webkit-appearance: none; background: transparent; border: 1px solid var(--line); border-radius: 50%; width: 18px; height: 18px; padding: 0; margin: 0 1px; color: var(--dim); font-size: 11px; line-height: 16px; text-align: center; cursor: pointer; flex: none; }
+  .dayNav:hover:not(:disabled) { color: var(--gold); border-color: var(--gold); }
+  .dayNav:disabled { opacity: .3; cursor: default; }
+  #todayTitle { color: inherit; }
+  #todayTitle.past { color: var(--dim); font-style: italic; }
   #todayTot { display: inline-flex; align-items: center; gap: 10px; margin-right: 10px; color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
   #todayTot b { color: var(--text); font-weight: 600; }
   #todayTot .tc { display: inline-flex; align-items: center; gap: 4px; } #todayTot .tc .ic { font-size: 12.5px; }
@@ -431,7 +437,15 @@
           <div class="scrollbox" id="capList"></div>
         </div>
         <div class="card" id="todayCard">
-          <div class="h"><span>Today’s highlights &middot; 00:00 to 23:59</span><span class="grow"></span><span class="todayTot" id="todayTot"></span><span class="chip" id="todayCount"></span></div>
+          <!-- lang-75: Today's highlights header. The three icon counters sit next to the title; the two arrows at the far right let the user step through the last 7 days (kept on this computer). -->
+          <div class="h">
+            <span><span id="todayTitle">Today’s highlights &middot; 00:00 to 23:59</span></span>
+            <span class="todayTot" id="todayTot"></span>
+            <span class="grow"></span>
+            <button class="dayNav" id="todayPrev" title="Show the day before" aria-label="Show the day before" type="button">&#8249;</button>
+            <button class="dayNav" id="todayNext" title="Show the day after" aria-label="Show the day after" type="button" disabled>&#8250;</button>
+            <span class="chip" id="todayCount"></span>
+          </div>
           <div class="scrollbox" id="todayList"></div>
         </div>
         <div class="card" id="dropsCard">
@@ -1177,20 +1191,29 @@ window.addEventListener('message', e => {
 //  A shiny capture · a great catch (IV 170 or more, or a Legendary or better roll) · a drop worth at least the Summary's "highlight" price each ·
 //  an egg that hatched · a Pokémon of the team that evolved · a hunt the trainer level opened.
 // =====================================================================================
-const TODAY_KEY = '4h.today', TODAY_MAX = 400, GREAT_IV = 170, GREAT_Q = 1.75;
+const TODAY_KEY_OLD = '4h.today', TODAY_KEY_PRE = '4h.today.', TODAY_DAYS_BACK = 6, TODAY_MAX = 400, GREAT_IV = 170, GREAT_Q = 1.75;
 const dayOf = ms => { const d = new Date(ms); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-// lang-75: three counters for the Today's highlights header: shiny captured (★), shiny stones picked up (Pedra Shiny), adupokes picked up. Kept with the day.
+// lang-75: three counters for the Today's highlights header: shiny captured (the rainbow pokeball), shiny stones picked up, adupokes picked up. Kept with the day.
 const TODAY_ZERO_COUNTS = () => ({ shiny: 0, shinyStone: 0, adupoke: 0 });
-const today = (() => {
-  let o = null; try { o = JSON.parse(localStorage.getItem(TODAY_KEY)); } catch (e) {}
-  const ok = o && typeof o === 'object' && o.date === dayOf(Date.now()) && Array.isArray(o.items) && Array.isArray(o.keys);
-  const items = ok ? o.items.filter(x => x && typeof x === 'object' && typeof x.t === 'number' && typeof x.kind === 'string' && x.p && typeof x.p === 'object').slice(0, TODAY_MAX) : [];
+// lang-75: each day is its own localStorage entry (4h.today.<YYYY-MM-DD>), up to 7 days (today + the 6 days before). An older 4h.today key, if any, is moved to its own date on first load.
+const todayParse = raw => { let o = null; try { o = JSON.parse(raw); } catch (e) {} if (!o || typeof o !== 'object' || !o.date || !Array.isArray(o.items)) return null;
+  const items = o.items.filter(x => x && typeof x === 'object' && typeof x.t === 'number' && typeof x.kind === 'string' && x.p && typeof x.p === 'object').slice(0, TODAY_MAX);
   const num = v => (typeof v === 'number' && isFinite(v) && v >= 0 && v < 1e6) ? Math.round(v) : 0;
-  const c = ok && o.counts && typeof o.counts === 'object' ? { shiny: num(o.counts.shiny), shinyStone: num(o.counts.shinyStone), adupoke: num(o.counts.adupoke) } : TODAY_ZERO_COUNTS();
-  return { date: dayOf(Date.now()), items: items, keys: ok ? o.keys.filter(k => typeof k === 'string').slice(-2000) : [], counts: c, base: {} };      // base: what was seen first, per account (not kept: a restart starts again from what it sees)
+  const c = o.counts && typeof o.counts === 'object' ? { shiny: num(o.counts.shiny), shinyStone: num(o.counts.shinyStone), adupoke: num(o.counts.adupoke) } : TODAY_ZERO_COUNTS();
+  const keys = Array.isArray(o.keys) ? o.keys.filter(k => typeof k === 'string').slice(-2000) : [];
+  return { date: String(o.date).slice(0, 10), items: items, keys: keys, counts: c }; };
+try { const oldRaw = localStorage.getItem(TODAY_KEY_OLD); if (oldRaw) { const po = todayParse(oldRaw); if (po && !localStorage.getItem(TODAY_KEY_PRE + po.date)) localStorage.setItem(TODAY_KEY_PRE + po.date, JSON.stringify({ v: 1, date: po.date, items: po.items, keys: po.keys, counts: po.counts })); localStorage.removeItem(TODAY_KEY_OLD); } } catch (e) {}
+function todayLoad(date) { const p = todayParse(localStorage.getItem(TODAY_KEY_PRE + date)); return p && p.date === date ? p : null; }
+function todayDates() { const out = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(TODAY_KEY_PRE) === 0) out.push(k.slice(TODAY_KEY_PRE.length)); } return out.sort(); }
+function todayPrune() { const keep = []; for (let i = 0; i <= TODAY_DAYS_BACK; i++) { const d = new Date(); d.setDate(d.getDate() - i); keep.push(dayOf(d.getTime())); } todayDates().forEach(d => { if (keep.indexOf(d) < 0) try { localStorage.removeItem(TODAY_KEY_PRE + d); } catch (e) {} }); }
+const today = (() => {                                                      // the live (editable) day in memory
+  const d = dayOf(Date.now()), o = todayLoad(d);
+  return { date: d, items: o ? o.items : [], keys: o ? o.keys : [], counts: o ? o.counts : TODAY_ZERO_COUNTS(), base: {} };          // base: what was seen first, per account (not kept)
 })();
-function todaySave() { try { localStorage.setItem(TODAY_KEY, JSON.stringify({ v: 1, date: today.date, items: today.items, keys: today.keys, counts: today.counts })); } catch (e) {} }
-function todayDay() { const d = dayOf(Date.now()); if (d !== today.date) { today.date = d; today.items = []; today.keys = []; today.counts = TODAY_ZERO_COUNTS(); todaySave(); } }      // midnight: a new, empty day
+let viewDate = today.date;                                                   // what is currently shown: a date in YYYY-MM-DD; equal to today.date in live mode
+function todaySave() { try { localStorage.setItem(TODAY_KEY_PRE + today.date, JSON.stringify({ v: 1, date: today.date, items: today.items, keys: today.keys, counts: today.counts })); } catch (e) {} }
+function todayDay() { const d = dayOf(Date.now()); if (d !== today.date) { todaySave(); today.date = d; today.items = []; today.keys = []; today.counts = TODAY_ZERO_COUNTS(); today.base = {}; if (viewDate === undefined || viewDate < d) viewDate = d; todayPrune(); todaySave(); } }      // midnight: today rolls to the new day (yesterday's entry stays in storage)
+todayPrune();                                                                // on load: drop anything older than the last 7 days
 // kept as facts (p), written in the chosen language when drawn
 function todayAdd(a, kind, p, key) {
   todayDay();
@@ -1287,13 +1310,33 @@ const TODAY_ICON = { shiny: '\u2726', catch: '\u2605', drop: '$', egg: '\u25cf',
 const ovTodayOn = k => !sumCfg.ovTodayOff[k];
 const todayShown = x => ovTodayOn(x.kind) && (x.kind === 'catch' ? isGreatCatch(x.p && x.p.iv !== '' ? Number(x.p.iv) : null, qualityOf(x.p || {}), x.p && x.p.rarity)
   : x.kind === 'drop' ? Number(x.p && x.p.each) >= minDrop() : true);
+// lang-75: what the user is looking at now: the live day (today), or a snapshot of a past day from storage, or a known past day with no stored data (empty)
+function todayViewed() {
+  if (viewDate === today.date) return { date: today.date, items: today.items, counts: today.counts || TODAY_ZERO_COUNTS(), stored: true, live: true };
+  const o = todayLoad(viewDate);
+  return o ? { date: viewDate, items: o.items, counts: o.counts, stored: true, live: false } : { date: viewDate, items: [], counts: TODAY_ZERO_COUNTS(), stored: false, live: false };
+}
+function todayTitleFor(date) {                                                // "Today", "Yesterday", or a short "DD Mon" for older days
+  const liveD = today.date; if (date === liveD) return t('Today\u2019s highlights \u00b7 00:00 to 23:59');
+  const d = new Date(date + 'T12:00:00'), dPrev = new Date(liveD + 'T12:00:00'); dPrev.setDate(dPrev.getDate() - 1);
+  const dayLabel = date === dayOf(dPrev.getTime()) ? t('Yesterday') : (d.toLocaleDateString(undefined, { day: '2-digit', month: 'short' }));
+  return t('{day}\u2019s highlights', { day: dayLabel });
+}
 function drawToday() {
   todayDay();
-  const list = document.getElementById('todayList'), cnt = document.getElementById('todayCount'), items = today.items.filter(todayShown);
+  const V = todayViewed(), items = V.items.filter(todayShown);
+  const list = document.getElementById('todayList'), cnt = document.getElementById('todayCount'), ttl = document.getElementById('todayTitle');
+  const prev = document.getElementById('todayPrev'), next = document.getElementById('todayNext');
+  ttl.textContent = todayTitleFor(V.date); ttl.classList.toggle('past', !V.live);
+  // can we step back to the day before the viewed one? (storage has it OR it's within the 7-day window)
+  const back = (() => { const d = new Date(V.date + 'T12:00:00'); d.setDate(d.getDate() - 1); return dayOf(d.getTime()); })();
+  const liveD = today.date, oldestAllowed = (() => { const d = new Date(liveD + 'T12:00:00'); d.setDate(d.getDate() - TODAY_DAYS_BACK); return dayOf(d.getTime()); })();
+  prev.disabled = back < oldestAllowed; prev.setAttribute('aria-label', t('Show {day}', { day: todayTitleFor(back).replace(/\u2019s highlights.*$/, '') || back }));
+  next.disabled = V.live;
   cnt.textContent = items.length ? String(items.length) : '';
   cnt.classList.toggle('hidden', !items.length);
   // lang-75: the three counters in the header: shiny captured, shiny stones, adupokes
-  const tot = document.getElementById('todayTot'), c = today.counts || { shiny: 0, shinyStone: 0, adupoke: 0 };
+  const tot = document.getElementById('todayTot'), c = V.counts;
   const parts = [];
   if (c.shiny > 0) parts.push('<span class="tc shiny" title="' + esc(t('Shinies captured today')) + '"><img class="ic" src="item-icons/shiny-pokemon.png" alt="" onerror="this.remove()"><b>' + fmt(c.shiny) + '</b></span>');
   if (c.shinyStone > 0) parts.push('<span class="tc stone" title="' + esc(t('Pedras Shiny picked up today')) + '"><img class="ic" src="item-icons/shiny-stone.png" alt="" onerror="this.remove()"><b>' + fmt(c.shinyStone) + '</b></span>');
@@ -1304,9 +1347,13 @@ function drawToday() {
     const a = accounts[x.acc], who = a ? accName(a) : esc(x.name);
     const tx = todayText(x);
     return '<div class="ev ' + esc(x.kind) + '"><span class="when">' + hm + '</span><span class="mk">' + (TODAY_ICON[x.kind] || '\u2022') + '</span><span class="tx" title="' + esc(tx.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&')) + '"><span class="dot" style="background:' + COLORS[x.acc % COLORS.length] + '"></span> <span class="who">' + who + ':</span> ' + tx + '</span></div>';
-  }).join('') : '<div class="empty">' + t('Nothing yet today. Shinies, great catches and valuable drops (as set in Settings \u203a Notifications), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.') + '</div>';
+  }).join('') : '<div class="empty">' + (V.stored || V.live ? t('Nothing yet today. Shinies, great catches and valuable drops (as set in Settings \u203a Notifications), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.')
+    : t('4horizon was not running on this day: there is nothing to show.')) + '</div>';
   if (list.dataset.html !== html) { list.dataset.html = html; list.innerHTML = html; }
 }
+// lang-75: the two arrows step through the last 7 days (kept on this computer)
+document.getElementById('todayPrev').addEventListener('click', () => { const d = new Date(viewDate + 'T12:00:00'); d.setDate(d.getDate() - 1); viewDate = dayOf(d.getTime()); drawToday(); });
+document.getElementById('todayNext').addEventListener('click', () => { if (viewDate === today.date) return; const d = new Date(viewDate + 'T12:00:00'); d.setDate(d.getDate() + 1); viewDate = dayOf(d.getTime()); drawToday(); });
 
 const CAP_PITCH = 40;           // one row of the list: 36 px high + 4 px between rows (the CSS has the same numbers)
 function drawCaptures() {
