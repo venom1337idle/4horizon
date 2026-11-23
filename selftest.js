@@ -60,7 +60,9 @@ function selfTestInPage() {
   // (the report shows it; nothing is hidden yet). Reads only.
   const boxes = {};
   try {
-    const ANCHORS = { team: x => /^equipe\b/.test(x.t), bar: x => x.t === 'perfil' && x.el.getBoundingClientRect().top < topLimit, hunt: x => x.t === 'abates', chat: null, helper: x => x.t === 'auto helper' };
+    // lang-75+: when a .hud .toolbar-wrap exists, the icon bar's "perfil" word must be inside it; a modal (Hunt Analyzer, Pokédex, Perfil itself) can also carry a "Perfil" label and would otherwise be picked as the anchor (reported 2026-11-22: "icon bar NOT FOUND" when the Analyzer was open). If no .hud .toolbar-wrap exists (older game or test harness), the top-position rule is kept.
+    const toolbarWrap = document.querySelector('.hud .toolbar-wrap');
+    const ANCHORS = { team: x => /^equipe\b/.test(x.t), bar: x => x.t === 'perfil' && x.el.getBoundingClientRect().top < topLimit && (toolbarWrap ? toolbarWrap.contains(x.el) : true), hunt: x => x.t === 'abates', chat: null, helper: x => x.t === 'auto helper' };
     const chatInput = Array.prototype.find.call(document.querySelectorAll('input,textarea'), i => shown(i) && /^falar em|^chat|^say|^talk/.test(plain(i.placeholder || '')));
     const chatTab = (texts.find(x => (x.t === 'geral' || x.t === 'general') && shown(x.el) && x.el.getBoundingClientRect().top > innerHeight * 0.5) || {}).el;          // the chat collapsed to its tabs (popup tidy does that at login)
     const anchorEl = {}; Object.keys(ANCHORS).forEach(k => { const hit = k === 'chat' ? (chatInput || chatTab) : (texts.find(x => ANCHORS[k](x) && shown(x.el)) || {}).el; if (hit) anchorEl[k] = hit; });
