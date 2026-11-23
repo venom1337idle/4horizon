@@ -208,7 +208,6 @@
     "{n} visits": "{n} visitas",
     "{n} {ball} left, {r} thrown per hour (the last {m} minutes of the hunt)": "{n} {ball} sobrando, {r} lançadas por hora (os últimos {m} minutos da hunt)",
     "{n}m ago": "há {n}m",
-    "✦ shiny only": "✦ só shiny",
     // ---- diag
     "(CRASHED)": "(TRAVOU)",
     "(encryption is NOT available on this PC: passwords cannot be saved)": "(a criptografia NÃO está disponível neste PC: as senhas não podem ser salvas)",

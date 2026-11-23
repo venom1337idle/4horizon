@@ -296,6 +296,7 @@
   .b-stop { color: var(--red); border-color: rgba(255, 138, 138, .35); background: #3a1620; }
 
   .caps { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+  #capShiny { font-size: 14px; padding: 0 10px; }                              /* lang-76: just the ✦ glyph, tooltip "Shiny only" */
   .eggs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px 28px; }
   .eggcol .top { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 8px; }
   .eggcol .top .cnt { margin-left: auto; color: var(--dim); font-weight: 500; }
@@ -318,22 +319,25 @@
   /* the captures card is the left half of its row; the right half is left empty for another table */
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .split > .card { margin-bottom: 14px; min-width: 0; }
-  /* lang-75: three cards, two per row (the third wraps below); when only one of the three is shown, it still takes half the width (it starts a new row by itself) */
+  /* lang-76: three cards side by side on wide windows (≥ 1700 px); two per row at medium widths; one per row on narrow windows. A card hidden by the gear leaves no gap (its `.ov-off` sets display:none). All three have the same fixed height and lay out their content as a column (header + optional toolbar/tick boxes + scrollbox that fills the rest). */
   .split3 { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
-  .split3 > .card { flex: 1 1 calc(50% - 7px); min-width: 0; max-width: calc(50% - 7px); margin-bottom: 0; }
+  .split3 > .card { flex: 1 1 calc(33.333% - 10px); min-width: 0; max-width: calc(33.333% - 10px); margin-bottom: 0; height: 460px; display: flex; flex-direction: column; }
+  @media (max-width: 1400px) { .split3 > .card { flex-basis: calc(50% - 7px); max-width: calc(50% - 7px); } }
+  @media (max-width: 900px)  { .split3 > .card { flex-basis: 100%; max-width: 100%; height: auto; } }
   /* the day's tracker (lang-47): one row per thing worth seeing, newest first */
   /* lang-75: Session drops · all accounts (a card on the Overview; one line per item, per-account split in the tooltip; the account tick boxes hide the lines only, the sums keep counting; a pin on the left of each row rides it to the top and is kept across restarts) */
-  #dropsAcc { display: inline-flex; align-items: center; gap: 8px; }
+  /* lang-76: the four account tick boxes live on their own row below the title, grouped tight on the left (not spread across the card) */
+  #dropsAcc { display: flex; align-items: center; gap: 14px; margin: 0 2px 10px; flex-wrap: wrap; }
   #dropsAcc label { display: inline-flex; align-items: center; gap: 4px; color: var(--dim); font-size: 11.5px; cursor: pointer; white-space: nowrap; }
   #dropsAcc label.on { color: var(--text); font-weight: 600; } #dropsAcc label.on .dot { box-shadow: 0 0 6px var(--c); }
   #dropsAcc .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; opacity: .4; } #dropsAcc label.on .dot { opacity: 1; }
   #dropsAcc input { appearance: none; -webkit-appearance: none; width: 12px; height: 12px; margin: 0; border: 1px solid var(--line2); border-radius: 3px; background: #0c1222; cursor: pointer; position: relative; }
   #dropsAcc input:checked { background: var(--blue, #5aa9ff); border-color: var(--blue, #5aa9ff); }
   #dropsAcc input:checked::after { content: ''; position: absolute; left: 3px; top: 0; width: 3px; height: 6px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
-  #dropsList { max-height: 359px; }                                       /* a box of its own height with a scroll bar, like Latest captures and Today's highlights (the three cards line up) */
+  #dropsList { flex: 1 1 auto; min-height: 0; overflow-y: auto; }          /* lang-76: fills the rest of the card; the card is fixed-height, see .split3 > .card below */
   /* lang-75: each row is a dark pill, the same look as the per-account Session drops (reusing .drops .row / .row.hot / .row.top from above); hot items keep their gold tint; a pinned row has a dashed gold border on top of the dark pill */
-  #dropsList .row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto auto; align-items: center; column-gap: 8px;
-    background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); padding: 7px 11px; margin-bottom: 5px; font-size: 12px; }
+  #dropsList .row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto auto; align-items: center; column-gap: 8px; height: 36px; box-sizing: border-box;
+    background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); padding: 0 11px; margin-bottom: 4px; font-size: 12px; }
   #dropsList .row.hot { background: linear-gradient(90deg, rgba(227, 192, 107, .17), rgba(227, 192, 107, .04)); border-color: rgba(227, 192, 107, .5); box-shadow: inset 3px 0 0 var(--gold); }
   #dropsList .row.hot .nm { color: var(--gold); font-weight: 700; }
   #dropsList .row.hot .q { color: rgba(227, 192, 107, .75); }
@@ -372,9 +376,9 @@
   #future { min-width: 0; }
   /* the list shows 8 whole rows (8 x 40 px) and scrolls one row at a time: it can never stop with a row cut in half */
   .scrollbox { overflow-y: auto; scroll-snap-type: y mandatory; }
-  #capList { max-height: 320px; }
-  #todayList { max-height: 359px; }          /* lang-57: a box of its own height with a scroll bar, like Latest captures (both cards end on the same line) */
-  .cap { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 11px; margin-bottom: 4px; scroll-snap-align: start; background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); }
+  /* lang-76: the three scrollboxes fill the rest of their (fixed-height) card; same font, same row height across Latest captures, Today's highlights and Session drops */
+  #capList, #todayList { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .cap { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 11px; margin-bottom: 4px; font-size: 12px; scroll-snap-align: start; background: var(--bg2); border: 1px solid #141d3a; border-radius: var(--r-sm); }
   .cap .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cap .mult { width: 52px; text-align: right; } .cap .iv { width: 66px; text-align: right; font-weight: 700; } .cap .ctime { width: 44px; text-align: right; color: var(--dim2); }          /* the time of a capture. (Not "tm": that is the class of a team row in the summary, and its box styling leaked onto every time) */
   .empty { color: var(--dim); padding: 14px 4px; font-size: 12px; line-height: 1.7; }
@@ -432,7 +436,7 @@
             <input type="number" id="capIv" placeholder="IV &ge;" min="0" max="192" style="width:64px">
             <input type="number" id="capQ" placeholder="&times; &ge;" min="0" step="0.1" style="width:64px">
             <select id="capSort" title="Order of the list" aria-label="Order of the list"><option value="new">latest</option><option value="iv">highest IV</option><option value="q">highest quality</option><option value="ivq">IV &times; Quality</option></select>
-            <button class="btn" id="capShiny" title="Shiny only">&#10022; shiny only</button>
+            <button class="btn" id="capShiny" title="Shiny only" aria-label="Shiny only">&#10022;</button>
           </div>
           <div class="scrollbox" id="capList"></div>
         </div>
@@ -449,7 +453,8 @@
           <div class="scrollbox" id="todayList"></div>
         </div>
         <div class="card" id="dropsCard">
-          <div class="h"><span>Session drops &middot; all accounts</span><span class="grow"></span><span id="dropsAcc"></span><span class="chip" id="dropsCount"></span></div>
+          <div class="h"><span>Session drops &middot; all accounts</span><span class="grow"></span><span class="chip" id="dropsCount"></span></div>
+          <div id="dropsAcc"></div>
           <div class="scrollbox" id="dropsList"></div>
         </div>
         </div>

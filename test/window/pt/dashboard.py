@@ -71,8 +71,6 @@ EXACT = {
   'Latest captures · all accounts': 'Últimas capturas · todas as contas',
   'Search Pokémon': 'Buscar Pokémon',
   'all': 'todas',
-  'Shiny only': 'Só shiny',
-  '✦ shiny only': '✦ só shiny',
   'cap': 'cap.',
   'balls': 'bolas',
   'potions': 'poções',
@@ -105,6 +103,7 @@ EXACT = {
   # lang-72: the comparison's two lists, Last 5 and Best 5, and the party of a hunt
   'Last 5': 'Últimas 5', 'Best 5': '5 melhores', 'Last 5 hunts, newest first': 'Últimas 5 hunts, da mais recente', 'previous hunt': 'hunt anterior',
   # lang-72: the gear of the Overview (what it shows)
+  'Shiny only': 'Só shiny',
   'Overview settings': 'Configurações da Visão geral', 'Show in the Overview': 'Mostrar na Visão geral',
   # lang-75: combined session drops across the accounts, shown as a new card on the Overview
   'Session drops (combined)': 'Drops da sessão (combinado)',

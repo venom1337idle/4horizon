@@ -111,7 +111,7 @@ const settle = p => p.waitForTimeout(1300);
     const r = { scrolls: L.scrollHeight > L.clientHeight + 10 && getComputedStyle(L).overflowY === 'auto', h: L.clientHeight, top: Math.abs(c1.top - c2.top), bottom: Math.abs(c1.bottom - c2.bottom), capFull };
     today.items = keep; drawToday(); return r;
   });
-  ok('with many highlights the list keeps its height (359 px) and scrolls, like Latest captures; both cards start on the same line', box.scrolls && box.h === 359 && box.top <= 1, box);
+  ok('with many highlights the list fills the rest of the card and scrolls; both cards start on the same line (lang-76: fixed card height, not fixed scrollbox height)', box.scrolls && box.h >= 300 && box.top <= 1, box);
   ok('...and when Latest captures is full too, they also end on the same line', !box.capFull || box.bottom <= 2, box);
   await p.dash().evaluate(() => { for (let i = 0; i < 20; i++) logCapture(i % 4, { name: 'Fill' + i, iv: 50, max: 192, quality: 1, rarity: 'Comum ×1.0', time: '12:00' }); drawCaptures(); });
   const box2 = await p.dash().evaluate(() => { const keep = today.items.slice(); for (let i = 0; i < 30; i++) today.items.push({ t: Date.now(), acc: 0, name: 'x', kind: 'shiny', p: { name: 'T', iv: 1, max: 192, rarity: '' } }); drawToday();
