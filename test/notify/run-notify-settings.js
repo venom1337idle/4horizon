@@ -55,6 +55,10 @@ const read = () => JSON.parse(fs.readFileSync(FILE, 'utf8'));
   N.setConfig({ enabled: true, sound: false });
   SHOWN = []; N.test();
   ok('"play a sound" off: the notification is silent; on: it is not', SHOWN.length === 1 && SHOWN[0].silent === true && (N.setConfig({ sound: true }), SHOWN = [], N.test(), SHOWN[0].silent === false), SHOWN);
+  // lang-76+: a Golden Ball that is active (unlimited balls): no "Running low on balls", even with 0 Golden Balls in the bag and balls being thrown
+  const lowBalls = (acc, golden) => { SHOWN = []; console.log = () => {}; N.handle(acc, { name: 'trainer' + acc, autoBall: 'golden-ball', goldenBallUntil: golden, startedAt: 77, active: true, elapsedMs: 3600000, ballsUsed: 300, autoBalls: 0, potions: 999, healsUsed: 1 }); console.log = quiet; return SHOWN.filter(x => /Running low on balls/.test(x.title)).length; };
+  ok('Golden Ball active (goldenBallUntil in the future): no "Running low on balls" while its stock is 0', lowBalls(5, Date.now() + 86400000) === 0);
+  ok('...once it has ended (goldenBallUntil in the past) with none left: "Running low on balls" again', lowBalls(6, Date.now() - 60000) === 1);
 
   // the tray and the window write the same file
   N.setEnabled(false);

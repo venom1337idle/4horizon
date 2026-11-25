@@ -38,6 +38,12 @@ const WHITE = 'rgb(255, 255, 255)', YELLOW = 'rgb(255, 216, 77)', RED = 'rgb(255
   ok('auto-catch is off: "⏱ Auto-catch off", grey', c.txt === '\u23f1 Auto-catch off' && /\bna\b/.test(c.cls), c);
   c = await set(2, { autoCatchOn: true });
   ok('...on again: the time is back', c.txt === '\u23f1 Ultra Ball: 43h 20m left', c);
+  // lang-76+: the Golden Ball while it is active (character.goldenBallUntil in the future): unlimited, "Golden Ball: ∞" in gold, the tooltip says until when
+  const pageNow = await p.dash().evaluate(() => Date.now());          // (the test page has its own fixed clock)
+  c = await set(1, { autoBall: 'golden-ball', autoBalls: 0, goldenBallUntil: pageNow + 5 * 24 * H, startedAt: 11, elapsedMs: H, active: true, ballsByType: { 'golden-ball': 400 } });
+  ok('Golden Ball active: "⏱ Golden Ball: ∞" in gold (not "none left" in red), tooltip "Golden Ball active until …: unlimited balls."', c.txt === '\u23f1 Golden Ball: \u221e' && /\bgold\b/.test(c.cls) && c.color !== RED && /^Golden Ball active until .+: unlimited balls\.$/.test(c.tip || ''), c);
+  c = await set(1, { goldenBallUntil: pageNow - 60000 });
+  ok('...once it has ended (goldenBallUntil in the past) and none are left: back to "Golden Ball: none left" in red', c.txt === '\u23f1 Golden Ball: none left' && c.color === RED, c);
 
   // THE CASE OF THE SCREENSHOT: a ball chosen late in a long hunt (9h 41m of Ultra Balls, then Eng Ball Magu)
   await set(3, { autoBall: 'ultra-ball', autoBalls: 9000, startedAt: 3, elapsedMs: 9 * H + 30 * M, active: true, ballsByType: { 'ultra-ball': 5000 } });

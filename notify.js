@@ -167,8 +167,10 @@ function checkSupplies(account, s, who, c) {
     { key: 'balls', label: 'balls', stock: s.autoBalls !== undefined ? s.autoBalls : s.balls, used: s.ballsUsed },
     { key: 'potions', label: 'potions', stock: s.potions, used: s.healsUsed }
   ];
+  const golden = /^golden-ball/.test(String(s.autoBall || '')) && typeof s.goldenBallUntil === 'number' && s.goldenBallUntil > Date.now();          // lang-76+: unlimited balls: never "running low on balls"
   for (const it of things) {
     if (it.stock === undefined || it.stock === null) continue;
+    if (golden && it.key === 'balls') continue;
     const rate = (enough && it.used > 0) ? it.used / hours : null;       // used per hour, this session
     const runway = rate ? it.stock / rate : null;                          // hours left at that pace
     const out = it.stock <= 0 && it.used > 0;
@@ -257,6 +259,8 @@ function handleOne(account, d) {
   }
 
   // supplies in stock
+  if (d.autoBall !== undefined) s.autoBall = d.autoBall;
+  if (d.goldenBallUntil !== undefined) s.goldenBallUntil = d.goldenBallUntil;          // lang-76+: the Golden Ball (unlimited balls) is active until then
   if (d.autoBalls !== undefined) s.autoBalls = d.autoBalls;
   if (d.balls !== undefined) s.balls = d.balls;
   if (d.potions !== undefined) s.potions = d.potions;

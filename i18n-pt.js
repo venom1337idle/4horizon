@@ -197,6 +197,7 @@
     "XP/H": "XP/H",
     "XP/h": "XP/h",
     "Yesterday": "Ontem",
+    "{ball} active until {when}: unlimited balls.": "{ball} ativa até {when}: bolas ilimitadas.",
     "{ball}: measuring…": "{ball}: medindo…",
     "{ball}: none left": "{ball}: nenhuma sobrando",
     "{ball}: none thrown lately": "{ball}: nenhuma lançada ultimamente",

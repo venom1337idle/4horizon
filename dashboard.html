@@ -238,6 +238,7 @@
   .acard .ln.best { flex-wrap: nowrap; gap: 6px; white-space: nowrap; margin-top: 1px; line-height: 15px; font-size: 11.5px; } body.tightest .acard { padding: 1px 6px; } .acard .ln.best .bv { min-width: 0; overflow: hidden; text-overflow: ellipsis; }          /* lang-72: the best catch, always one line */
   /* the time the auto-catch ball lasts at the pace of this hunt: white above 3 h, yellow from 1 h to 3 h, red under 1 h, grey while it cannot be known */
   .acard .ln.btime { font-size: 11.5px; } .acard .ln.btime.ok { color: #fff; } .acard .ln.btime.warn { color: #ffd84d; } .acard .ln.btime.low { color: #ff5c5c; font-weight: 700; } .acard .ln.btime.na { color: var(--dim); }
+  .acard .ln.btime.gold { color: var(--gold); font-weight: 700; }          /* lang-76+: the Golden Ball is active: unlimited balls */
   .acard .ln { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; margin-top: 3px; color: #c9d2ea; }
   .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 
@@ -858,6 +859,11 @@ function ballTime(a) {
   const ball = id ? esc(supplyName(id)) : '';
   if (a.autoCatchOn === false) return { cls: 'na', txt: t('Auto-catch off') };
   if (!id) return { cls: 'na', txt: t('Auto-catch ball: \u2014') };
+  // lang-76+: the Golden Ball while it is active has no stock to run out of: "Golden Ball: ∞" in gold; the tooltip says until when
+  if (/^golden-ball/.test(id) && typeof a.goldenBallUntil === 'number' && a.goldenBallUntil > Date.now()) {
+    const end = new Date(a.goldenBallUntil), when = end.toLocaleDateString(undefined, { day: '2-digit', month: 'short' }) + ' ' + String(end.getHours()).padStart(2, '0') + ':' + String(end.getMinutes()).padStart(2, '0');
+    return { cls: 'gold', txt: ball + ': \u221e', tip: t('{ball} active until {when}: unlimited balls.', { ball: ball, when: when }) };
+  }
   const stock = (typeof a.autoBalls === 'number' && isFinite(a.autoBalls)) ? a.autoBalls : (a.ballTypes && typeof a.ballTypes[id] === 'number' ? a.ballTypes[id] : null);
   if (stock === null) return { cls: 'na', txt: t('{ball}: \u2014', { ball: ball }) };
   if (stock <= 0) return { cls: 'low', txt: t('{ball}: none left', { ball: ball }), tip: t('No {ball} left: auto-catch has nothing to throw.', { ball: ball }) };

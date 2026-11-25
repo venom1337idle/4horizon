@@ -247,8 +247,10 @@ function attachReader(wc, account, send) {
       autoBallId = ac.ballId; shinyBallId = ac.shinyBallId;
       [ac.ballId, ac.shinyBallId].forEach(id => { if (id && !ballIds.includes(id)) ballIds.push(id); });
       const until = c.vipUntil ? (c.vipUntil > 1e12 ? c.vipUntil : c.vipUntil * 1000) : 0;
+      const gb = typeof c.goldenBallUntil === 'number' && isFinite(c.goldenBallUntil) ? (c.goldenBallUntil > 1e12 ? c.goldenBallUntil : c.goldenBallUntil * 1000) : 0;          // lang-76+: the Golden Ball (unlimited balls) is active until then
       return { name: c.name, level: c.level, trainerXp: c.xp, money: c.gold, diamonds: c.diamonds, vip: until > Date.now(), autoBall: ac.ballId, autoBalls: stockOf(ac.ballId), shinyBalls: stockOf(ac.shinyBallId),
-        autoCatchOn: typeof ac.enabled === 'boolean' ? ac.enabled : undefined };      // lang-70: the card's "time left" of the auto-catch ball says "auto-catch off" when it is off
+        autoCatchOn: typeof ac.enabled === 'boolean' ? ac.enabled : undefined,      // lang-70: the card's "time left" of the auto-catch ball says "auto-catch off" when it is off
+        goldenBallUntil: gb };
     }
 
     if (type === 'party' || type === 'party-leave') {

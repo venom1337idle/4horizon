@@ -126,6 +126,7 @@ EXACT = {
   'Shinies captured today': 'Shinies capturados hoje',
   'Pedras Shiny picked up today': 'Pedras Shiny pegas hoje',
   'Adupokes picked up today': 'Adupokes pegos hoje',
+  '{ball} active until {when}: unlimited balls.': '{ball} ativa até {when}: bolas ilimitadas.',          # lang-76+: the Golden Ball line of a card
   # lang-76+: Eevee items (Pelo de Eevee, Sangue de Eevee) also have their own header counter
   'Pelos de Eevee picked up today': 'Pelos de Eevee pegos hoje',
   'Sangues de Eevee picked up today': 'Sangues de Eevee pegos hoje',
