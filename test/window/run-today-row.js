@@ -64,7 +64,9 @@ const row = fr => fr.evaluate(() => { const el = document.getElementById('todayR
   await p.s(4, { shinyAll: { caught: 8, balls: 1378, at: Date.now(), sinceCaught: 0, sinceBalls: 0 } }); await p.waitForTimeout(250); await sel();
   const tile = await fr.evaluate(() => { const s = document.querySelector('#sideBody .grid4 .stat:nth-child(4)'); return { v: s.querySelector('.v').textContent.trim(), l: s.querySelector('.l').textContent.trim(), tip: s.getAttribute('title') }; });
   ok('the 4th box of the Session: "13/1.9K" (5 + 8 captured, 512 + 1,378 balls; short, no comma), "Shinies all time"', tile.v === '13/1.9K' && tile.l === 'Shinies all time', tile);
-  ok('...its tooltip: 1 shiny per 145 balls, and that 2 of 4 accounts are counted (open Perfil on the others)', /1 shiny per 145 balls/.test(tile.tip) && /2 of 4 accounts: open Perfil once in the game on the others/.test(tile.tip), tile.tip);
+  ok('...its tooltip: 1 shiny per 145 balls, and the names of the 2 accounts still missing (open Perfil on them)', /1 shiny per 145 balls/.test(tile.tip) && /Open Perfil on [^,]+, [^,]+ in the game to count their shinies too\./.test(tile.tip), tile.tip);
+  const dots = await fr.evaluate(() => Array.from(document.querySelectorAll('#sideBody .grid4 .stat:nth-child(4) .miss i')).map(i => i.getAttribute('title')));
+  ok('...and one dim dot per missing account (2), each with its own "Open Perfil on <name>" tooltip (lang-76+)', dots.length === 2 && dots.every(x => /^Open Perfil on .+ in the game to count its shinies of all time\.$/.test(x)), dots);
   const fit = await fr.evaluate(() => { const v = document.querySelector('#sideBody .grid4 .stat:nth-child(4) .v'); return v.scrollWidth <= v.clientWidth + 1; });
   ok('...and the number fits in its box', fit);
   ok('no JavaScript errors', p.errors.length === 0, p.errors); await p.context().close();
