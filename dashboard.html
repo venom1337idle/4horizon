@@ -322,6 +322,8 @@
   .ring .in span { font-size: 11px; color: var(--dim); white-space: nowrap; }
   .ring.ready .in span { color: var(--green); font-weight: 600; }
   .ring .nm { margin-top: 4px; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ring .eq { font-size: 10px; color: var(--dim); white-space: nowrap; font-variant-numeric: tabular-nums; }          /* lang-76+: the projected quality and the IV of the egg */
+  .ring .eq .ivv { color: var(--text); }
   /* the captures card is the left half of its row; the right half is left empty for another table */
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .split > .card { margin-bottom: 14px; min-width: 0; }
@@ -1509,6 +1511,26 @@ function eggState(e) {
 }
 // the colour of the tip of the ring: a deep green at the start, a bright one when it is ready
 const eggTip = pct => { const k = Math.max(0, Math.min(1, (pct || 0) / 100)); const mix = (a, b) => Math.round(a + (b - a) * k); return 'rgb(' + mix(52, 150) + ',' + mix(168, 245) + ',' + mix(92, 170) + ')'; };
+// lang-76+: the egg's projection, the same one the game shows before the egg is made. Owner's rule: the exact result must NOT be shown before it hatches.
+// The game rolls the bonuses when the egg is made and keeps them in the egg (quality = base + breedBonus + adupokeBonus + qualityPotionBonus), so the base is
+// taken back out and the game's ranges are added to it (its data module: normalDelta 0.05-0.10, doubledDelta 0.10-0.20, adupokeDelta 0.05-0.20, qualityCap 4).
+// Owner's Trapinch 2026-11-25: 1.668 - 0.054 - 0.166 = base 1.448 -> 1.548-1.748, as in the game. Without breedBonus the base is unknown: no quality is shown.
+// The IV: the sum of the egg's stats (growth.*) without the Adupoke's +1 if it was rolled (ivBoostStat), and the 10% chance is said instead, like the game.
+const EGG_RULES = { cap: 4, normal: [0.05, 0.1], doubled: [0.1, 0.2], adupoke: [0.05, 0.2] };
+function eggProjection(e) {
+  const n = k => (typeof e[k] === 'number' && isFinite(e[k]) ? e[k] : null);
+  const stats = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].map(k => n('growth.' + k));
+  const sum = stats.every(v => v !== null) ? stats.reduce((s, v) => s + v, 0) : null;
+  const iv = sum === null ? null : sum - (e.ivBoostStat ? 1 : 0);
+  const q = n('quality'), bb = n('breedBonus');
+  let lo = null, hi = null;
+  if (q !== null && bb !== null) {
+    const base = q - bb - (n('adupokeBonus') || 0) - (n('qualityPotionBonus') || 0);
+    const g = e.doubled === true ? EGG_RULES.doubled : EGG_RULES.normal, ad = e.usedAdupoke === true ? EGG_RULES.adupoke : [0, 0];
+    lo = Math.min(EGG_RULES.cap, base + g[0] + ad[0]); hi = Math.min(EGG_RULES.cap, base + g[1] + ad[1]);
+  }
+  return { iv: iv, lo: lo, hi: hi, ivChance: e.usedAdupoke === true };
+}
 function drawEggs() {
   const card = document.getElementById('eggCard');
   // only the eggs that are in an incubator; an account without one is not shown, and neither is the card when no account has one
@@ -1521,10 +1543,14 @@ function drawEggs() {
       const e = x.e, name = (typeof e.speciesName === 'string' && e.speciesName) || (typeof e.species === 'string' && e.species) || t('Egg {n}', { n: i + 1 });
       const pct = x.pct === null ? 0 : x.pct, ready = x.left !== null ? x.left <= 0 : pct >= 100;
       const time = x.left === null ? '' : ready ? t('ready') : dur(x.left);
-      const tip = [(e.shiny ? '\u2726 ' : '') + name, x.pct === null ? '' : Math.floor(pct) + '%', x.left === null ? '' : ready ? t('ready') : t('ready in {t}', { t: dur(x.left) })].filter(Boolean).join(' \u00b7 ');
+      const P = eggProjection(e), q2 = v => v.toFixed(2);
+      const qTxt = P.lo === null ? '' : (Math.abs(P.hi - P.lo) < 0.005 ? '\u00d7' + q2(P.lo) : '\u00d7' + q2(P.lo) + '\u2013' + q2(P.hi));
+      const eqLine = (qTxt || P.iv !== null) ? '<div class="eq">' + qTxt + (qTxt && P.iv !== null ? ' \u00b7 ' : '') + (P.iv !== null ? '<span class="ivv">IV ' + P.iv + '</span>' : '') + '</div>' : '';
+      const projTip = [P.lo === null ? '' : t('Quality {lo} \u2013 {hi}', { lo: P.lo.toFixed(3), hi: P.hi.toFixed(3) }), P.iv === null ? '' : t('IV {iv}/192', { iv: P.iv }) + (P.ivChance ? ' (' + t('Adupoke: 10% chance of +1 IV') + ')' : '')].filter(Boolean).join(' \u00b7 ');
+      const tip = [(e.shiny ? '\u2726 ' : '') + name, x.pct === null ? '' : Math.floor(pct) + '%', x.left === null ? '' : ready ? t('ready') : t('ready in {t}', { t: dur(x.left) }), projTip].filter(Boolean).join(' \u00b7 ');
       return '<div class="ring' + (ready ? ' ready' : '') + '" title="' + esc(tip) + '" role="img" aria-label="' + esc(tip) + '"><div class="dial"><div class="arc" style="--p:' + pct.toFixed(1) + ';--tip:' + eggTip(pct) + '"></div>' +
         '<div class="in"><b>' + (x.pct === null ? '?' : Math.floor(pct) + '%') + '</b>' + (time ? '<span>' + esc(time) + '</span>' : '') + '</div></div>' +
-        '<div class="nm">' + (e.shiny ? star + ' ' : '') + esc(name) + '</div></div>';
+        '<div class="nm">' + (e.shiny ? star + ' ' : '') + esc(name) + '</div>' + eqLine + '</div>';
     }).join('');
     return '<div class="eggcol"><div class="top"><span class="dot" style="background:' + COLORS[a.idx % COLORS.length] + '"></span>' + accName(a) +
       '<span class="cnt">' + c.eggs.length + (a.breedSlots ? ' / ' + a.breedSlots : '') + '</span></div><div class="rings">' + rings + '</div></div>';

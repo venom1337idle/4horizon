@@ -36,6 +36,20 @@ const green = rgb => Number((/rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(rgb) || [])[2
   await p.clock.setFixedTime(new Date(now + 90 * 60e3)); await p.dash().evaluate(() => renderAll()); await p.waitForTimeout(200);
   v = await look(p);
   ok('an hour and a half later the rings move on by themselves (25% → 50%, 4h 30m → 3h 0m)', v.cols[0].rings[0].pct === '50%' && v.cols[0].rings[0].time === '3h 0m', v.cols[0].rings[0]);
+  // lang-76+: the egg's projection under its name, the same as the game's before the egg is made; the exact roll is never shown before it hatches (owner's rule)
+  const st = (a, b, c, d, e, f) => ({ 'growth.hp': a, 'growth.atk': b, 'growth.def': c, 'growth.spa': d, 'growth.spd': e, 'growth.spe': f });
+  await p.s(1, { eggs: [
+    egg(21, 'Trapinch', 0.3, Object.assign({ quality: 1.668, breedBonus: 0.054, adupokeBonus: 0.166, qualityPotionBonus: 0, doubled: false, usedAdupoke: true, ivBoostStat: null }, st(32, 28, 31, 32, 31, 27))),          // the owner's real egg
+    egg(22, 'Aron', 0.3, Object.assign({ quality: 1.38, breedBonus: 0.15, adupokeBonus: 0.1, qualityPotionBonus: 0, doubled: true, usedAdupoke: true, ivBoostStat: 'atk' }, st(10, 11, 10, 10, 10, 10))),          // doubled + Adupoke, and the +1 IV was rolled
+    egg(23, 'Larvitar', 0.3, Object.assign({ quality: 1.5 }, st(20, 20, 20, 20, 20, 20)))] });          // no breeding bonus sent: the base is unknown
+  await p.waitForTimeout(1400);
+  const eq = await p.dash().evaluate(() => Array.from(document.querySelectorAll('#eggGrid .ring')).map(r => ({ nm: r.querySelector('.nm').textContent.trim(), eq: (r.querySelector('.eq') || {}).textContent || '', tip: r.title })));
+  const tr = eq.find(x => x.nm === 'Trapinch'), ar = eq.find(x => x.nm === 'Aron'), lv = eq.find(x => x.nm === 'Larvitar');
+  ok('the owner\u2019s Trapinch: "×1.55–1.75 · IV 181" under the name, the game\u2019s own projection (base 1.448 = 1.668 − 0.054 − 0.166, + 0.05–0.10 + Adupoke 0.05–0.20)', tr && tr.eq === '\u00d71.55\u20131.75 \u00b7 IV 181', tr);
+  ok('...its tooltip: "Quality 1.548 – 1.748 · IV 181/192 (Adupoke: 10% chance of +1 IV)", and the exact 1.668 is nowhere', tr && /Quality 1\.548 \u2013 1\.748 \u00b7 IV 181\/192 \(Adupoke: 10% chance of \+1 IV\)/.test(tr.tip) && !/1\.668|1\.67\b/.test(tr.tip + tr.eq), tr && tr.tip);
+  ok('doubled cost + Adupoke: "×1.28–1.53"; the +1 IV that was already rolled is not given away (IV 60, not 61)', ar && ar.eq === '\u00d71.28\u20131.53 \u00b7 IV 60' && !/\b61\b/.test(ar.tip), ar);
+  ok('an egg without the breeding bonus (its base is unknown): the IV only, no quality', lv && lv.eq === 'IV 120' && !/Quality/.test(lv.tip), lv);
+  ok('...an egg without those numbers (an older shape): no extra line', !eq.some(x => ['Trapinch', 'Aron', 'Larvitar'].indexOf(x.nm) < 0 && x.eq), eq);
   await p.s(1, { eggs: [] }); await p.s(2, { eggs: [egg(7, 'Rhyhorn', 1, { status: 'claimed' })] }); await p.waitForTimeout(1400);
   v = await look(p);
   ok('no egg in any incubator: the whole card is not shown', !v.shown && v.cols.length === 0, v);
