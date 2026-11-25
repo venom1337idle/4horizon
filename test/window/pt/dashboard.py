@@ -44,7 +44,11 @@ EXACT = {
   'Open Perfil once in the game on this account to see its shinies of all time here.': 'Abra o Perfil uma vez no jogo nesta conta para ver aqui os shinies desde sempre.',
   'Shinies all time': 'Shinies desde sempre',
   'Shinies captured / balls spent at shinies, all time, as the game’s Perfil counts them: {c} / {b}, {r}.': 'Shinies capturados / bolas gastas em shinies, desde sempre, como o Perfil do jogo conta: {c} / {b}, {r}.',
-  '{k} of {n} accounts: open Perfil once in the game on the others.': '{k} de {n} contas: abra o Perfil uma vez no jogo nas outras.',
+  # lang-76+: the dim dots on the Shinies all time tile, and the extended tooltip when no account has Perfil open
+  'Open Perfil on {name} in the game to count its shinies of all time.': 'Abra o Perfil de {name} no jogo para contar os shinies desde sempre dessa conta.',
+  'Open Perfil on {names} in the game to count their shinies too.': 'Abra o Perfil de {names} no jogo para contar os shinies dessas contas também.',
+  'Balls thrown at shiny Pokémon since this window opened, counted from each throw. Open Perfil on each account in the game to see the shinies of all time here. The Pokédex has the total of all time of each species.':
+    'Bolas lançadas em Pokémon shiny desde que esta janela abriu, contadas a cada lançamento. Abra o Perfil de cada conta no jogo para ver aqui os shinies desde sempre. A Pokédex tem o total desde sempre de cada espécie.',
   # lang-70: the time the auto-catch ball lasts, the 5th line of each account card
   'Auto-catch off': 'Captura automática desligada',
   'Auto-catch ball: —': 'Bola da captura automática: —',
@@ -58,7 +62,6 @@ EXACT = {
   '{ball}: {time} left': '{ball}: {time} restantes',
   '{n} {ball} left, {r} thrown per hour (the last {m} minutes of the hunt)': '{n} {ball} sobrando, {r} lançadas por hora (os últimos {m} minutos da hunt)',
   '{ball}: none thrown lately': '{ball}: nenhuma lançada ultimamente',
-  'Balls thrown at shiny Pokémon since this window opened, counted from each throw. The Pokédex has the total of all time of each species.': 'Bolas lançadas em Pokémon shiny desde que esta janela abriu, contadas a partir de cada lançamento. A Pokédex tem o total de todos os tempos de cada espécie.',
   'All time, added up from the species whose Capturas tab you opened in the Pokédex (the game only sends it when you open a species).': 'Todos os tempos, somados das espécies cuja aba Capturas você abriu na Pokédex (o jogo só envia isso quando você abre uma espécie).',
   '${n} each': '${n} cada',
   'Items worth {n} or more each are highlighted': 'Itens que valem {n} ou mais cada um ficam destacados',
@@ -68,7 +71,6 @@ EXACT = {
   'Quality': 'Qualidade',
   'Per account · click a header to sort, a row to open it in the summary': 'Por conta · clique em um título para ordenar, em uma linha para abrir no resumo',
   'Incubators · breeding, every account': 'Incubadoras · breeding, todas as contas',
-  'Latest captures · all accounts': 'Últimas capturas · todas as contas',
   'Search Pokémon': 'Buscar Pokémon',
   'all': 'todas',
   'cap': 'cap.',
@@ -107,7 +109,6 @@ EXACT = {
   'Overview settings': 'Configurações da Visão geral', 'Show in the Overview': 'Mostrar na Visão geral',
   # lang-75: combined session drops across the accounts, shown as a new card on the Overview
   'Session drops (combined)': 'Drops da sessão (combinado)',
-  'Session drops \u00b7 all accounts': 'Drops da sessão \u00b7 todas as contas',
   'No drops yet in any of the ticked accounts. A session starts again from nothing when an account changes hunt.':
     'Nenhum drop ainda nas contas marcadas. A sessão recomeça do zero quando uma conta troca de hunt.',
   'each': 'cada',
@@ -125,9 +126,16 @@ EXACT = {
   'Shinies captured today': 'Shinies capturados hoje',
   'Pedras Shiny picked up today': 'Pedras Shiny pegas hoje',
   'Adupokes picked up today': 'Adupokes pegos hoje',
+  # lang-76+: Eevee items (Pelo de Eevee, Sangue de Eevee) also have their own header counter
+  'Pelos de Eevee picked up today': 'Pelos de Eevee pegos hoje',
+  'Sangues de Eevee picked up today': 'Sangues de Eevee pegos hoje',
   'Only the Overview uses these choices. The incubators show only while an account is breeding. Great catches and valuable drops also follow Settings \u203a Notifications.':
     'Só a Visão geral usa estas escolhas. As incubadoras só aparecem enquanto uma conta está fazendo breeding. As ótimas capturas e os drops valiosos também seguem Configurações \u203a Notificações.',
-  'Today (daily totals)': 'Hoje (totais do dia)', 'Live totals (per hour)': 'Totais ao vivo (por hora)', 'Incubators': 'Incubadoras', 'Latest captures': 'Últimas capturas', 'Today’s highlights': 'Destaques de hoje',
+  'Today (daily totals)': 'Hoje (totais do dia)', 'Live totals (per hour)': 'Totais ao vivo (por hora)', 'Incubators': 'Incubadoras', 'Latest captures': 'Últimas capturas',
+  # lang-76+: the short titles of the three Overview cards now carry a longer explanatory tooltip
+  'Last captures of every account. Filter above, ✦ for shinies only.': 'Últimas capturas de cada conta. Filtre acima, ✦ só para shinies.',
+  'Shinies, great catches, valuable drops, eggs, evolutions and new hunts from 00:00 to 23:59, kept on this computer. Pick kinds in the Overview’s gear; thresholds in Settings › Notifications. Arrows step through the last 7 days.': 'Shinies, ótimas capturas, drops valiosos, ovos, evoluções e novas hunts das 00:00 às 23:59, guardado neste computador. Escolha os tipos na engrenagem da Visão geral; os limites em Configurações › Notificações. As setas passam pelos últimos 7 dias.',
+  'Drops of every account’s current hunt added up. Untick to hide a share; pin to send an item to the top.': 'Drops da hunt atual de cada conta somados. Desmarque para esconder uma parte; fixe para enviar um item ao topo.', 'Today’s highlights': 'Destaques de hoje',
   'Everything is hidden: use the gear to show it again': 'Está tudo escondido: use a engrenagem para mostrar de novo',
   'Hidden: press Overview to show it again': 'Escondida: clique em Visão geral para mostrar de novo', 'Hide the Overview, or show it again': 'Esconder a Visão geral, ou mostrar de novo',
   'Best 5 by gold per hour': '5 melhores por gold por hora', 'Best 5 by XP per hour': '5 melhores por XP por hora', 'Best 5 by gold and XP together': '5 melhores por gold e XP juntos',

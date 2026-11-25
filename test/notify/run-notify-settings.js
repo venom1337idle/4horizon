@@ -20,7 +20,7 @@ const read = () => JSON.parse(fs.readFileSync(FILE, 'utf8'));
 (async () => {
   let N = fresh();
   const d = N.getConfig();
-  ok('the defaults: on, sound on, startup notice on, all 9 alerts on (lang-41: battle pass, daily mission, egg)', d.enabled && d.sound && d.startupNotice && Object.keys(d.events).join() === 'shiny,goodCatch,rareDrop,suppliesLow,stopped,huntUnlocked,battlePass,dailyQuest,eggReady' && Object.values(d.events).every(v => v === true), d);
+  ok('the defaults: on, sound on, startup notice on, all 10 alerts on (lang-41: battle pass, daily mission, egg; lang-76+: Eevee drop)', d.enabled && d.sound && d.startupNotice && Object.keys(d.events).join() === 'shiny,goodCatch,rareDrop,eeveeDrop,suppliesLow,stopped,huntUnlocked,battlePass,dailyQuest,eggReady' && Object.values(d.events).every(v => v === true), d);
   ok('the defaults of the numbers: IV 175, quality 1.7, drop 10000, supplies 1 h / 10 min, no kills 180 s, silent 120 s', d.goodCatch.minIV === 175 && d.goodCatch.minQuality === 1.7 && d.rareDrop.minValue === 10000 && d.suppliesLow.minRunwayHours === 1 && d.suppliesLow.minSampleMinutes === 10 && d.stopped.noKillsSeconds === 180 && d.stopped.silentSeconds === 120, d);
 
   // a change is written into the file and keeps what else the person wrote there

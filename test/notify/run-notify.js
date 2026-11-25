@@ -21,6 +21,8 @@ async function scenario(file, lang) {
   N.handle(1, { catchEvent: { name: 'Horsea', iv: 180, max: 192, quality: 1.2, rarity: 'Rara ×1.37', shiny: false }, catchSeq: 2 });
   N.handle(1, { startedAt: 1, active: true, elapsedMs: 3600000, drops: [{ name: 'Venom stone', qty: 1, value: 50000 }], balls: 400, ballsUsed: 100, potions: 0, healsUsed: 5, defeated: 10 });
   N.handle(1, { startedAt: 1, active: true, drops: [{ name: 'Venom stone', qty: 4, value: 200000 }], defeated: 10 });
+  N.handle(1, { startedAt: 1, active: true, drops: [{ name: 'Venom stone', qty: 4, value: 200000 }, { id: 'eevee-fur', name: 'Pelo de Eevee', qty: 1, value: 10000 }], defeated: 10 });          // lang-76+: an Eevee drop fires "eeveeDrop" (not "rareDrop")
+  N.handle(1, { startedAt: 1, active: true, drops: [{ name: 'Venom stone', qty: 4, value: 200000 }, { id: 'eevee-fur', name: 'Pelo de Eevee', qty: 1, value: 10000 }, { id: 'eevee-blood', name: 'Sangue de Eevee', qty: 1, value: 10000 }], defeated: 10 });
   N.handle(3, { name: 'x', startedAt: 7, active: true, defeated: 5, elapsedMs: 3600000, balls: 3, ballsUsed: 500 });
   const st = N._state; st[3].lastMsg = Date.now() - 200000; st[1].killsAt = Date.now() - 400000; st[1].lastMsg = Date.now();
   N.handle(4, { name: 'trainer4', startedAt: 9, active: true, defeated: 1 }); N.handle(4, { startedAt: 9, active: false }); st[4].pendingStop = Date.now() - 200000;          // (lang-54: left the hunt longer ago than the "No kills" time, 180 s by default)
@@ -30,7 +32,12 @@ async function scenario(file, lang) {
 (async () => {
   const oldEn = await scenario('notify.before.js', 'en'), newEn = await scenario('notify.js', 'en'), pt = await scenario('notify.js', 'pt-BR');
   console.log('\n' + newEn.length + ' notifications in English:'); newEn.forEach(n => console.log('   ' + n.title + ' | ' + n.body));
-  ok('the English notifications are exactly the ones of the old file', JSON.stringify(oldEn) === JSON.stringify(newEn));
+  // lang-76+: Eevee items (Pelo de Eevee, Sangue de Eevee) have their own alert; the old file didn't know them and fired "Rare drop" for them
+  const eeveeNew = newEn.filter(n => /Pelo de Eevee|Sangue de Eevee/.test(n.title + ' ' + n.body));
+  ok('new "Eevee drop" alerts (one Pelo de Eevee, one Sangue de Eevee), with their own title, and no "Rare drop" fired for them', eeveeNew.length === 2 && eeveeNew.every(n => /^Eevee drop:/.test(n.title) && !/worth \$/.test(n.body)), eeveeNew);
+  // everything that is NOT an Eevee item should be identical to the old file
+  const strip = ns => ns.filter(n => !/Pelo de Eevee|Sangue de Eevee/.test(n.title + ' ' + n.body));
+  ok('the non-Eevee English notifications are exactly the ones of the old file', JSON.stringify(strip(oldEn)) === JSON.stringify(strip(newEn)));
   ok('every kind of alert was exercised (startup, test, hunts opened x2, shiny, great catch, rare drop, supplies low, no data, no kills, stopped)', newEn.length >= 12, newEn.length);
   console.log('\n' + pt.length + ' notifications in Portuguese:'); pt.forEach(n => console.log('   ' + n.title + ' | ' + n.body));
   ok('as many notifications in Portuguese as in English', pt.length === newEn.length, [pt.length, newEn.length]);

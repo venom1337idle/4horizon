@@ -31,7 +31,7 @@ const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.
   const vals = await p.evaluate(() => { const v = id => document.getElementById(id).value; return { iv: v('nIV'), q: v('nQuality'), drop: v('nDrop'), run: v('nRunway'), samp: v('nSample'), nk: v('nNoKills'), si: v('nSilent'),
     en: document.getElementById('nEnabled').checked, snd: document.getElementById('nSound').checked, st: document.getElementById('nStartup').checked, evs: Array.from(document.querySelectorAll('[data-ev]')).map(x => x.dataset.ev + ':' + x.checked) }; });
   ok('the Settings dialog shows the saved numbers (IV 175, quality 1.7, drop 10000, 1 h, 10 min, 180 s, 120 s)', vals.iv === '175' && vals.q === '1.7' && vals.drop === '10000' && vals.run === '1' && vals.samp === '10' && vals.nk === '180' && vals.si === '120', vals);
-  ok('...and the switches: Enabled, sound, start notice, and the 9 alerts all ticked', vals.en && vals.snd && vals.st && vals.evs.length === 9 && vals.evs.every(x => /:true$/.test(x)), vals);
+  ok('...and the switches: Enabled, sound, start notice, and the 10 alerts all ticked', vals.en && vals.snd && vals.st && vals.evs.length === 10 && vals.evs.every(x => /:true$/.test(x)), vals);
   ok('the install note is hidden when the bridge is there', await p.evaluate(() => document.getElementById('nNeedInstall').classList.contains('hidden')));
 
   await setNum(p, 'nIV', 180);
@@ -181,10 +181,10 @@ const setNum = async (p, id, v) => { await p.fill('#' + id, String(v)); await p.
     await p.click('#btnSettings'); await p.waitForTimeout(300);
     const L = await p.evaluate(() => { const dlg = document.querySelector('#settingsModal .dlg').getBoundingClientRect();
       return { dlgL: dlg.left, dlgR: dlg.right, boxes: Array.from(document.querySelectorAll('#evChecks label')).map(l => { const r = l.getBoundingClientRect(); return { ev: l.querySelector('input').dataset.ev, x: Math.round(r.left), y: Math.round(r.top), r: Math.round(r.right), h: Math.round(r.height) }; }) }; });
-    // lang-74: the five simple alerts are one straight column in their own box; the four with numbers (great catch, valuable drop, supplies low, stopped) are the tick boxes of their own cards
+    // lang-74: the simple alerts are one straight column in their own box; the four with numbers (great catch, valuable drop, supplies low, stopped) are the tick boxes of their own cards. lang-76+: the sixth alert is the Eevee drop (Pelo / Sangue de Eevee)
     const a = L.boxes[0];
-    ok('at ' + size[0] + ' x ' + size[1] + ': the five simple alerts are one straight column, one under the other', L.boxes.length === 5 && L.boxes.every(x => x.x === a.x) && L.boxes.every((x, i, arr) => i === 0 || x.y > arr[i - 1].y), L.boxes);
-    ok('...in this order: shiny, new hunt, battle pass, daily mission, egg', L.boxes.map(x => x.ev).join() === 'shiny,huntUnlocked,battlePass,dailyQuest,eggReady', L.boxes.map(x => x.ev));
+    ok('at ' + size[0] + ' x ' + size[1] + ': the six simple alerts are one straight column, one under the other', L.boxes.length === 6 && L.boxes.every(x => x.x === a.x) && L.boxes.every((x, i, arr) => i === 0 || x.y > arr[i - 1].y), L.boxes);
+    ok('...in this order: shiny, new hunt, battle pass, daily mission, egg, eevee drop', L.boxes.map(x => x.ev).join() === 'shiny,huntUnlocked,battlePass,dailyQuest,eggReady,eeveeDrop', L.boxes.map(x => x.ev));
     const cards = await p.evaluate(() => ['goodCatch', 'rareDrop', 'suppliesLow', 'stopped'].map(ev => { const i = document.querySelector('#notifBody [data-ev="' + ev + '"]'), s = i.closest('.sub'), r = i.getBoundingClientRect(); return { ev, inCard: !!s, x: Math.round(r.left), y: Math.round(r.top), r: Math.round(r.right), first: s && s.querySelector('input') === i }; }));
     ok('...the four alerts with numbers are the tick box at the top of their own card (great catch, valuable drop, supplies low, stopped), the last three side by side', cards.every(c => c.inCard && c.first) && cards[1].x < cards[2].x && cards[2].x < cards[3].x && Math.abs(cards[1].y - cards[2].y) <= 2 && cards[0].y < cards[1].y, cards);
     ok('...and all of them are inside the dialog', L.boxes.concat(cards).every(x => x.x >= L.dlgL && x.r <= L.dlgR), [L.dlgL, L.dlgR]);

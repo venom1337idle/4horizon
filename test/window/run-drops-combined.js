@@ -16,7 +16,7 @@ const drops = (p, n, sid, list) => p.s(n, { startedAt: sid, drops: list.map(([na
   await p.dash().evaluate(() => { accounts.forEach(a => { a.drops = []; }); drawDropsCombined(); });
   // layout: the card is on the Overview, below Latest captures and Today's highlights
   const lay = await p.dash().evaluate(() => { const c = document.getElementById('dropsCard'), t = document.getElementById('todayCard'); return { title: c.querySelector('.h span').textContent, after: c.getBoundingClientRect().top >= t.getBoundingClientRect().top, inOverview: !!c.closest('#mainCol') }; });
-  ok('a "Session drops · all accounts" card below Today\u2019s highlights, inside the Overview', lay.title === 'Session drops · all accounts' && lay.after && lay.inOverview, lay);
+  ok('a "Session drops" card below Today\u2019s highlights, inside the Overview (lang-76+: short title, long text in the tooltip)', lay.title === 'Session drops' && lay.after && lay.inOverview, lay);
   // the account tick boxes: four, all ticked at first, in the account colour
   const a0 = await accs(p);
   ok('the header has four account tick boxes, all ticked at first, in order 1 to 4', a0.length === 4 && a0.every((x, i) => x.n === i + 1 && x.checked && x.on), a0);
@@ -90,7 +90,7 @@ const drops = (p, n, sid, list) => p.s(n, { startedAt: sid, drops: list.map(([na
   // force-empty list (one unticked account, others with no drops in this scenario) to see the Portuguese empty line
   await p.dash().evaluate(() => { accounts.forEach(a => { a.drops = []; }); drawDropsCombined(); });
   const pt2 = await p.dash().evaluate(() => (document.querySelector('#dropsList .empty') || {}).textContent);
-  ok('in Portuguese: "Drops da sessão · todas as contas", empty line "Nenhum drop ainda..."', pt.title === 'Drops da sessão · todas as contas' && /^Nenhum drop ainda/.test(pt2), [pt, pt2]);
+  ok('in Portuguese: "Drops da sessão", empty line "Nenhum drop ainda..." (lang-76+: short title)', pt.title === 'Drops da sessão' && /^Nenhum drop ainda/.test(pt2), [pt, pt2]);
   ok('no JavaScript errors (Portuguese)', p.errors.length === 0, p.errors);
   await b.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

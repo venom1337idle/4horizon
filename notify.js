@@ -23,6 +23,7 @@ const DEFAULTS = {
     shiny: true,          // a shiny was captured
     goodCatch: true,      // a capture with a high IV or a high quality
     rareDrop: true,       // an item worth a lot dropped
+    eeveeDrop: true,      // lang-76+: a Pelo de Eevee or Sangue de Eevee dropped (rare, low price; its own alert so the user can mute the regular rareDrop without missing them)
     suppliesLow: true,    // balls or potions will run out soon
     stopped: true,        // an account stopped hunting, got no kills, or went silent
     huntUnlocked: true,   // the trainer level opened a new hunt
@@ -232,7 +233,10 @@ function handleOne(account, d) {
       for (const it of d.drops) {
         const prev = s.qty[it.name] || 0;
         const unit = (typeof it.value === 'number' && it.qty > 0) ? it.value / it.qty : null;
-        if (s.dropsReady && it.qty > prev && unit !== null && unit >= c.rareDrop.minValue) {
+        const isEevee = it.id === 'eevee-fur' || it.id === 'eevee-blood' || it.name === 'Pelo de Eevee' || it.name === 'Sangue de Eevee';          // lang-76+: Eevee items have their own notification; the regular rareDrop ignores them
+        if (s.dropsReady && it.qty > prev && isEevee) {
+          show(account, 'eeveeDrop', t('Eevee drop: {item}', { item: it.name }), t('{who} got {n} \u00d7 {item}', { who: who, n: it.qty - prev, item: it.name }), { noCooldown: true, key: 'eevee' });
+        } else if (s.dropsReady && it.qty > prev && unit !== null && unit >= c.rareDrop.minValue) {
           show(account, 'rareDrop', t('Rare drop: {item}', { item: it.name }), t('{who} got {n} \u00d7 {item} (worth ${value} each)', { who: who, n: it.qty - prev, item: it.name, value: num(unit) }), { noCooldown: true, key: 'drop' });
         }
         s.qty[it.name] = it.qty;

@@ -65,6 +65,7 @@ EXACT = {
   'Tick Rule 2 to have a second combination. A catch is great when it meets Rule 1 OR Rule 2. Example: Rule 1 IV 130 AND quality 1.75, Rule 2 IV 170 OR quality 5 (no catch reaches 5, so only the IV counts).': 'Marque Regra 2 para ter uma segunda combinação. Uma captura é ótima quando atende à Regra 1 OU à Regra 2. Exemplo: Regra 1 IV 130 E qualidade 1,75, Regra 2 IV 170 OU qualidade 5 (nenhuma captura chega a 5, então só o IV conta).',
   'Simple alerts': 'Alertas simples', 'A shiny is captured': 'Um shiny é capturado', 'New hunt unlocks': 'Nova hunt liberada', 'Battle pass mission done': 'Missão do passe de batalha concluída',
   'Daily mission done': 'Missão diária concluída', 'Egg ready to hatch': 'Ovo pronto para chocar', 'Account stopped': 'Conta parada',
+  'Pelo / Sangue de Eevee drop': 'Drop de Pelo / Sangue de Eevee',          # lang-76+: the alert tick box in Simple alerts
   'Min. hunting': 'Min. caçando', 'No kills (s)': 'Sem kills (s)', 'No data (s)': 'Sem dados (s)',
   'History': 'Histórico', 'Daily totals, saved on this computer': 'Totais do dia, guardados neste computador', 'until': 'até',
   # lang-73: Settings › Grid, and the strip of mini screens beside an expanded screen

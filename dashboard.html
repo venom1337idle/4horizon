@@ -59,6 +59,10 @@
   .stat { background: linear-gradient(180deg, var(--tile-a), var(--tile-b)); border: 1px solid var(--line); border-radius: var(--r); padding: 9px 6px; }
   .stat .v { font-size: 18px; font-weight: 700; }
   .stat .l { font-size: 10px; letter-spacing: .08em; color: var(--dim); text-transform: uppercase; font-weight: 600; }
+  /* lang-76+: the Shinies all time tile shows a dim dot per account that never opened Perfil in the game; the colour is the account's colour, the tooltip is the account's name */
+  .stat.sall .miss { display: flex; justify-content: center; gap: 4px; margin-top: 4px; min-height: 6px; }
+  .stat.sall .miss i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); opacity: .45; cursor: help; }
+  .stat.sall .miss i:hover { opacity: .9; }
   .grid4 .v { font-size: 16px; }
   .row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
   .row .k { color: #c9d2ea; } .row .v { font-weight: 700; }
@@ -273,6 +277,7 @@
   .card h2, .card .h { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; font-size: 12px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase;
                        padding-bottom: 7px; border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, rgba(227, 192, 107, .38), rgba(227, 192, 107, 0) 70%) 1; }
   .card .h .grow { flex: 1; }
+  .card .h .tipTitle { cursor: help; }                                                       /* lang-76+: a cursor hint on the card titles that carry an explanatory tooltip */
   .card table { width: 100%; border-collapse: collapse; }
   .card th { text-align: left; font-size: 10px; letter-spacing: .12em; color: var(--dim); font-weight: 700; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; text-transform: uppercase; }
   .card td { padding: 8px 7px; border-bottom: 1px solid #141d3a; white-space: nowrap; }
@@ -343,6 +348,13 @@
   #dropsList .row.hot .q { color: rgba(227, 192, 107, .75); }
   #dropsList .row.top { background: linear-gradient(90deg, rgba(227, 192, 107, .30), rgba(227, 192, 107, .08)); border-color: rgba(227, 192, 107, .8); box-shadow: inset 3px 0 0 var(--gold), 0 0 14px rgba(227, 192, 107, .22); }
   #dropsList .row.pinned { border-style: dashed; border-color: var(--gold); }        /* owner choice 2026-11-22: a dashed gold border instead of an outline */
+  /* lang-76+: Eevee rows (Pelo de Eevee tan, Sangue de Eevee red) override the gold hot/top tints with their own colour. --eevee is set inline per row. */
+  #dropsList .row.eevee { background: linear-gradient(90deg, color-mix(in srgb, var(--eevee) 24%, transparent), color-mix(in srgb, var(--eevee) 6%, transparent)); border-color: color-mix(in srgb, var(--eevee) 70%, transparent); box-shadow: inset 3px 0 0 var(--eevee), 0 0 12px color-mix(in srgb, var(--eevee) 25%, transparent); }
+  #dropsList .row.eevee .nm { color: var(--eevee); font-weight: 700; }
+  #dropsList .row.eevee .q { color: color-mix(in srgb, var(--eevee) 75%, transparent); }
+  #dropsList .row.eevee .gold { color: var(--eevee); }
+  #dropsList .row.eevee.pinned { border-color: var(--eevee); }                        /* the pinned-dashed border uses the row's colour, not gold */
+  #dropsList .row.eevee.pinned .pin { color: var(--eevee); }
   #dropsList .row .pin { appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; color: var(--dim2); font-size: 13px; line-height: 1; opacity: .5; transition: opacity .15s, color .15s; }
   #dropsList .row:hover .pin, #dropsList .row.pinned .pin { opacity: 1; }
   #dropsList .row.pinned .pin { color: var(--gold); }
@@ -359,7 +371,9 @@
   .dayNav:disabled { opacity: .3; cursor: default; }
   #todayTitle { color: inherit; }
   #todayTitle.past { color: var(--dim); font-style: italic; }
-  #todayTot { display: inline-flex; align-items: center; gap: 10px; margin-right: 10px; color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  /* lang-76+: counters on their own row below the Today's highlights header; hidden (empty, height 0) when none shows, so the list uses the full card height. Thin separator under them. */
+  #todayTot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  #todayTot:not(:empty) { margin: 0 2px 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
   #todayTot b { color: var(--text); font-weight: 600; }
   #todayTot .tc { display: inline-flex; align-items: center; gap: 4px; } #todayTot .tc .ic { font-size: 12.5px; }
   #todayTot .tc img.ic { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: -3px; }          /* the three icons in item-icons/ (shiny-pokemon, shiny-stone, adupoke) */
@@ -428,7 +442,7 @@
         <!-- lang-75: Latest captures, Today's highlights, Session drops: three cards of the same size. Two per row (flex-wrap); when only one of the three is shown, it takes its own row (half width). Session drops is combined (one line per item, per-account split in the tooltip; accounts unticked here still count behind the scenes; pins on the left of each row ride to the top and are kept). -->
         <div class="split3">
         <div class="card" id="capCard">
-          <div class="h"><span>Latest captures &middot; all accounts</span></div>
+          <div class="h"><span class="tipTitle" title="Last captures of every account. Filter above, ✦ for shinies only.">Latest captures</span></div>
           <div class="caps">
             <select id="capAcc"><option value="all">all</option></select>
             <input type="text" id="capSearch" placeholder="Search Pok&eacute;mon" style="width:122px">
@@ -441,19 +455,19 @@
           <div class="scrollbox" id="capList"></div>
         </div>
         <div class="card" id="todayCard">
-          <!-- lang-75: Today's highlights header. The three icon counters sit next to the title; the two arrows at the far right let the user step through the last 7 days (kept on this computer). -->
+          <!-- lang-76+: short title + explanatory tooltip; counters sit on their own row below the header (hidden when all are 0, so the list uses the full height) -->
           <div class="h">
-            <span><span id="todayTitle">Today’s highlights &middot; 00:00 to 23:59</span></span>
-            <span class="todayTot" id="todayTot"></span>
+            <span class="tipTitle" title="Shinies, great catches, valuable drops, eggs, evolutions and new hunts from 00:00 to 23:59, kept on this computer. Pick kinds in the Overview’s gear; thresholds in Settings › Notifications. Arrows step through the last 7 days."><span id="todayTitle">Today’s highlights</span></span>
             <span class="grow"></span>
             <button class="dayNav" id="todayPrev" title="Show the day before" aria-label="Show the day before" type="button">&#8249;</button>
             <button class="dayNav" id="todayNext" title="Show the day after" aria-label="Show the day after" type="button" disabled>&#8250;</button>
             <span class="chip" id="todayCount"></span>
           </div>
+          <div class="todayTot" id="todayTot"></div>
           <div class="scrollbox" id="todayList"></div>
         </div>
         <div class="card" id="dropsCard">
-          <div class="h"><span>Session drops &middot; all accounts</span><span class="grow"></span><span class="chip" id="dropsCount"></span></div>
+          <div class="h"><span class="tipTitle" title="Drops of every account’s current hunt added up. Untick to hide a share; pin to send an item to the top.">Session drops</span><span class="grow"></span><span class="chip" id="dropsCount"></span></div>
           <div id="dropsAcc"></div>
           <div class="scrollbox" id="dropsList"></div>
         </div>
@@ -870,13 +884,18 @@ function shinyCardPart(a) {
 }
 // a short number without a comma for a small box: 2116 -> "2.1K", 980 -> "980"
 const short = n => { n = Math.round(n0(n)); if (n < 1000) return String(n); const k = n >= 1e6 ? [1e6, 'M'] : [1e3, 'K'], v = n / k[0]; return I18N.dec(v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '')) + k[1]; };
-// the 4th box of the Session: all time for the accounts whose Perfil was opened ("13" and a smaller "/1.9K"), else the balls at shinies of this session as before
+// the 4th box of the Session: all time for the accounts whose Perfil was opened ("13" and a smaller "/1.9K"), else the balls at shinies of this session as before.
+// lang-76+: a dim dot per account that is missing (never opened Perfil) is shown under the label, in the account's colour, with the name as its own tooltip.
 function shinyTile() {
-  const known = accounts.filter(allOf);
-  if (!known.length) return '<div class="stat" title="' + t('Balls thrown at shiny Pok\u00e9mon since this window opened, counted from each throw. The Pok\u00e9dex has the total of all time of each species.') + '"><div class="v gold">' + (accounts.some(a => a.shinyThrown !== undefined) ? fmt(sum('shinyThrown')) : '\u2014') + '</div><div class="l">' + t('Balls at shinies') + '</div></div>';
+  const known = accounts.filter(allOf), missing = accounts.filter(a => !allOf(a));
+  const missDots = missing.length ? '<div class="miss">' + missing.map(a => '<i title="' + esc(t('Open Perfil on {name} in the game to count its shinies of all time.', { name: accName(a) })) + '" style="--c:' + COLORS[a.idx % COLORS.length] + '"></i>').join('') + '</div>' : '';
+  if (!known.length) {
+    const tip = t('Balls thrown at shiny Pok\u00e9mon since this window opened, counted from each throw. Open Perfil on each account in the game to see the shinies of all time here. The Pok\u00e9dex has the total of all time of each species.');
+    return '<div class="stat sall" title="' + esc(tip) + '"><div class="v gold">' + (accounts.some(a => a.shinyThrown !== undefined) ? fmt(sum('shinyThrown')) : '\u2014') + '</div><div class="l">' + t('Balls at shinies') + '</div>' + missDots + '</div>';
+  }
   const c = known.reduce((s, a) => s + allOf(a).caught, 0), b = known.reduce((s, a) => s + allOf(a).balls, 0);
-  const tip = t('Shinies captured / balls spent at shinies, all time, as the game\u2019s Perfil counts them: {c} / {b}, {r}.', { c: fullNum(c), b: fullNum(b), r: perShiny(c, b) }) + (known.length < accounts.length ? ' ' + t('{k} of {n} accounts: open Perfil once in the game on the others.', { k: known.length, n: accounts.length }) : '');
-  return '<div class="stat sall" title="' + esc(tip) + '"><div class="v" style="white-space:nowrap"><span class="pink">' + fmt(c) + '</span><span class="gold" style="font-size:11px;font-weight:600">/' + short(b) + '</span></div><div class="l">' + t('Shinies all time') + '</div></div>';
+  const tip = t('Shinies captured / balls spent at shinies, all time, as the game\u2019s Perfil counts them: {c} / {b}, {r}.', { c: fullNum(c), b: fullNum(b), r: perShiny(c, b) }) + (missing.length ? ' ' + t('Open Perfil on {names} in the game to count their shinies too.', { names: missing.map(a => accName(a)).join(', ') }) : '');
+  return '<div class="stat sall" title="' + esc(tip) + '"><div class="v" style="white-space:nowrap"><span class="pink">' + fmt(c) + '</span><span class="gold" style="font-size:11px;font-weight:600">/' + short(b) + '</span></div><div class="l">' + t('Shinies all time') + '</div>' + missDots + '</div>';
 }
 function sideAll() {
   const live = liveAccounts();
@@ -1143,7 +1162,7 @@ function lastHtml(a) {
 const COLS = [
   { key: 'name', label: tt('ACCOUNT'), val: a => a.name, html: a => '<span class="dot" style="background:' + COLORS[a.idx % COLORS.length] + '"></span> ' + accName(a) },
   { key: 'pokemon', label: tt('POK\u00c9MON'), val: a => a.pokemon || '', html: a => esc(a.pokemon || '\u2014') },
-  { key: 'hunt', label: tt('HUNT'), val: a => a.hunt || '', html: a => esc(a.hunt || '\u2014') },
+  { key: 'hunt', label: tt('HUNT'), val: a => a.hunt || '', html: a => esc(a.hunt || '\u2014'), cellAttr: a => (a.hunt ? ' title="' + esc(a.hunt) + '"' : '') },          // lang-76+: full hunt on hover (the cell can be ellipsized when its text is long)
   { key: 'minutes', label: tt('TIME'), val: a => n0(a.minutes), html: a => esc(a.sessionTime || '0m') },
   { key: 'goldH', label: tt('GOLD/H'), val: a => n0(a.goldH), html: a => '<span class="' + signCls(n0(a.goldH)) + '">' + sgn(n0(a.goldH)) + '</span>', sumv: t => '<span class="' + signCls(t) + '">' + sgn(t) + '</span>' },
   { key: 'xpH', label: tt('XP/H'), val: a => n0(a.xpH), html: a => '<span class="xp">' + fmt(n0(a.xpH)) + '</span>', sumv: t => '<span class="xp">' + fmt(t) + '</span>' },
@@ -1166,7 +1185,7 @@ function drawTable() {
   });
   const arrow = c => c.key === sortState.key ? (sortState.dir > 0 ? ' \u25b2' : ' \u25bc') : '';
   const head = COLS.map(c => '<th class="sortable" data-sort="' + c.key + '">' + t(c.label) + arrow(c) + '</th>').join('');
-  const body = rows.map(a => '<tr data-tab="' + a.idx + '"' + (selected === a.idx ? ' class="sel"' : '') + '>' + COLS.map(c => '<td>' + c.html(a) + '</td>').join('') + '</tr>').join('');
+  const body = rows.map(a => '<tr data-tab="' + a.idx + '"' + (selected === a.idx ? ' class="sel"' : '') + '>' + COLS.map(c => '<td' + (c.cellAttr ? c.cellAttr(a) : '') + '>' + c.html(a) + '</td>').join('') + '</tr>').join('');
   const total = '<tr class="total">' + COLS.map(c => '<td>' + (c.key === 'name' ? t('Total ({n})', { n: accounts.length }) : (c.sumv ? c.sumv(sum(c.key)) : '')) + '</td>').join('') + '</tr>';
   document.getElementById('tableWrap').innerHTML = '<table><thead><tr>' + head + '</tr></thead><tbody>' + body + total + '</tbody></table>';
 }
@@ -1198,13 +1217,13 @@ window.addEventListener('message', e => {
 // =====================================================================================
 const TODAY_KEY_OLD = '4h.today', TODAY_KEY_PRE = '4h.today.', TODAY_DAYS_BACK = 6, TODAY_MAX = 400, GREAT_IV = 170, GREAT_Q = 1.75;
 const dayOf = ms => { const d = new Date(ms); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-// lang-75: three counters for the Today's highlights header: shiny captured (the rainbow pokeball), shiny stones picked up, adupokes picked up. Kept with the day.
-const TODAY_ZERO_COUNTS = () => ({ shiny: 0, shinyStone: 0, adupoke: 0 });
+// lang-75: counters for the Today's highlights header: shiny captured (rainbow pokeball), shiny stones, adupokes; lang-76+: Pelo de Eevee (fur) and Sangue de Eevee (blood). Kept with the day.
+const TODAY_ZERO_COUNTS = () => ({ shiny: 0, shinyStone: 0, adupoke: 0, eeveeFur: 0, eeveeBlood: 0 });
 // lang-75: each day is its own localStorage entry (4h.today.<YYYY-MM-DD>), up to 7 days (today + the 6 days before). An older 4h.today key, if any, is moved to its own date on first load.
 const todayParse = raw => { let o = null; try { o = JSON.parse(raw); } catch (e) {} if (!o || typeof o !== 'object' || !o.date || !Array.isArray(o.items)) return null;
   const items = o.items.filter(x => x && typeof x === 'object' && typeof x.t === 'number' && typeof x.kind === 'string' && x.p && typeof x.p === 'object').slice(0, TODAY_MAX);
   const num = v => (typeof v === 'number' && isFinite(v) && v >= 0 && v < 1e6) ? Math.round(v) : 0;
-  const c = o.counts && typeof o.counts === 'object' ? { shiny: num(o.counts.shiny), shinyStone: num(o.counts.shinyStone), adupoke: num(o.counts.adupoke) } : TODAY_ZERO_COUNTS();
+  const c = o.counts && typeof o.counts === 'object' ? { shiny: num(o.counts.shiny), shinyStone: num(o.counts.shinyStone), adupoke: num(o.counts.adupoke), eeveeFur: num(o.counts.eeveeFur), eeveeBlood: num(o.counts.eeveeBlood) } : TODAY_ZERO_COUNTS();
   const keys = Array.isArray(o.keys) ? o.keys.filter(k => typeof k === 'string').slice(-2000) : [];
   // lang-76+: the per-session baseline, so a reload in the middle of a session keeps counting from the right place (regression reported 2026-11-23: a reload during a session lost the next drop).
   const base = {}; if (o.base && typeof o.base === 'object') Object.keys(o.base).slice(0, 8).forEach(k => { const b = o.base[k]; if (b && typeof b === 'object' && typeof b.dropSid === 'string') { const bd = {}; if (b.drops && typeof b.drops === 'object') Object.keys(b.drops).slice(0, 40).forEach(n => { if (typeof b.drops[n] === 'number' && b.drops[n] >= 0) bd[String(n).slice(0, 60)] = b.drops[n]; }); base[String(k).slice(0, 4)] = { dropSid: String(b.dropSid).slice(0, 40), drops: bd }; } });
@@ -1253,7 +1272,7 @@ function todayCatch(a, ev) {
   if (added && ev.shiny) { today.counts.shiny = (today.counts.shiny || 0) + 1; todaySave(); }          // lang-75: the header counter
 }
 // lang-75: a drop of a counted item (shiny-stone / adupoke): bumps the day's counter. Kept per account+session, so a reload of the window does not double it.
-const TODAY_DROPS = { 'shiny-stone': 'shinyStone', 'adupoke': 'adupoke', 'Pedra Shiny': 'shinyStone', 'Adupoke': 'adupoke' };          // lang-75: by the game's id and by the localized name (an older ws-reader has no id)
+const TODAY_DROPS = { 'shiny-stone': 'shinyStone', 'adupoke': 'adupoke', 'eevee-fur': 'eeveeFur', 'eevee-blood': 'eeveeBlood', 'Pedra Shiny': 'shinyStone', 'Adupoke': 'adupoke', 'Pelo de Eevee': 'eeveeFur', 'Sangue de Eevee': 'eeveeBlood' };          // lang-75/76: by the game's id and by the localized name (an older ws-reader has no id)
 // lang-76+: the dedup key uses the CUMULATIVE total (`total`), not the increment (`add`): two separate drops of the same item in the same session have different totals but the same increment (regression reported 2026-11-23: 4 Adupokes in the list but the counter showed 3).
 function todayDropCount(a, sid, name, add, total) {
   const key = 'dc:' + a.idx + ':' + sid + ':' + name + ':' + total;
@@ -1353,6 +1372,8 @@ function drawToday() {
   if (c.shiny > 0) parts.push('<span class="tc shiny" title="' + esc(t('Shinies captured today')) + '"><img class="ic" src="item-icons/shiny-pokemon.png" alt="" onerror="this.remove()"><b>' + fmt(c.shiny) + '</b></span>');
   if (c.shinyStone > 0) parts.push('<span class="tc stone" title="' + esc(t('Pedras Shiny picked up today')) + '"><img class="ic" src="item-icons/shiny-stone.png" alt="" onerror="this.remove()"><b>' + fmt(c.shinyStone) + '</b></span>');
   if (c.adupoke > 0) parts.push('<span class="tc adu" title="' + esc(t('Adupokes picked up today')) + '"><img class="ic" src="item-icons/adupoke.png" alt="" onerror="this.remove()"><b>' + fmt(c.adupoke) + '</b></span>');
+  if (c.eeveeFur > 0) parts.push('<span class="tc fur" title="' + esc(t('Pelos de Eevee picked up today')) + '"><img class="ic" src="item-icons/eevee-fur.png" alt="" onerror="this.remove()"><b>' + fmt(c.eeveeFur) + '</b></span>');
+  if (c.eeveeBlood > 0) parts.push('<span class="tc blood" title="' + esc(t('Sangues de Eevee picked up today')) + '"><img class="ic" src="item-icons/eevee-blood.png" alt="" onerror="this.remove()"><b>' + fmt(c.eeveeBlood) + '</b></span>');
   tot.innerHTML = parts.join('');
   const html = items.length ? items.map(x => {
     const d = new Date(x.t), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -1542,32 +1563,38 @@ function drawDropsCombined() {
   // the account tick boxes (always in the header, in the account's colour)
   const accHtml = accounts.map(a => { const on = !sumCfg.ovDropsOff[a.idx + 1]; return '<label class="' + (on ? 'on' : '') + '" style="--c:' + COLORS[a.idx % COLORS.length] + '"><input type="checkbox" data-drops-acc="' + (a.idx + 1) + '"' + (on ? ' checked' : '') + '><span class="dot"></span>' + esc(accName(a)) + '</label>'; }).join('');
   if (acc.dataset.html !== accHtml) { acc.dataset.html = accHtml; acc.innerHTML = accHtml; }
-  // add each account's drops to a map { name -> { qty, value, each, byAcc: { idx -> qty } } }
+  // add each account's drops to a map { name -> { id, qty, value, each, byAcc: { idx -> qty } } }
   const by = {};
   accounts.forEach(a => {
     if (sumCfg.ovDropsOff[a.idx + 1]) return;
     (a.drops || []).forEach(d => {
       if (!d || !d.name || !(d.qty > 0)) return;
-      const r = by[d.name] || (by[d.name] = { name: d.name, qty: 0, value: 0, each: null, byAcc: {} });
+      const r = by[d.name] || (by[d.name] = { name: d.name, id: d.id || '', qty: 0, value: 0, each: null, byAcc: {} });
+      if (!r.id && d.id) r.id = d.id;
       r.qty += d.qty; if (typeof d.value === 'number') r.value += d.value;
       if (r.each === null && d.qty > 0 && typeof d.value === 'number') r.each = d.value / d.qty;          // (the game sells the same item at the same price for every account)
       r.byAcc[a.idx] = (r.byAcc[a.idx] || 0) + d.qty;
     });
   });
-  // sort: pinned first (most valuable among pinned first), then expensive (price of one >= hot), then the rest by total value
-  const sortRule = (x, y) => ((y.each >= DROP_HOT) - (x.each >= DROP_HOT)) || (x.each >= DROP_HOT ? ((y.each || 0) - (x.each || 0)) : 0) || ((y.value || 0) - (x.value || 0)) || ((y.qty || 0) - (x.qty || 0));
+  // lang-76+: Pelo de Eevee and Sangue de Eevee are always highlighted (rare, low price, their own colour), independent of the "hot" threshold
+  const EEVEE = { 'eevee-fur': { cls: 'fur', col: '#c9a67a' }, 'eevee-blood': { cls: 'blood', col: '#b23b3b' }, 'Pelo de Eevee': { cls: 'fur', col: '#c9a67a' }, 'Sangue de Eevee': { cls: 'blood', col: '#b23b3b' } };
+  const eeveeOf = r => EEVEE[r.id] || EEVEE[r.name] || null;
+  // sort: pinned first (most valuable among pinned first), then Eevee items, then expensive (price of one >= hot), then the rest by total value
+  const sortRule = (x, y) => ((!!eeveeOf(y)) - (!!eeveeOf(x))) || ((y.each >= DROP_HOT) - (x.each >= DROP_HOT)) || (x.each >= DROP_HOT ? ((y.each || 0) - (x.each || 0)) : 0) || ((y.value || 0) - (x.value || 0)) || ((y.qty || 0) - (x.qty || 0));
   const rows = Object.values(by).sort((x, y) => (!!sumCfg.dropsPins[y.name] - !!sumCfg.dropsPins[x.name]) || sortRule(x, y));
   cnt.textContent = rows.length ? String(rows.length) : '';
   cnt.classList.toggle('hidden', !rows.length);
   const html = rows.length ? rows.map(r => {
-    const tier = r.each >= DROP_TOP ? ' hot top' : r.each >= DROP_HOT ? ' hot' : '';
+    const ev = eeveeOf(r);
+    const tier = ev ? ' hot top eevee' : r.each >= DROP_TOP ? ' hot top' : r.each >= DROP_HOT ? ' hot' : '';
+    const style = ev ? ' style="--eevee:' + ev.col + '"' : '';
     const pinned = !!sumCfg.dropsPins[r.name];
     const pinTip = pinned ? t('Unpin') : t('Pin to the top');
     const who = Object.keys(r.byAcc).map(i => '<i style="--c:' + COLORS[i % COLORS.length] + '" title="' + esc(accName(accounts[i])) + ': \u00d7' + fmt(r.byAcc[i]) + '"></i>').join('');
     const tip = Object.keys(r.byAcc).map(i => accName(accounts[i]) + ': \u00d7' + fmt(r.byAcc[i])).join('\n') + (r.each !== null ? '\n$' + fmt(Math.round(r.each)) + ' ' + t('each') : '');
-    return '<div class="row' + tier + (pinned ? ' pinned' : '') + '" title="' + esc(tip) + '">' +
+    return '<div class="row' + tier + (pinned ? ' pinned' : '') + '"' + style + ' title="' + esc(tip) + '">' +
       '<button class="pin" data-pin="' + esc(r.name) + '" title="' + esc(pinTip) + '" aria-label="' + esc(pinTip) + '" aria-pressed="' + pinned + '">' + (pinned ? '\u2605' : '\u2606') + '</button>' +
-      '<span class="nm">' + (r.each >= DROP_TOP ? star + ' ' : '') + esc(r.name) + ' <span class="q">\u00d7' + fmt(r.qty) + '</span></span>' +
+      '<span class="nm">' + (r.each >= DROP_TOP || ev ? star + ' ' : '') + esc(r.name) + ' <span class="q">\u00d7' + fmt(r.qty) + '</span></span>' +
       '<span class="who">' + who + '</span>' + '<span class="gold">' + (r.value ? '$' + fmt(Math.round(r.value)) : '') + '</span></div>';
   }).join('') : '<div class="empty">' + t('No drops yet in any of the ticked accounts. A session starts again from nothing when an account changes hunt.') + '</div>';
   if (list.dataset.html !== html) { list.dataset.html = html; list.innerHTML = html; }

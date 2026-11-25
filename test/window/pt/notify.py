@@ -27,6 +27,9 @@ EXACT = {
   'Great catch': 'Ótima captura',
   'Rare drop: {item}': 'Drop raro: {item}',
   '{who} got {n} × {item} (worth ${value} each)': '{who} conseguiu {n} × {item} (vale ${value} cada)',
+  # lang-76+: Eevee items (Pelo de Eevee, Sangue de Eevee) have their own alert
+  'Eevee drop: {item}': 'Drop de Eevee: {item}',
+  '{who} got {n} × {item}': '{who} conseguiu {n} × {item}',
   'Stopped hunting': 'Parou de caçar',
   '{who} is no longer hunting.': '{who} não está mais caçando.',
   'No data from the game': 'Sem dados do jogo',
