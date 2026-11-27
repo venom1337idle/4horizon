@@ -182,7 +182,6 @@
     "TIME": "TEMPO",
     "Today (daily totals)": "Hoje (totais do dia)",
     "Today’s highlights": "Destaques de hoje",
-    "Today’s highlights · 00:00 to 23:59": "Destaques de hoje · 00:00 às 23:59",
     "Today’s highlights: show": "Destaques de hoje: mostrar",
     "total": "total",
     "Total ({n})": "Total ({n})",

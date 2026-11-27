@@ -388,7 +388,15 @@
   #todayList .ev .tx .who { color: var(--dim); }
   #todayList .ev.shiny { border-color: rgba(255, 216, 107, .55); background: linear-gradient(90deg, rgba(255, 216, 107, .14), rgba(255, 143, 208, .05)); }
   #todayList .ev.shiny .mk, #todayList .ev.drop .mk { color: var(--gold); }
-  #todayList .ev.catch .mk { color: var(--purple); } #todayList .ev.egg .mk { color: var(--green); } #todayList .ev.evo .mk { color: var(--blue); } #todayList .ev.hunt .mk { color: var(--teal); }
+  /* lang-76: an Eevee drop in Today's highlights has its own colour (--eevee, set on the row), like its row in Session drops */
+  #todayList .ev.eevee { border-color: color-mix(in srgb, var(--eevee) 70%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--eevee) 24%, transparent), color-mix(in srgb, var(--eevee) 6%, transparent)); box-shadow: inset 3px 0 0 var(--eevee), 0 0 12px color-mix(in srgb, var(--eevee) 25%, transparent); }          /* exactly as #dropsList .row.eevee */
+  #todayList .ev.eevee .mk, #todayList .ev.eevee .it { color: var(--eevee); } #todayList .ev.eevee .it { font-weight: 700; }
+  #todayList .ev.catch .mk { color: var(--purple); } #todayList .ev.hunt .mk { color: var(--teal); }
+  /* lang-76 (owner's choice 2026-11-26): a whole coloured row for a shiny, an Eevee drop, a hatched egg (green) and an evolution (white); the other kinds colour their icon only */
+  #todayList .ev.egg { --tint: var(--green); } #todayList .ev.evo { --tint: #ffffff; }
+  #todayList .ev.egg, #todayList .ev.evo { border-color: color-mix(in srgb, var(--tint) 50%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--tint) 16%, transparent), color-mix(in srgb, var(--tint) 4%, transparent)); box-shadow: inset 3px 0 0 var(--tint); }
+  #todayList .ev.evo { border-color: color-mix(in srgb, var(--tint) 35%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--tint) 10%, transparent), color-mix(in srgb, var(--tint) 2%, transparent)); }          /* white is brighter: a lighter tint */
+  #todayList .ev.egg .mk, #todayList .ev.evo .mk { color: var(--tint); }
   #todayList .empty { color: var(--dim); font-size: 12px; padding: 8px 2px; line-height: 1.5; }
   #future { min-width: 0; }
   /* the list shows 8 whole rows (8 x 40 px) and scrolls one row at a time: it can never stop with a row cut in half */
@@ -1280,6 +1288,9 @@ function todayCatch(a, ev) {
   if (added && ev.shiny) { today.counts.shiny = (today.counts.shiny || 0) + 1; todaySave(); }          // lang-75: the header counter
 }
 // lang-75: a drop of a counted item (shiny-stone / adupoke): bumps the day's counter. Kept per account+session, so a reload of the window does not double it.
+// lang-76: Pelo de Eevee and Sangue de Eevee: rare but sold for little, so they have their own colour (Session drops and Today's highlights) and are never hidden by the "valuable drop" price
+const EEVEE_ITEMS = { 'eevee-fur': { cls: 'fur', col: '#a0703c' }, 'eevee-blood': { cls: 'blood', col: '#b23b3b' }, 'Pelo de Eevee': { cls: 'fur', col: '#a0703c' }, 'Sangue de Eevee': { cls: 'blood', col: '#b23b3b' } };          // owner 2026-11-26: Pelo a deeper brown (the tan #c9a67a looked like the gold of a shiny)
+const eeveeItem = (id, name) => (id && EEVEE_ITEMS[id]) || (name && EEVEE_ITEMS[name]) || null;
 const TODAY_DROPS = { 'shiny-stone': 'shinyStone', 'adupoke': 'adupoke', 'eevee-fur': 'eeveeFur', 'eevee-blood': 'eeveeBlood', 'Pedra Shiny': 'shinyStone', 'Adupoke': 'adupoke', 'Pelo de Eevee': 'eeveeFur', 'Sangue de Eevee': 'eeveeBlood' };          // lang-75/76: by the game's id and by the localized name (an older ws-reader has no id)
 // lang-76+: the dedup key uses the CUMULATIVE total (`total`), not the increment (`add`): two separate drops of the same item in the same session have different totals but the same increment (regression reported 2026-11-23: 4 Adupokes in the list but the counter showed 3).
 function todayDropCount(a, sid, name, add, total) {
@@ -1302,7 +1313,7 @@ function todayScan() {
       if (b.dropSid === sid && b.drops) {
         Object.keys(q).forEach(n => {
           const d = q[n], unit = typeof d.value === 'number' ? d.value / d.qty : null, more = d.qty - (b.drops[n] || 0);
-          if (more > 0 && unit !== null && unit >= minDrop()) todayAdd(a, 'drop', { item: n, n: more, each: unit }, 'd:' + a.idx + ':' + sid + ':' + n + ':' + d.qty);
+          if (more > 0 && unit !== null && (unit >= minDrop() || eeveeItem(d.id, n))) todayAdd(a, 'drop', { item: n, id: d.id || '', n: more, each: unit }, 'd:' + a.idx + ':' + sid + ':' + n + ':' + d.qty);          // lang-76: Eevee items are always kept, whatever the "valuable drop" price
           if (more > 0 && (TODAY_DROPS[d.id] || TODAY_DROPS[n])) todayDropCount(a, sid, (TODAY_DROPS[d.id] ? d.id : n), more, d.qty);          // lang-75: the header counters (independent of the "valuable drop" rule); the item's id if the reader sends it, else its name. Pass `more` and `d.qty` (cumulative) so the dedup key is unique per drop message.
           if (more > 0) dropBumped = true;
         });
@@ -1337,7 +1348,7 @@ function todayScan() {
 function todayText(x) {
   const p = x.p || {}, e = v => esc(String(v === undefined ? '' : v));
   if (x.kind === 'shiny' || x.kind === 'catch') { const what = e(p.name) + (p.iv !== '' && p.iv !== undefined ? ' \u00b7 IV ' + e(p.iv) + '/' + e(p.max) : '') + (p.rarity ? ' \u00b7 ' + e(p.rarity) : ''); return x.kind === 'shiny' ? t('Shiny captured: {what}', { what: what }) : t('Great catch: {what}', { what: what }); }
-  if (x.kind === 'drop') return t('Valuable drop: {item} \u00d7{n} \u00b7 {each} each', { item: e(p.item), n: e(p.n), each: '$' + fmt(Number(p.each) || 0) });
+  if (x.kind === 'drop') return t('Valuable drop: {item} \u00d7{n} \u00b7 {each} each', { item: eeveeItem(p.id, p.item) ? '<b class="it">' + e(p.item) + '</b>' : e(p.item), n: e(p.n), each: '$' + fmt(Number(p.each) || 0) });          // lang-76: an Eevee item's name is in its colour, as in Session drops
   if (x.kind === 'evo') return t('Evolved: {from} \u2192 {to}', { from: e(p.from), to: e(p.to) });
   if (x.kind === 'hunt') return t('New hunt unlocked: {hunt} (level {n})', { hunt: e(p.hunt), n: e(p.n) });
   if (x.kind === 'egg') return t('Egg hatched: {name}', { name: (p.shiny ? '\u2726 ' : '') + (p.name ? e(p.name) : t('an egg')) });
@@ -1348,7 +1359,7 @@ const TODAY_ICON = { shiny: '\u2726', catch: '\u2605', drop: '$', egg: '\u25cf',
 // lang-75: an event shows only if its kind is ticked in the gear (sumCfg.ovTodayOff), AND, for great catches and valuable drops, it meets the Notifications rule
 const ovTodayOn = k => !sumCfg.ovTodayOff[k];
 const todayShown = x => ovTodayOn(x.kind) && (x.kind === 'catch' ? isGreatCatch(x.p && x.p.iv !== '' ? Number(x.p.iv) : null, qualityOf(x.p || {}), x.p && x.p.rarity)
-  : x.kind === 'drop' ? Number(x.p && x.p.each) >= minDrop() : true);
+  : x.kind === 'drop' ? (Number(x.p && x.p.each) >= minDrop() || !!eeveeItem(x.p && x.p.id, x.p && x.p.item)) : true);          // lang-76: Eevee items always show
 // lang-75: what the user is looking at now: the live day (today), or a snapshot of a past day from storage, or a known past day with no stored data (empty)
 function todayViewed() {
   if (viewDate === today.date) return { date: today.date, items: today.items, counts: today.counts || TODAY_ZERO_COUNTS(), stored: true, live: true };
@@ -1356,7 +1367,7 @@ function todayViewed() {
   return o ? { date: viewDate, items: o.items, counts: o.counts, stored: true, live: false } : { date: viewDate, items: [], counts: TODAY_ZERO_COUNTS(), stored: false, live: false };
 }
 function todayTitleFor(date) {                                                // "Today", "Yesterday", or a short "DD Mon" for older days
-  const liveD = today.date; if (date === liveD) return t('Today\u2019s highlights \u00b7 00:00 to 23:59');
+  const liveD = today.date; if (date === liveD) return t('Today\u2019s highlights');          // lang-76: the short title (the hours are in the title's tooltip)
   const d = new Date(date + 'T12:00:00'), dPrev = new Date(liveD + 'T12:00:00'); dPrev.setDate(dPrev.getDate() - 1);
   const dayLabel = date === dayOf(dPrev.getTime()) ? t('Yesterday') : (d.toLocaleDateString(undefined, { day: '2-digit', month: 'short' }));
   return t('{day}\u2019s highlights', { day: dayLabel });
@@ -1386,8 +1397,8 @@ function drawToday() {
   const html = items.length ? items.map(x => {
     const d = new Date(x.t), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     const a = accounts[x.acc], who = a ? accName(a) : esc(x.name);
-    const tx = todayText(x);
-    return '<div class="ev ' + esc(x.kind) + '"><span class="when">' + hm + '</span><span class="mk">' + (TODAY_ICON[x.kind] || '\u2022') + '</span><span class="tx" title="' + esc(tx.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&')) + '"><span class="dot" style="background:' + COLORS[x.acc % COLORS.length] + '"></span> <span class="who">' + who + ':</span> ' + tx + '</span></div>';
+    const tx = todayText(x), ev = x.kind === 'drop' ? eeveeItem(x.p && x.p.id, x.p && x.p.item) : null;          // lang-76: an Eevee drop has its own colour, as in Session drops
+    return '<div class="ev ' + esc(x.kind) + (ev ? ' eevee' : '') + '"' + (ev ? ' style="--eevee:' + ev.col + '"' : '') + '><span class="when">' + hm + '</span><span class="mk">' + (TODAY_ICON[x.kind] || '\u2022') + '</span><span class="tx" title="' + esc(tx.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&')) + '"><span class="dot" style="background:' + COLORS[x.acc % COLORS.length] + '"></span> <span class="who">' + who + ':</span> ' + tx + '</span></div>';
   }).join('') : '<div class="empty">' + (V.stored || V.live ? t('Nothing yet today. Shinies, great catches and valuable drops (as set in Settings \u203a Notifications), hatched eggs, evolutions and new hunts show here, from 00:00 to 23:59, also after the app is closed and opened again.')
     : t('4horizon was not running on this day: there is nothing to show.')) + '</div>';
   if (list.dataset.html !== html) { list.dataset.html = html; list.innerHTML = html; }
@@ -1609,8 +1620,7 @@ function drawDropsCombined() {
     });
   });
   // lang-76+: Pelo de Eevee and Sangue de Eevee are always highlighted (rare, low price, their own colour), independent of the "hot" threshold
-  const EEVEE = { 'eevee-fur': { cls: 'fur', col: '#c9a67a' }, 'eevee-blood': { cls: 'blood', col: '#b23b3b' }, 'Pelo de Eevee': { cls: 'fur', col: '#c9a67a' }, 'Sangue de Eevee': { cls: 'blood', col: '#b23b3b' } };
-  const eeveeOf = r => EEVEE[r.id] || EEVEE[r.name] || null;
+  const eeveeOf = r => eeveeItem(r.id, r.name);
   // sort: pinned first (most valuable among pinned first), then Eevee items, then expensive (price of one >= hot), then the rest by total value
   const sortRule = (x, y) => ((!!eeveeOf(y)) - (!!eeveeOf(x))) || ((y.each >= DROP_HOT) - (x.each >= DROP_HOT)) || (x.each >= DROP_HOT ? ((y.each || 0) - (x.each || 0)) : 0) || ((y.value || 0) - (x.value || 0)) || ((y.qty || 0) - (x.qty || 0));
   const rows = Object.values(by).sort((x, y) => (!!sumCfg.dropsPins[y.name] - !!sumCfg.dropsPins[x.name]) || sortRule(x, y));

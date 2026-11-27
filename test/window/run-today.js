@@ -15,7 +15,7 @@ const settle = p => p.waitForTimeout(1300);
   await p.dash().evaluate(() => { Object.keys(localStorage).filter(k => k.indexOf('4h.today') === 0).forEach(k => localStorage.removeItem(k)); location.reload(); }); await p.waitForTimeout(1500);
   const lay = await p.dash().evaluate(() => { const c = document.getElementById('todayCard'), cap = document.getElementById('capList').closest('.card'), r = c.getBoundingClientRect(), rc = cap.getBoundingClientRect();
     return { title: c.querySelector('.h span').textContent, beside: Math.abs(r.top - rc.top) < 2 && r.left > rc.right, empty: (document.querySelector('#todayList .empty') || {}).textContent || '', count: document.getElementById('todayCount').textContent }; });
-  ok('a "Today\u2019s highlights · 00:00 to 23:59" card beside Latest captures (lang-57)', /Today\u2019s highlights/.test(lay.title) && lay.beside, lay);
+  ok('a "Today\u2019s highlights" card beside Latest captures (lang-76: the short title, the hours are in its tooltip)', lay.title.trim() === 'Today\u2019s highlights' && lay.beside, lay);
   const emptyNow = await p.dash().evaluate(() => today.items.length);
   ok('the capture the test data had already sent (Magikarp IV 191), sent again when the Summary was loaded again, is NOT taken as new', emptyNow === 0, emptyNow);
   await p.dash().evaluate(() => { today.items = []; drawToday(); });
@@ -89,6 +89,10 @@ const settle = p => p.waitForTimeout(1300);
   ok('eggs: one whose time was up and is gone from the incubator hatched ("Egg hatched: Charmander")', r[0].kind === 'egg' && r[0].tx === 'trainer2: Egg hatched: Charmander', r[0]);
   await p.s(2, { eggs: [] }); await settle(p);
   ok('...one taken out before its time is not counted as hatched', (await rows(p)).filter(x => x.kind === 'egg').length === 1);
+  // lang-76 (owner's choice 2026-11-26): whole coloured rows for a hatched egg (green) and an evolution (white), like a shiny; a valuable drop colours its $ only
+  const look = await p.dash().evaluate(() => { const g = k => { const e = document.querySelector('#todayList .ev.' + k); if (!e) return null; const s = getComputedStyle(e); return { mk: getComputedStyle(e.querySelector('.mk')).color, edge: s.boxShadow, bg: s.backgroundImage }; }; return { egg: g('egg'), evo: g('evo'), drop: g('drop:not(.eevee)') }; });
+  ok('a hatched egg is a green row (green icon and left edge, a green background), an evolution a white one; a valuable drop has no coloured row (its $ only)', look.egg && look.egg.mk === 'rgb(110, 231, 160)' && /rgb\(110, 231, 160\)/.test(look.egg.edge) && /gradient/.test(look.egg.bg)
+    && look.evo && look.evo.mk === 'rgb(255, 255, 255)' && /rgb\(255, 255, 255\)/.test(look.evo.edge) && /gradient/.test(look.evo.bg) && look.drop && !/gradient/.test(look.drop.bg) && look.drop.edge === 'none', look);
   // ---- lang-56: Settings › Notifications decide what a great catch and a valuable drop are (as for the notifications)
   const rules = (iv, q, mode, drop) => p.dash().evaluate(r => { window.postMessage(r, '*'); }, { type: 'rules', goodCatch: { minIV: iv, minQuality: q, mode }, rareDrop: { minValue: drop } });
   const kinds = async () => (await rows(p)).map(x => x.kind + ':' + x.tx.replace(/^.*?: /, '').split(' · ')[0].replace(/^.*: /, '')).join(',');
@@ -104,6 +108,11 @@ const settle = p => p.waitForTimeout(1300);
   ok('AND (IV 110 AND quality 1.78): only the Mankey (116, ×1.79) is both', /catch:Mankey/.test(k) && !/catch:Exeggcute/.test(k) && !/catch:Abra/.test(k), k);
   await rules(175, 2, 'or', 20000); await p.waitForTimeout(300); k = await kinds();
   ok('Valuable drop "worth at least $20,000": the Water gems ($15K each) are no longer shown', !/drop:/.test(k), k);
+  // lang-76: a Pelo de Eevee ($10K) still shows at $20,000 (Eevee items are never hidden by the price), in its own colour (reported 2026-11-26: it looked like any drop)
+  await drops(2, 9300, [['Pelo de Eevee', 1, 10000]]); await settle(p); await drops(2, 9300, [['Pelo de Eevee', 2, 10000]]); await settle(p);
+  const ee = await p.dash().evaluate(() => { const r = Array.from(document.querySelectorAll('#todayList .ev')).find(e => /Pelo de Eevee/.test(e.textContent)); const it = r && r.querySelector('.it'); return r ? { cls: r.className, col: r.style.getPropertyValue('--eevee'), mk: getComputedStyle(r.querySelector('.mk')).color, name: it ? it.textContent : null, nameCol: it ? getComputedStyle(it).color : null, tip: r.querySelector('.tx').title } : null; });
+  ok('...but a Pelo de Eevee ($10K) is shown at $20,000 too, in its own colour (a deeper brown, owner 2026-11-26), the same as its Session drops row', ee && /\beevee\b/.test(ee.cls) && ee.col === '#a0703c' && ee.mk === 'rgb(160, 112, 60)', ee);
+  ok('...its name is in that colour too, and the tooltip is plain text', ee && ee.name === 'Pelo de Eevee' && ee.nameCol === 'rgb(160, 112, 60)' && !/</.test(ee.tip), ee);
   await rules(175, 2, 'or', 10000); await p.waitForTimeout(300);
   ok('...at $10,000 they are again', /drop:/.test(await kinds()));
   // ---- lang-57: a box of its own height, with a scroll bar, like Latest captures
@@ -152,7 +161,7 @@ const settle = p => p.waitForTimeout(1300);
   await p.dash().evaluate(() => renderAll()); await p.waitForTimeout(300);
   r = await rows(p);
   const ptTitle = await p.dash().evaluate(() => document.getElementById('todayTitle').textContent);
-  ok('in Portuguese: "Destaques de hoje · 00:00 às 23:59", and a row kept in English is written in Portuguese ("Shiny capturado")', ptTitle === 'Destaques de hoje · 00:00 às 23:59' && r.length === 1 && r[0].tx === 'trainer2: Shiny capturado: Gengar · IV 120/192 · Rara ×1.2', [ptTitle, r]);
+  ok('in Portuguese: "Destaques de hoje" (lang-76: the short title), and a row kept in English is written in Portuguese ("Shiny capturado")', ptTitle === 'Destaques de hoje' && r.length === 1 && r[0].tx === 'trainer2: Shiny capturado: Gengar · IV 120/192 · Rara ×1.2', [ptTitle, r]);
   ok('no JavaScript errors (Portuguese)', p.errors.length === 0, p.errors);
   await b.close(); console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('FAILED ' + e.message + '\n' + e.stack); process.exit(1); });

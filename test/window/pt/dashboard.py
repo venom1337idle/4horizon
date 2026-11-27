@@ -194,7 +194,6 @@ EXACT = {
   'shiny': 'shiny',
   'Order of the list': 'Ordem da lista',
   # lang-47: the day's tracker
-  'Today’s highlights · 00:00 to 23:59': 'Destaques de hoje · 00:00 às 23:59',
   'Shiny captured: {what}': 'Shiny capturado: {what}',
   'Great catch: {what}': 'Ótima captura: {what}',
   'Valuable drop: {item} ×{n} · {each} each': 'Drop valioso: {item} ×{n} · {each} cada',
