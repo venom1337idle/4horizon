@@ -1532,7 +1532,7 @@ function eggProjection(e) {
   const n = k => (typeof e[k] === 'number' && isFinite(e[k]) ? e[k] : null);
   const stats = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].map(k => n('growth.' + k));
   const sum = stats.every(v => v !== null) ? stats.reduce((s, v) => s + v, 0) : null;
-  const iv = sum === null ? null : sum - (e.ivBoostStat ? 1 : 0);
+  const iv = sum === null ? null : sum - (e.ivBoostStat ? 1 : 0) - (e.strengthStat ? 1 : 0);          // the +1 of the Adupoke (ivBoostStat) and of the Poção da Força (strengthStat) are taken back out: they are part of the roll
   const q = n('quality'), bb = n('breedBonus');
   let lo = null, hi = null;
   if (q !== null && bb !== null) {

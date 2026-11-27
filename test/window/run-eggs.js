@@ -41,7 +41,8 @@ const green = rgb => Number((/rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(rgb) || [])[2
   await p.s(1, { eggs: [
     egg(21, 'Trapinch', 0.3, Object.assign({ quality: 1.668, breedBonus: 0.054, adupokeBonus: 0.166, qualityPotionBonus: 0, doubled: false, usedAdupoke: true, ivBoostStat: null }, st(32, 28, 31, 32, 31, 27))),          // the owner's real egg
     egg(22, 'Aron', 0.3, Object.assign({ quality: 1.38, breedBonus: 0.15, adupokeBonus: 0.1, qualityPotionBonus: 0, doubled: true, usedAdupoke: true, ivBoostStat: 'atk' }, st(10, 11, 10, 10, 10, 10))),          // doubled + Adupoke, and the +1 IV was rolled
-    egg(23, 'Larvitar', 0.3, Object.assign({ quality: 1.5 }, st(20, 20, 20, 20, 20, 20)))] });          // no breeding bonus sent: the base is unknown
+    egg(23, 'Larvitar', 0.3, Object.assign({ quality: 1.5 }, st(20, 20, 20, 20, 20, 20))),          // no breeding bonus sent: the base is unknown
+    egg(24, 'Gengar', 0.3, Object.assign({ quality: 2.882, breedBonus: 0, adupokeBonus: 0, qualityPotionBonus: 0.1, doubled: false, usedAdupoke: false, ivBoostStat: null, strengthStat: 'spe' }, st(29, 29, 29, 29, 29, 28)))] });          // the owner's Gengar shape: base 2.782; the Força's +1 IV and the potion's +0.10 both hit
   await p.waitForTimeout(1400);
   const eq = await p.dash().evaluate(() => Array.from(document.querySelectorAll('#eggGrid .ring')).map(r => ({ nm: r.querySelector('.nm').textContent.trim(), eq: (r.querySelector('.eq') || {}).textContent || '', tip: r.title })));
   const tr = eq.find(x => x.nm === 'Trapinch'), ar = eq.find(x => x.nm === 'Aron'), lv = eq.find(x => x.nm === 'Larvitar');
@@ -49,7 +50,9 @@ const green = rgb => Number((/rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(rgb) || [])[2
   ok('...its tooltip: "Quality 1.548 – 1.748 · IV 181/192 (Adupoke: 10% chance of +1 IV)", and the exact 1.668 is nowhere', tr && /Quality 1\.548 \u2013 1\.748 \u00b7 IV 181\/192 \(Adupoke: 10% chance of \+1 IV\)/.test(tr.tip) && !/1\.668|1\.67\b/.test(tr.tip + tr.eq), tr && tr.tip);
   ok('doubled cost + Adupoke: "×1.28–1.53"; the +1 IV that was already rolled is not given away (IV 60, not 61)', ar && ar.eq === '\u00d71.28\u20131.53 \u00b7 IV 60' && !/\b61\b/.test(ar.tip), ar);
   ok('an egg without the breeding bonus (its base is unknown): the IV only, no quality', lv && lv.eq === 'IV 120' && !/Quality/.test(lv.tip), lv);
-  ok('...an egg without those numbers (an older shape): no extra line', !eq.some(x => ['Trapinch', 'Aron', 'Larvitar'].indexOf(x.nm) < 0 && x.eq), eq);
+  const gg = eq.find(x => x.nm === 'Gengar');
+  ok('a Poção da Força that hit (strengthStat) is not given away either (IV 172, not 173), and a Poção da Qualidade that hit is taken out of the base (2.832…, not 2.932…)', gg && gg.eq === '\u00d72.83\u20132.88 \u00b7 IV 172' && !/\b173\b/.test(gg.tip), gg);
+  ok('...an egg without those numbers (an older shape): no extra line', !eq.some(x => ['Trapinch', 'Aron', 'Larvitar', 'Gengar'].indexOf(x.nm) < 0 && x.eq), eq);
   await p.s(1, { eggs: [] }); await p.s(2, { eggs: [egg(7, 'Rhyhorn', 1, { status: 'claimed' })] }); await p.waitForTimeout(1400);
   v = await look(p);
   ok('no egg in any incubator: the whole card is not shown', !v.shown && v.cols.length === 0, v);
